@@ -62,6 +62,29 @@ describe('Task Schemas', () => {
     });
   });
 
+  describe('taskItemSchema', () => {
+    it('parses task item with epicId and epicTitle', () => {
+      const raw = {
+        id: 'task-1',
+        storyId: 'story-1',
+        epicId: 'epic-1',
+        epicTitle: 'Branding KKN',
+        title: 'Task Alpha',
+        status: 'TODO',
+        priority: 'MEDIUM',
+        isBlocked: false,
+        revisionCount: 0,
+      };
+
+      const res = taskItemSchema.safeParse(raw);
+      expect(res.success).toBe(true);
+      if (res.success) {
+        expect(res.data.epicId).toBe('epic-1');
+        expect(res.data.epicTitle).toBe('Branding KKN');
+      }
+    });
+  });
+
   describe('taskDetailSchema', () => {
     it('parses full task detail with activity logs', () => {
       const raw = {

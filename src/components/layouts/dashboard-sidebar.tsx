@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useDivisions } from '@/features/divisions/api/use-queries';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -23,12 +24,14 @@ export function DashboardSidebar() {
   const pathname = usePathname();
   const { isSidebarOpen } = useUIStore();
   const { data: user } = useCurrentUser();
+  const { data: allDivisions = [] } = useDivisions();
 
   const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
   const userDivisions = user?.divisions ?? [];
 
   const mainNavItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { key: 'board', label: 'Papan Kanban', icon: FolderKanban, href: '/board' },
     { key: 'epics', label: 'Inisiatif & Epics', icon: Target, href: '/epics' },
     { key: 'my-tasks', label: 'Tugas Saya', icon: CheckSquare, href: '/my-tasks' },
     ...(isAdmin
@@ -130,6 +133,49 @@ export function DashboardSidebar() {
                         <Award size={13} className="text-amber-500 shrink-0" />
                       </span>
                     )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+
+        {/* Semua Divisi untuk Admin jika tidak punya keanggotaan divisi spesifik */}
+        {isAdmin && userDivisions.length === 0 && allDivisions.length > 0 && (
+          <div className="space-y-1.5 pt-2 border-t border-border/40">
+            {isSidebarOpen ? (
+              <div className="px-3 pb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Papan Divisi
+              </div>
+            ) : (
+              <div className="h-2" />
+            )}
+
+            <nav aria-label="Admin Divisi navigation" className="space-y-1">
+              {allDivisions.map((div) => {
+                const href = `/d/${div.slug}`;
+                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+
+                return (
+                  <Link
+                    key={div.id}
+                    href={href}
+                    aria-label={div.name}
+                    title={div.name}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FolderKanban size={17} aria-hidden="true" className="shrink-0 text-indigo-500" />
+                      {isSidebarOpen && (
+                        <span className="truncate text-xs">{div.name}</span>
+                      )}
+                    </div>
                   </Link>
                 );
               })}

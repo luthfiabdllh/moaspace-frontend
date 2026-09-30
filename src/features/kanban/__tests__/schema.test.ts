@@ -58,6 +58,8 @@ describe('Kanban Schemas', () => {
     it('validates valid board filter params', () => {
       const res = queryBoardSchema.safeParse({
         priority: 'URGENT',
+        epicId: 'epic-123',
+        prokerTag: 'proker-a',
         isBlocked: true,
         search: 'desain',
       });

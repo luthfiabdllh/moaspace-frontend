@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useEpics } from '@/features/epics/api/use-queries';
 import { useDivisionBoard } from '../api/use-queries';
 import { KanbanBoard } from './kanban-board';
 import { Button } from '@/components/ui/button';
@@ -38,8 +39,13 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
 
   const divisionId = division?.id;
 
+  const { data: epics = [] } = useEpics(
+    divisionId ? { divisionId } : undefined
+  );
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPriority, setSelectedPriority] = useState<string>('ALL');
+  const [selectedEpicId, setSelectedEpicId] = useState<string>('ALL');
   const [onlyBlocked, setOnlyBlocked] = useState(false);
   const [swimlaneMode, setSwimlaneMode] = useState<SwimlaneMode>('NONE');
 
@@ -48,6 +54,7 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
     divisionId || '',
     {
       priority: selectedPriority !== 'ALL' ? (selectedPriority as any) : undefined,
+      epicId: selectedEpicId !== 'ALL' ? selectedEpicId : undefined,
       isBlocked: onlyBlocked ? true : undefined,
       search: searchQuery.trim() || undefined,
     },
@@ -152,6 +159,20 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
 
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Epic Selector */}
+          <select
+            value={selectedEpicId}
+            onChange={(e) => setSelectedEpicId(e.target.value)}
+            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-36 truncate"
+          >
+            <option value="ALL">Semua Epic</option>
+            {epics.map((epic) => (
+              <option key={epic.id} value={epic.id}>
+                {epic.title}
+              </option>
+            ))}
+          </select>
+
           {/* Priority Selector */}
           <select
             value={selectedPriority}
@@ -172,6 +193,7 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
             className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="NONE">Swimlane: Tanpa Grup</option>
+            <option value="EPIC">Swimlane: Per Epic / Inisiatif</option>
             <option value="STORY">Swimlane: Per Story</option>
             <option value="ASSIGNEE">Swimlane: Per Assignee</option>
           </select>

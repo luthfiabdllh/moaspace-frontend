@@ -17,6 +17,7 @@ import {
 import { useEpics } from '../api/use-queries';
 import { EpicCard } from './epic-card';
 import { CreateEpicDialog } from './create-epic-dialog';
+import { EpicDetailSheet } from './epic-detail-sheet';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ export function EpicsPageContent() {
   const { data: epics = [], isLoading, error } = useEpics();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [selectedEpic, setSelectedEpic] = useState<EpicItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState<'ALL' | 'DIVISION' | 'CROSS'>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
@@ -327,7 +329,11 @@ export function EpicsPageContent() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEpics.map((epic) => (
-            <EpicCard key={epic.id} epic={epic} />
+            <EpicCard
+              key={epic.id}
+              epic={epic}
+              onSelect={(selected) => setSelectedEpic(selected)}
+            />
           ))}
         </div>
       )}
@@ -336,6 +342,13 @@ export function EpicsPageContent() {
       <CreateEpicDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
+      />
+
+      {/* Epic Detail & Hierarchy Breakdown Sheet */}
+      <EpicDetailSheet
+        epic={selectedEpic}
+        open={Boolean(selectedEpic)}
+        onOpenChange={(open) => !open && setSelectedEpic(null)}
       />
     </div>
   );

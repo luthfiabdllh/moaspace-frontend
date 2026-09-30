@@ -30,6 +30,8 @@ export const taskItemSchema = z.object({
   id: z.string(),
   storyId: z.string(),
   storyTitle: z.string().optional(),
+  epicId: z.string().nullable().optional(),
+  epicTitle: z.string().nullable().optional(),
   divisionId: z.string().optional(),
   divisionName: z.string().optional(),
   title: z.string(),

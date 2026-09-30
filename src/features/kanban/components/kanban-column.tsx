@@ -60,6 +60,15 @@ export function KanbanColumn({
           >
             {tasks.length}
           </Badge>
+
+          {tasks.reduce((sum, t) => sum + ((t as any).storyPoints || 0), 0) > 0 && (
+            <Badge
+              variant="outline"
+              className="h-5 px-1.5 font-mono text-3xs text-muted-foreground"
+            >
+              {tasks.reduce((sum, t) => sum + ((t as any).storyPoints || 0), 0)} SP
+            </Badge>
+          )}
         </div>
 
         {onAddTask && isCoordinatorOrAdmin && (

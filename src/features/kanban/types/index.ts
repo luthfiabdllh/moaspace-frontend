@@ -17,7 +17,7 @@ export interface BoardColumns {
   DONE: TaskItem[];
 }
 
-export type SwimlaneMode = 'NONE' | 'STORY' | 'ASSIGNEE';
+export type SwimlaneMode = 'NONE' | 'EPIC' | 'STORY' | 'ASSIGNEE';
 
 export const moveTaskSchema = z.object({
   status: kanbanColumnEnum,

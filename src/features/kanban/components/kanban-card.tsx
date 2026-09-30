@@ -82,6 +82,16 @@ export function KanbanCard({
           {/* Header Badges & Drag Handle */}
           <div className="flex items-center justify-between gap-1.5">
             <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+              {task.epicTitle && (
+                <span
+                  title={`Epic: ${task.epicTitle}`}
+                  className="inline-flex items-center gap-1 text-3xs font-medium px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 truncate max-w-28"
+                >
+                  <Target className="size-2.5 shrink-0 text-indigo-500" />
+                  <span className="truncate">{task.epicTitle}</span>
+                </span>
+              )}
+
               {task.storyTitle && (
                 <span
                   title={task.storyTitle}

@@ -19,7 +19,7 @@ import { KanbanCard } from './kanban-card';
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Bookmark, User } from 'lucide-react';
+import { Bookmark, User, Target } from 'lucide-react';
 
 interface KanbanBoardProps {
   columns: BoardColumns;
@@ -148,6 +148,32 @@ export function KanbanBoard({
 
     // Flatten all tasks
     const allTasks = Object.values(board).flat();
+
+    if (swimlaneMode === 'EPIC') {
+      const groups = new Map<string, { title: string; tasks: TaskItem[] }>();
+
+      allTasks.forEach((t) => {
+        const key = t.epicId || 'no-epic';
+        const title = t.epicTitle || 'Tanpa Epic (Pekerjaan Rutin / Langsung)';
+        if (!groups.has(key)) {
+          groups.set(key, { title, tasks: [] });
+        }
+        groups.get(key)!.tasks.push(t);
+      });
+
+      return Array.from(groups.entries()).map(([id, val]) => ({
+        id,
+        title: val.title,
+        icon: Target,
+        columns: {
+          BACKLOG: val.tasks.filter((t) => t.status === 'BACKLOG'),
+          TODO: val.tasks.filter((t) => t.status === 'TODO'),
+          IN_PROGRESS: val.tasks.filter((t) => t.status === 'IN_PROGRESS'),
+          REVIEW: val.tasks.filter((t) => t.status === 'REVIEW'),
+          DONE: val.tasks.filter((t) => t.status === 'DONE'),
+        } as BoardColumns,
+      }));
+    }
 
     if (swimlaneMode === 'STORY') {
       const groups = new Map<string, { title: string; tasks: TaskItem[] }>();
