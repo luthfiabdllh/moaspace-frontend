@@ -11,6 +11,7 @@ import {
   Layers,
   FolderKanban,
   Award,
+  Target,
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -27,6 +28,7 @@ export function DashboardSidebar() {
 
   const mainNavItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { key: 'epics', label: 'Inisiatif & Epics', icon: Target, href: '/epics' },
     ...(isAdmin
       ? [
           { key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' },
