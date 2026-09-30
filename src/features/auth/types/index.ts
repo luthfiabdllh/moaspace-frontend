@@ -62,6 +62,8 @@ export const userSchema = z.object({
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   role: z.string().default('user'),
   divisions: z.array(divisionMembershipSchema).default([]),
+  hasPassword: z.boolean().optional(),
+  googleLinked: z.boolean().optional(),
   createdAt: z.string().datetime().optional(),
 });
 
