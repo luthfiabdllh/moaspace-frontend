@@ -3,7 +3,12 @@ import { cookies } from 'next/headers';
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 
-export async function GET() {
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(_req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
 
@@ -15,7 +20,7 @@ export async function GET() {
   }
 
   try {
-    const res = await fetch(`${BACKEND_API_URL}/divisions`, {
+    const res = await fetch(`${BACKEND_API_URL}/divisions/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -33,7 +38,8 @@ export async function GET() {
   }
 }
 
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest, { params }: RouteParams) {
+  const { id } = await params;
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
 
@@ -46,8 +52,8 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const res = await fetch(`${BACKEND_API_URL}/divisions`, {
-      method: 'POST',
+    const res = await fetch(`${BACKEND_API_URL}/divisions/${id}`, {
+      method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',

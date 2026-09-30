@@ -2,21 +2,35 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, User, Settings, Users, History } from 'lucide-react';
+import {
+  LayoutDashboard,
+  User,
+  Settings,
+  Users,
+  History,
+  Layers,
+  FolderKanban,
+  Award,
+} from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isSidebarOpen } = useUIStore();
   const { data: user } = useCurrentUser();
 
-  const navItems = [
+  const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
+  const userDivisions = user?.divisions ?? [];
+
+  const mainNavItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    ...(user?.isSuperAdmin || user?.isKormanit
+    ...(isAdmin
       ? [
           { key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' },
+          { key: 'admin-divisions', label: 'Kelola Divisi', icon: Layers, href: '/admin/divisions' },
           { key: 'admin-activity-logs', label: 'Activity Log', icon: History, href: '/admin/activity-logs' },
         ]
       : []),
@@ -39,34 +53,86 @@ export function DashboardSidebar() {
           M
         </div>
         {isSidebarOpen && (
-          <span className="ml-3 font-semibold truncate">MoaSpace</span>
+          <span className="ml-3 font-semibold truncate text-foreground">MoaSpace</span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav aria-label="Main navigation" className="flex-1 space-y-1 p-3">
-        {navItems.map(({ key, label, icon: Icon, href }) => {
-          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+      <div className="flex-1 overflow-y-auto p-3 space-y-6">
+        {/* Main Navigation */}
+        <nav aria-label="Main navigation" className="space-y-1">
+          {mainNavItems.map(({ key, label, icon: Icon, href }) => {
+            const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
-          return (
-            <Link
-              key={key}
-              href={href}
-              aria-label={label}
-              aria-current={isActive ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              <Icon size={18} aria-hidden="true" className="shrink-0" />
-              {isSidebarOpen && <span className="truncate">{label}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+            return (
+              <Link
+                key={key}
+                href={href}
+                aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <Icon size={18} aria-hidden="true" className="shrink-0" />
+                {isSidebarOpen && <span className="truncate">{label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Divisi Saya (Dinamis dari Keanggotaan User) */}
+        {userDivisions.length > 0 && (
+          <div className="space-y-1.5 pt-2 border-t border-border/40">
+            {isSidebarOpen ? (
+              <div className="px-3 pb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Divisi Saya
+              </div>
+            ) : (
+              <div className="h-2" />
+            )}
+
+            <nav aria-label="Divisi navigation" className="space-y-1">
+              {userDivisions.map((div) => {
+                const href = `/d/${div.divisionSlug}`;
+                const isActive = pathname === href || pathname.startsWith(`${href}/`);
+                const isCoordinator = div.role === 'COORDINATOR';
+
+                return (
+                  <Link
+                    key={div.divisionId}
+                    href={href}
+                    aria-label={div.divisionName}
+                    title={div.divisionName}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={cn(
+                      'flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <FolderKanban size={17} aria-hidden="true" className="shrink-0 text-indigo-500" />
+                      {isSidebarOpen && (
+                        <span className="truncate text-xs">{div.divisionName}</span>
+                      )}
+                    </div>
+                    {isSidebarOpen && isCoordinator && (
+                      <span title="Koordinator Divisi">
+                        <Award size={13} className="text-amber-500 shrink-0" />
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+      </div>
     </aside>
   );
 }
