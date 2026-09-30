@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Award,
   Target,
+  CheckSquare,
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -29,6 +30,7 @@ export function DashboardSidebar() {
   const mainNavItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { key: 'epics', label: 'Inisiatif & Epics', icon: Target, href: '/epics' },
+    { key: 'my-tasks', label: 'Tugas Saya', icon: CheckSquare, href: '/my-tasks' },
     ...(isAdmin
       ? [
           { key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' },

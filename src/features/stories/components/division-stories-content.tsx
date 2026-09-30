@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import {
   Bookmark,
   Plus,
@@ -15,6 +16,7 @@ import {
   Target,
   FolderKanban,
   Award,
+  Columns,
 } from 'lucide-react';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -148,15 +150,32 @@ export function DivisionStoriesContent({ divisionSlug }: DivisionStoriesContentP
           </div>
         </div>
 
-        {isCoordinator && (
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-            className="gap-2 shadow-xs shrink-0"
-          >
-            <Plus className="size-4" />
-            Story Baru
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* View Switcher: Stories vs Kanban */}
+          <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background text-foreground shadow-2xs font-semibold">
+              <Bookmark className="size-3.5 text-primary" />
+              Deliverable Stories
+            </div>
+            <Link
+              href={`/d/${divisionSlug}/board`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Columns className="size-3.5" />
+              Papan Kanban
+            </Link>
+          </div>
+
+          {isCoordinator && (
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="gap-2 shadow-xs shrink-0"
+            >
+              <Plus className="size-4" />
+              Story Baru
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* KPI Cards */}

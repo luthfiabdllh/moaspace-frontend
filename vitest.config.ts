@@ -17,6 +17,8 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/app/**',
         'src/components/ui/**',
+        'src/components/reui/**',
+        'src/components/examples/**',
         'src/components/layouts/**',
         'src/proxy.ts',
         'src/env.ts',
