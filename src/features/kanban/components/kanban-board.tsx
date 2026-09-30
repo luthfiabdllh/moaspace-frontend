@@ -1,17 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  closestCorners,
-  type DragStartEvent,
-  type DragEndEvent,
-} from '@dnd-kit/core';
 import { isAxiosError } from 'axios';
+import {
+  Kanban,
+  KanbanBoard as ReuiKanbanBoard,
+  KanbanOverlay,
+  type KanbanCommitMeta,
+} from '@/components/reui/kanban';
+
 import type { TaskItem, TaskStatus } from '@/features/tasks/types';
 import type { BoardColumns, MoveTaskDTO, SwimlaneMode } from '../types';
 import { useMoveTask } from '../api/use-mutations';
@@ -45,86 +42,68 @@ export function KanbanBoard({
   isCoordinatorOrAdmin = false,
   swimlaneMode = 'NONE',
 }: KanbanBoardProps) {
-  const [board, setBoard] = useState<BoardColumns>(initialColumns);
-  const [activeTask, setActiveTask] = useState<TaskItem | null>(null);
+  const [board, setBoard] = useState<BoardColumns>(() => ({
+    BACKLOG: initialColumns?.BACKLOG || [],
+    TODO: initialColumns?.TODO || [],
+    IN_PROGRESS: initialColumns?.IN_PROGRESS || [],
+    REVIEW: initialColumns?.REVIEW || [],
+    DONE: initialColumns?.DONE || [],
+  }));
+
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus | null>(null);
 
   // Overcapacity dialog state for moves
   const [overcapacityData, setOvercapacityData] = useState<OvercapacityWarningData | null>(null);
-  const [pendingMove, setPendingMove] = useState<{ id: string; dto: MoveTaskDTO } | null>(null);
+  const [pendingMove, setPendingMove] = useState<{
+    id: string;
+    dto: MoveTaskDTO;
+    previousValue: BoardColumns;
+  } | null>(null);
   const [isOvercapacityOpen, setIsOvercapacityOpen] = useState(false);
 
   const moveMutation = useMoveTask(divisionId);
 
-
-  // Sync board with query data
+  // Sync board with query data while preserving active column ordering
   useEffect(() => {
-    setBoard(initialColumns);
+    if (initialColumns) {
+      setBoard((prev) => {
+        const keys =
+          Object.keys(prev).length === 5
+            ? Object.keys(prev)
+            : ['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'];
+
+        const updated: BoardColumns = {
+          BACKLOG: initialColumns.BACKLOG || [],
+          TODO: initialColumns.TODO || [],
+          IN_PROGRESS: initialColumns.IN_PROGRESS || [],
+          REVIEW: initialColumns.REVIEW || [],
+          DONE: initialColumns.DONE || [],
+        };
+
+        const result: any = {};
+        keys.forEach((k) => {
+          result[k] = updated[k as TaskStatus] || [];
+        });
+        return result;
+      });
+    }
   }, [initialColumns]);
 
-  // Pointer sensor with drag activation distance
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    })
-  );
-
-  // Helper to find task and column
-  const findTaskAndColumn = (taskId: string) => {
-    for (const colDef of COLUMN_DEFS) {
-      const task = board[colDef.id].find((t) => t.id === taskId);
-      if (task) {
-        return { task, colId: colDef.id };
-      }
-    }
-    return null;
-  };
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const found = findTaskAndColumn(String(active.id));
-    if (found) {
-      setActiveTask(found.task);
-    }
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveTask(null);
-
-    if (!over) return;
-
-    const activeId = String(active.id);
-    const overId = String(over.id);
-
-    const activeInfo = findTaskAndColumn(activeId);
-    if (!activeInfo) return;
-
-    const sourceCol = activeInfo.colId;
-    let targetCol: TaskStatus | null = null;
-    let targetIndex = 0;
-
-    // Check if dropped directly onto a column container
-    const isOverColumn = COLUMN_DEFS.some((c) => c.id === overId);
-    if (isOverColumn) {
-      targetCol = overId as TaskStatus;
-      targetIndex = board[targetCol].length;
-    } else {
-      // Dropped onto another task card
-      const overInfo = findTaskAndColumn(overId);
-      if (overInfo) {
-        targetCol = overInfo.colId;
-        targetIndex = board[targetCol].findIndex((t) => t.id === overId);
-      }
+  const handleValueCommit = async (
+    newColumns: Record<string, TaskItem[]>,
+    meta: KanbanCommitMeta<TaskItem>
+  ) => {
+    if (meta.kind === 'column') {
+      return;
     }
 
-    if (!targetCol) return;
+    const taskId = String(meta.event.active.id);
+    const targetCol = meta.overContainer as TaskStatus;
+    const targetIndex = meta.overIndex;
 
     // Calculate fractional position
-    const targetTasks = board[targetCol].filter((t) => t.id !== activeId);
+    const targetTasks = (newColumns[targetCol] || []).filter((t) => t.id !== taskId);
     let position = 'a0';
 
     if (targetTasks.length === 0) {
@@ -137,10 +116,9 @@ export function KanbanBoard({
       position = `m${Date.now()}_${targetIndex}`;
     }
 
-    // Call mutation (optimistic update and rollback handled by useMoveTask)
     try {
       await moveMutation.mutateAsync({
-        id: activeId,
+        id: taskId,
         dto: {
           status: targetCol,
           position,
@@ -152,9 +130,16 @@ export function KanbanBoard({
         err.response?.status === 409 &&
         err.response?.data?.error === 'OVERCAPACITY_WARNING'
       ) {
-        setPendingMove({ id: activeId, dto: { status: targetCol, position } });
+        setPendingMove({
+          id: taskId,
+          dto: { status: targetCol, position },
+          previousValue: meta.previousValue as BoardColumns,
+        });
         setOvercapacityData(err.response.data.data);
         setIsOvercapacityOpen(true);
+      } else {
+        // Rollback to previous state
+        setBoard(meta.previousValue as BoardColumns);
       }
     }
   };
@@ -173,7 +158,9 @@ export function KanbanBoard({
       setPendingMove(null);
       setOvercapacityData(null);
     } catch {
-      // Handled in mutation
+      if (pendingMove?.previousValue) {
+        setBoard(pendingMove.previousValue);
+      }
     }
   };
 
@@ -266,29 +253,63 @@ export function KanbanBoard({
   }, [board, swimlaneMode]);
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
+    <>
       <div className="space-y-6">
         {/* Standard Single View */}
         {swimlaneMode === 'NONE' && (
-          <div className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start min-h-137.5">
-            {COLUMN_DEFS.map((col) => (
-              <KanbanColumn
-                key={col.id}
-                id={col.id}
-                title={col.title}
-                colorDot={col.colorDot}
-                tasks={board[col.id]}
-                onCardClick={(task) => setSelectedTaskId(task.id)}
-                onAddTask={(status) => setCreateTaskStatus(status)}
-                isCoordinatorOrAdmin={isCoordinatorOrAdmin}
-              />
-            ))}
-          </div>
+          <Kanban
+            value={board}
+            onValueChange={(val) => setBoard(val as BoardColumns)}
+            onValueCommit={handleValueCommit}
+            getItemValue={(item) => item.id}
+          >
+            <ReuiKanbanBoard className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start sm:grid-cols-none min-h-137.5">
+              {Object.keys(board).map((colId) => {
+                const colDef = COLUMN_DEFS.find((c) => c.id === colId);
+                if (!colDef) return null;
+                return (
+                  <KanbanColumn
+                    key={colId}
+                    id={colId as TaskStatus}
+                    title={colDef.title}
+                    colorDot={colDef.colorDot}
+                    tasks={board[colId as TaskStatus] || []}
+                    onCardClick={(task) => setSelectedTaskId(task.id)}
+                    onAddTask={(status) => setCreateTaskStatus(status)}
+                    isCoordinatorOrAdmin={isCoordinatorOrAdmin}
+                  />
+                );
+              })}
+            </ReuiKanbanBoard>
+            <KanbanOverlay className="bg-muted/10 rounded-md border-2 border-dashed">
+              {({ value, variant }) => {
+                if (variant === 'column') {
+                  const colDef = COLUMN_DEFS.find((c) => c.id === value);
+                  if (!colDef) return null;
+                  return (
+                    <KanbanColumn
+                      id={value as TaskStatus}
+                      title={colDef.title}
+                      colorDot={colDef.colorDot}
+                      tasks={board[value as TaskStatus] || []}
+                      isOverlay
+                      className="shadow-2xl opacity-90 rotate-1 border-primary/50"
+                    />
+                  );
+                }
+                const allTasks = Object.values(board).flat();
+                const task = allTasks.find((t) => t.id === value);
+                if (task) {
+                  return (
+                    <div className="w-72">
+                      <KanbanCard task={task} isOverlay />
+                    </div>
+                  );
+                }
+                return null;
+              }}
+            </KanbanOverlay>
+          </Kanban>
         )}
 
         {/* Swimlanes View */}
@@ -308,32 +329,61 @@ export function KanbanBoard({
                     </Badge>
                   </div>
 
-                  <div className="flex gap-4 overflow-x-auto pb-2 items-start">
-                    {COLUMN_DEFS.map((col) => (
-                      <KanbanColumn
-                        key={`${lane.id}-${col.id}`}
-                        id={col.id}
-                        title={col.title}
-                        colorDot={col.colorDot}
-                        tasks={lane.columns[col.id]}
-                        onCardClick={(task) => setSelectedTaskId(task.id)}
-                        isCoordinatorOrAdmin={isCoordinatorOrAdmin}
-                      />
-                    ))}
-                  </div>
+                  <Kanban
+                    value={lane.columns}
+                    onValueChange={(newLaneCols) => {
+                      setBoard((prev) => {
+                        const updated = { ...prev };
+                        const laneTaskIds = new Set(
+                          Object.values(newLaneCols).flat().map((t) => t.id)
+                        );
+                        for (const col of Object.keys(updated) as TaskStatus[]) {
+                          updated[col] = [
+                            ...updated[col].filter((t) => !laneTaskIds.has(t.id)),
+                            ...(newLaneCols[col] || []),
+                          ];
+                        }
+                        return updated;
+                      });
+                    }}
+                    onValueCommit={handleValueCommit}
+                    getItemValue={(item) => item.id}
+                  >
+                    <ReuiKanbanBoard className="flex gap-4 overflow-x-auto pb-2 items-start sm:grid-cols-none">
+                      {COLUMN_DEFS.map((col) => (
+                        <KanbanColumn
+                          key={`${lane.id}-${col.id}`}
+                          id={col.id}
+                          title={col.title}
+                          colorDot={col.colorDot}
+                          tasks={lane.columns[col.id] || []}
+                          onCardClick={(task) => setSelectedTaskId(task.id)}
+                          isCoordinatorOrAdmin={isCoordinatorOrAdmin}
+                        />
+                      ))}
+                    </ReuiKanbanBoard>
+                    <KanbanOverlay className="bg-muted/10 rounded-md border-2 border-dashed">
+                      {({ value }) => {
+                        const task = Object.values(lane.columns)
+                          .flat()
+                          .find((t) => t.id === value);
+                        if (task) {
+                          return (
+                            <div className="w-72">
+                              <KanbanCard task={task} isOverlay />
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    </KanbanOverlay>
+                  </Kanban>
                 </div>
               );
             })}
           </div>
         )}
       </div>
-
-      {/* Drag Overlay when moving a card */}
-      <DragOverlay>
-        {activeTask ? (
-          <KanbanCard task={activeTask} isDraggingOverlay />
-        ) : null}
-      </DragOverlay>
 
       {/* Task Detail Sheet */}
       <TaskDetailSheet
@@ -360,13 +410,15 @@ export function KanbanBoard({
         data={overcapacityData}
         onConfirmOverride={handleConfirmMoveOverride}
         onCancel={() => {
+          if (pendingMove?.previousValue) {
+            setBoard(pendingMove.previousValue);
+          }
           setIsOvercapacityOpen(false);
           setPendingMove(null);
           setOvercapacityData(null);
         }}
         isLoading={moveMutation.isPending}
       />
-    </DndContext>
+    </>
   );
 }
-

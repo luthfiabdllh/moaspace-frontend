@@ -10,6 +10,7 @@ export const kanbanColumnEnum = z.enum([
 ]);
 
 export interface BoardColumns {
+  [key: string]: TaskItem[];
   BACKLOG: TaskItem[];
   TODO: TaskItem[];
   IN_PROGRESS: TaskItem[];

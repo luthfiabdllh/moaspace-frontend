@@ -1,51 +1,54 @@
 'use client';
 
-import { useDroppable } from '@dnd-kit/core';
+import type { ComponentProps } from 'react';
 import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { Plus } from 'lucide-react';
+  KanbanColumn as ReuiKanbanColumn,
+  KanbanColumnContent,
+  KanbanColumnHandle,
+} from '@/components/reui/kanban';
+import { Plus, GripVertical } from 'lucide-react';
 import type { TaskItem, TaskStatus } from '@/features/tasks/types';
 import { KanbanCard } from './kanban-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-interface KanbanColumnProps {
+export interface KanbanColumnProps
+  extends Omit<ComponentProps<typeof ReuiKanbanColumn>, 'children' | 'value'> {
   id: TaskStatus;
+  value?: TaskStatus;
   title: string;
   tasks: TaskItem[];
   colorDot: string;
   onCardClick?: (task: TaskItem) => void;
   onAddTask?: (status: TaskStatus) => void;
   isCoordinatorOrAdmin?: boolean;
+  isOverlay?: boolean;
 }
 
 export function KanbanColumn({
   id,
+  value,
   title,
   tasks,
   colorDot,
   onCardClick,
   onAddTask,
   isCoordinatorOrAdmin = false,
+  isOverlay = false,
+  className,
+  ...props
 }: KanbanColumnProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id,
-    data: {
-      type: 'Column',
-      status: id,
-    },
-  });
+  const columnValue = value || id;
 
   return (
-    <div
-      ref={setNodeRef}
+    <ReuiKanbanColumn
+      value={columnValue}
       className={cn(
-        'flex flex-col flex-1 min-w-67.5 max-w-85 rounded-xl border border-border/80 bg-muted/30 p-3 transition-colors duration-200',
-        isOver && 'border-primary/60 bg-primary/5 ring-1 ring-primary/20'
+        'flex flex-col flex-1 min-w-72 max-w-85 rounded-xl border border-border/80 bg-muted/30 p-3 transition-colors duration-200 select-none',
+        className
       )}
+      {...props}
     >
       {/* Column Header */}
       <div className="flex items-center justify-between pb-3 px-1">
@@ -71,36 +74,55 @@ export function KanbanColumn({
           )}
         </div>
 
-        {onAddTask && isCoordinatorOrAdmin && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onAddTask(id)}
-            className="size-6 text-muted-foreground hover:text-foreground"
-            title={`Tambah task di ${title}`}
-          >
-            <Plus className="size-3.5" />
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {onAddTask && isCoordinatorOrAdmin && !isOverlay && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onAddTask(columnValue)}
+              className="size-6 text-muted-foreground hover:text-foreground"
+              title={`Tambah task di ${title}`}
+            >
+              <Plus className="size-3.5" />
+            </Button>
+          )}
+
+          {!isOverlay && (
+            <KanbanColumnHandle asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="size-6 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+                title="Tarik untuk memindahkan kolom"
+              >
+                <GripVertical className="size-3.5" />
+              </Button>
+            </KanbanColumnHandle>
+          )}
+        </div>
       </div>
 
       {/* Cards List / Drop Area */}
-      <div className="flex-1 overflow-y-auto space-y-2.5 min-h-64 pr-0.5">
-        <SortableContext
-          items={tasks.map((t) => t.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {tasks.map((task) => (
-            <KanbanCard key={task.id} task={task} onClick={onCardClick} />
-          ))}
-        </SortableContext>
+      <KanbanColumnContent
+        value={columnValue}
+        className="flex-1 overflow-y-auto space-y-2.5 min-h-64 pr-0.5"
+      >
+        {tasks.map((task) => (
+          <KanbanCard
+            key={task.id}
+            task={task}
+            onClick={onCardClick}
+            asHandle={!isOverlay}
+            isOverlay={isOverlay}
+          />
+        ))}
 
         {tasks.length === 0 && (
           <div className="flex h-36 flex-col items-center justify-center rounded-lg border border-dashed border-border/70 p-4 text-center text-3xs text-muted-foreground/70">
             <span>Tidak ada task</span>
           </div>
         )}
-      </div>
-    </div>
+      </KanbanColumnContent>
+    </ReuiKanbanColumn>
   );
 }
