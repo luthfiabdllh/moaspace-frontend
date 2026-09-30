@@ -2,19 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, User, Settings } from 'lucide-react';
+import { LayoutDashboard, User, Settings, Users } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
+import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { cn } from '@/lib/utils';
-
-const navItems = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { key: 'profile', label: 'Profile', icon: User, href: '/profile' },
-  { key: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
-];
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const { isSidebarOpen } = useUIStore();
+  const { data: user } = useCurrentUser();
+
+  const navItems = [
+    { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    ...(user?.isSuperAdmin
+      ? [{ key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' }]
+      : []),
+    { key: 'profile', label: 'Profile', icon: User, href: '/profile' },
+    { key: 'settings', label: 'Settings', icon: Settings, href: '/settings' },
+  ];
 
   return (
     <aside
