@@ -3,12 +3,14 @@ import { jwtVerify, type JWTPayload } from 'jose';
 import { cookies } from 'next/headers';
 
 const secret = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? 'dev-secret-key-change-in-production-32c'
+  process.env.JWT_SECRET ?? 'your-secret-key-change-me-in-production-min-32-chars'
 );
 
 export interface SessionPayload extends JWTPayload {
   userId: string;
   email: string;
+  name?: string;
+  isSuperAdmin?: boolean;
   role?: string;
 }
 
@@ -17,18 +19,6 @@ export interface SessionPayload extends JWTPayload {
  *
  * Call this from Server Components and Route Handlers.
  * NEVER call from proxy.ts (use cookie existence check there instead).
- *
- * Returns the decoded payload on success, or null if the token is:
- * - Missing
- * - Expired
- * - Has an invalid signature
- *
- * @example
- * ```tsx
- * // In a Server Component or layout:
- * const session = await verifySession();
- * if (!session) redirect('/login');
- * ```
  */
 export async function verifySession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();

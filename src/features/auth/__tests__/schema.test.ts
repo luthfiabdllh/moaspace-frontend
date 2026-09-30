@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { loginSchema } from '@/features/auth/types';
+import {
+  loginSchema,
+  activateSchema,
+  resetPasswordSchema,
+} from '@/features/auth/types';
 
 describe('loginSchema (Zod v4)', () => {
   describe('valid inputs', () => {
@@ -97,6 +101,47 @@ describe('loginSchema (Zod v4)', () => {
         i.path.includes('password')
       );
       expect(passIssue?.message).toBe('Password must be at least 8 characters.');
+    });
+  });
+
+  describe('activateSchema', () => {
+    it('accepts valid token and matching passwords', () => {
+      const res = activateSchema.safeParse({
+        token: 'valid-token-123',
+        password: 'Password123!',
+        confirmPassword: 'Password123!',
+      });
+      expect(res.success).toBe(true);
+    });
+
+    it('rejects mismatched passwords', () => {
+      const res = activateSchema.safeParse({
+        token: 'valid-token-123',
+        password: 'Password123!',
+        confirmPassword: 'MismatchPassword!',
+      });
+      expect(res.success).toBe(false);
+      expect(res.error?.issues[0].message).toBe('Konfirmasi kata sandi tidak cocok.');
+    });
+  });
+
+  describe('resetPasswordSchema', () => {
+    it('accepts valid reset payload', () => {
+      const res = resetPasswordSchema.safeParse({
+        token: 'reset-token-456',
+        password: 'NewPassword123!',
+        confirmPassword: 'NewPassword123!',
+      });
+      expect(res.success).toBe(true);
+    });
+
+    it('rejects mismatched passwords', () => {
+      const res = resetPasswordSchema.safeParse({
+        token: 'reset-token-456',
+        password: 'NewPassword123!',
+        confirmPassword: 'DifferentPassword!',
+      });
+      expect(res.success).toBe(false);
     });
   });
 });

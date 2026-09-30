@@ -2,7 +2,7 @@ import 'server-only';
 import { cookies } from 'next/headers';
 import type { User } from '../types';
 
-const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:8000';
+const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 
 /**
  * Fetches the current user from the backend.
