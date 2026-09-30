@@ -1,0 +1,10 @@
+{
+  "*.{ts,tsx}": [
+    "eslint --fix",
+    "bash -c 'tsc --noEmit'"
+  ],
+  "*.{js,mjs,cjs}": [
+    "eslint --fix"
+  ],
+  "*.{json,md,mdx,css}": []
+}
