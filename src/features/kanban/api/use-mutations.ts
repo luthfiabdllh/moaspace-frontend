@@ -75,12 +75,17 @@ export const useMoveTask = (divisionId?: string) => {
         queryClient.setQueryData(context.queryKey, context.previousBoard);
       }
 
+      if (isAxiosError(error) && error.response?.data?.error === 'OVERCAPACITY_WARNING') {
+        return; // Handled by Overcapacity Dialog in kanban-board
+      }
+
       let msg = 'Gagal memindahkan kartu task.';
       if (isAxiosError(error) && error.response?.data?.message) {
         msg = error.response.data.message;
       }
       toast.error(msg, { duration: 4000 });
     },
+
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
       queryClient.invalidateQueries({ queryKey: taskKeys.all });

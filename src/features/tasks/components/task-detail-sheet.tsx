@@ -1,6 +1,4 @@
-'use client';
-
-import { useState } from 'react';
+import * as React from 'react';
 import {
   CheckSquare,
   Clock,
@@ -14,10 +12,18 @@ import {
   AlertCircle,
   Loader2,
   ShieldAlert,
+  Zap,
+  Lock,
+  Edit2,
 } from 'lucide-react';
+import { isAxiosError } from 'axios';
 import { useTask } from '../api/use-queries';
 import { useUpdateTask, useDeleteTask } from '../api/use-mutations';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useDivision } from '@/features/divisions/api/use-queries';
+import { useDivisionCapacities } from '@/features/capacity/api/use-queries';
+import { OvercapacityDialog } from '@/features/capacity/components/overcapacity-dialog';
+import type { OvercapacityWarningData } from '@/features/capacity/types';
 import {
   Sheet,
   SheetContent,
@@ -28,7 +34,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { TaskStatus, TaskPriority } from '../types';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { STORY_POINTS_SCALE, type TaskStatus, type TaskPriority, type UpdateTaskDTO } from '../types';
 
 interface TaskDetailSheetProps {
   taskId: string | null;
@@ -63,42 +71,90 @@ export function TaskDetailSheet({
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();
 
-  const [isEditingBlocker, setIsEditingBlocker] = useState(false);
-  const [blockerReasonInput, setBlockerReasonInput] = useState('');
+  const { data: division } = useDivision(task?.divisionId || '', Boolean(task?.divisionId));
+  const { data: memberCapacities = [] } = useDivisionCapacities(task?.divisionId, undefined);
+  const members = division?.members ?? [];
+
+  const [isEditingBlocker, setIsEditingBlocker] = React.useState(false);
+  const [blockerReasonInput, setBlockerReasonInput] = React.useState('');
+
+  // SP Editing State
+  const [isEditingSp, setIsEditingSp] = React.useState(false);
+  const [targetSp, setTargetSp] = React.useState<number>(1);
+  const [spReasonInput, setSpReasonInput] = React.useState('');
+
+  // Overcapacity modal state
+  const [overcapacityData, setOvercapacityData] = React.useState<OvercapacityWarningData | null>(null);
+  const [pendingUpdate, setPendingUpdate] = React.useState<UpdateTaskDTO | null>(null);
+  const [isOvercapacityOpen, setIsOvercapacityOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (task) {
+      setTargetSp(task.storyPoints ?? 1);
+      setSpReasonInput('');
+      setIsEditingSp(false);
+    }
+  }, [task]);
 
   if (!open || !taskId) return null;
 
-  const handleStatusChange = async (newStatus: TaskStatus) => {
+  const executeUpdate = async (dto: UpdateTaskDTO) => {
     if (!task) return;
-    await updateMutation.mutateAsync({
-      id: task.id,
-      dto: { status: newStatus },
+    try {
+      await updateMutation.mutateAsync({
+        id: task.id,
+        dto,
+      });
+      setIsOvercapacityOpen(false);
+      setOvercapacityData(null);
+      setPendingUpdate(null);
+    } catch (err: any) {
+      if (isAxiosError(err) && err.response?.status === 409 && err.response?.data?.error === 'OVERCAPACITY_WARNING') {
+        setPendingUpdate(dto);
+        setOvercapacityData(err.response.data.data);
+        setIsOvercapacityOpen(true);
+      }
+    }
+  };
+
+  const handleStatusChange = async (newStatus: TaskStatus) => {
+    await executeUpdate({ status: newStatus });
+  };
+
+  const handleAssigneeChange = async (newAssigneeId: string) => {
+    const val = newAssigneeId === 'NONE' ? null : newAssigneeId;
+    await executeUpdate({ assigneeId: val });
+  };
+
+  const handleSaveSp = async () => {
+    if (!task) return;
+    const isLocked = Boolean(task.spLockedAt || ['IN_PROGRESS', 'REVIEW', 'DONE'].includes(task.status));
+    if (isLocked && !spReasonInput.trim()) {
+      alert('Alasan perubahan Story Point wajib diisi.');
+      return;
+    }
+    await executeUpdate({
+      storyPoints: targetSp,
+      spReason: isLocked ? spReasonInput.trim() : undefined,
     });
+    setIsEditingSp(false);
   };
 
   const handleToggleBlocker = async () => {
     if (!task) return;
     if (task.isBlocked) {
-      // unblock
-      await updateMutation.mutateAsync({
-        id: task.id,
-        dto: { isBlocked: false, blockedReason: null },
-      });
+      await executeUpdate({ isBlocked: false, blockedReason: null });
       setIsEditingBlocker(false);
     } else {
-      // show input to block
       setIsEditingBlocker(true);
     }
   };
 
   const handleConfirmBlock = async () => {
     if (!task || !blockerReasonInput.trim()) return;
-    await updateMutation.mutateAsync({
-      id: task.id,
-      dto: {
-        isBlocked: true,
-        blockedReason: blockerReasonInput.trim(),
-      },
+    await executeUpdate({
+      isBlocked: true,
+      blockedReason: blockerReasonInput.trim(),
     });
     setIsEditingBlocker(false);
     setBlockerReasonInput('');
@@ -112,265 +168,452 @@ export function TaskDetailSheet({
     }
   };
 
+  const isSpLocked = Boolean(task?.spLockedAt || (task && ['IN_PROGRESS', 'REVIEW', 'DONE'].includes(task.status)));
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="overflow-y-auto sm:max-w-lg p-6 space-y-6">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 space-y-3">
-            <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-xs text-muted-foreground">Memuat detail task & log aktivitas...</p>
-          </div>
-        ) : error || !task ? (
-          <div className="p-6 text-center rounded-xl border border-destructive/20 bg-destructive/5 space-y-2">
-            <AlertCircle className="size-8 text-destructive mx-auto" />
-            <p className="text-sm font-semibold text-destructive">Gagal memuat task.</p>
-            <p className="text-xs text-muted-foreground">Task mungkin telah dihapus atau Anda tidak memiliki akses.</p>
-          </div>
-        ) : (
-          <>
-            {/* Header & Badges */}
-            <SheetHeader className="space-y-3 text-left">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
-                    className={`font-semibold text-2xs ${statusColors[task.status].bg} ${statusColors[task.status].text}`}
-                  >
-                    {statusColors[task.status].label}
-                  </Badge>
-
-                  <Badge
-                    variant="outline"
-                    className={`text-2xs ${priorityColors[task.priority].bg} ${priorityColors[task.priority].text}`}
-                  >
-                    <Flag className="size-3 mr-1" />
-                    {priorityColors[task.priority].label}
-                  </Badge>
-
-                  {task.revisionCount > 0 && (
-                    <Badge variant="secondary" className="text-2xs text-amber-600 bg-amber-50">
-                      Revisi: {task.revisionCount}x
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="right" className="overflow-y-auto sm:max-w-lg p-6 space-y-6">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-3">
+              <Loader2 className="size-8 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground">Memuat detail task & log aktivitas...</p>
+            </div>
+          ) : error || !task ? (
+            <div className="p-6 text-center rounded-xl border border-destructive/20 bg-destructive/5 space-y-2">
+              <AlertCircle className="size-8 text-destructive mx-auto" />
+              <p className="text-sm font-semibold text-destructive">Gagal memuat task.</p>
+              <p className="text-xs text-muted-foreground">Task mungkin telah dihapus atau Anda tidak memiliki akses.</p>
+            </div>
+          ) : (
+            <>
+              {/* Header & Badges */}
+              <SheetHeader className="space-y-3 text-left">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`font-semibold text-2xs ${statusColors[task.status].bg} ${statusColors[task.status].text}`}
+                    >
+                      {statusColors[task.status].label}
                     </Badge>
+
+                    <Badge
+                      variant="outline"
+                      className={`text-2xs ${priorityColors[task.priority].bg} ${priorityColors[task.priority].text}`}
+                    >
+                      <Flag className="size-3 mr-1" />
+                      {priorityColors[task.priority].label}
+                    </Badge>
+
+                    {task.storyPoints !== null && task.storyPoints !== undefined && (
+                      <Badge
+                        variant="secondary"
+                        className="text-2xs font-mono font-bold bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300 border border-violet-200"
+                      >
+                        {task.storyPoints} SP
+                        {isSpLocked && <Lock className="size-2.5 ml-1 text-violet-500" />}
+                      </Badge>
+                    )}
+
+                    {task.revisionCount > 0 && (
+                      <Badge variant="secondary" className="text-2xs text-amber-600 bg-amber-50">
+                        Revisi: {task.revisionCount}x
+                      </Badge>
+                    )}
+                  </div>
+
+                  {isCoordinatorOrAdmin && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDelete}
+                      disabled={deleteMutation.isPending}
+                      className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Hapus
+                    </Button>
                   )}
                 </div>
 
-                {isCoordinatorOrAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={deleteMutation.isPending}
-                    className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Hapus
-                  </Button>
-                )}
-              </div>
+                <SheetTitle className="text-xl font-bold leading-snug">
+                  {task.title}
+                </SheetTitle>
 
-              <SheetTitle className="text-xl font-bold leading-snug">
-                {task.title}
-              </SheetTitle>
+                <SheetDescription className="text-xs text-muted-foreground">
+                  Bagian dari story:{' '}
+                  <span className="font-semibold text-foreground">{task.storyTitle || 'Story'}</span>
+                  {task.divisionName && ` • Divisi ${task.divisionName}`}
+                </SheetDescription>
+              </SheetHeader>
 
-              <SheetDescription className="text-xs text-muted-foreground">
-                Bagian dari story:{' '}
-                <span className="font-semibold text-foreground">{task.storyTitle || 'Story'}</span>
-                {task.divisionName && ` • Divisi ${task.divisionName}`}
-              </SheetDescription>
-            </SheetHeader>
-
-            {/* Blocker Alert if active */}
-            {task.isBlocked && (
-              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold text-xs">
-                    <ShieldAlert className="size-4 shrink-0" />
-                    Task Terkendala (Blocked)
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={handleToggleBlocker}
-                    disabled={updateMutation.isPending}
-                    className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-100"
-                  >
-                    Lepas Kendala
-                  </Button>
-                </div>
-                <p className="text-xs text-rose-700 dark:text-rose-300 pl-6">
-                  {task.blockedReason || 'Tidak ada alasan kendala tercatat.'}
-                </p>
-              </div>
-            )}
-
-            {/* Toggle Blocker Form */}
-            {!task.isBlocked && isEditingBlocker && (
-              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
-                <p className="text-xs font-semibold text-amber-700">Tandai Hambatan / Kendala:</p>
-                <Input
-                  value={blockerReasonInput}
-                  onChange={(e) => setBlockerReasonInput(e.target.value)}
-                  placeholder="Jelaskan alasan blocker (cth: menunggu approval anggaran)..."
-                  className="text-xs bg-background"
-                />
-                <div className="flex justify-end gap-2 pt-1">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setIsEditingBlocker(false)}
-                    className="h-7 text-xs"
-                  >
-                    Batal
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={handleConfirmBlock}
-                    disabled={!blockerReasonInput.trim() || updateMutation.isPending}
-                    className="h-7 text-xs"
-                  >
-                    Pasang Blocker
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Description */}
-            <div className="space-y-1.5">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Deskripsi
-              </h4>
-              <div className="rounded-lg border bg-muted/20 p-3 text-xs leading-relaxed text-foreground min-h-16 whitespace-pre-wrap">
-                {task.description || (
-                  <span className="italic text-muted-foreground">Tidak ada deskripsi.</span>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Status Bar */}
-            <div className="space-y-2 rounded-xl border p-3.5 bg-card">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-foreground">Ubah Status Alur Kerja:</span>
-                {!task.isBlocked && !isEditingBlocker && (
-                  <button
-                    onClick={handleToggleBlocker}
-                    className="text-2xs text-rose-600 hover:underline flex items-center gap-1 font-medium"
-                  >
-                    <AlertTriangle className="size-3" />
-                    Tandai Blocker
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-5 gap-1.5 pt-1">
-                {(['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as TaskStatus[]).map((s) => {
-                  const isCurrent = task.status === s;
-                  return (
+              {/* Blocker Alert if active */}
+              {task.isBlocked && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold text-xs">
+                      <ShieldAlert className="size-4 shrink-0" />
+                      Task Terkendala (Blocked)
+                    </div>
                     <Button
-                      key={s}
-                      type="button"
                       size="sm"
-                      variant={isCurrent ? 'default' : 'outline'}
-                      onClick={() => handleStatusChange(s)}
-                      disabled={updateMutation.isPending || isCurrent}
-                      className={`h-7 px-1 text-2xs truncate ${
-                        isCurrent ? 'font-bold' : 'text-muted-foreground'
-                      }`}
+                      variant="outline"
+                      onClick={handleToggleBlocker}
+                      disabled={updateMutation.isPending}
+                      className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-100"
                     >
-                      {statusColors[s].label}
+                      Lepas Kendala
                     </Button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Key Information Grid */}
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-lg border bg-card space-y-1">
-                <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
-                  <User className="size-3 text-primary" />
-                  Assignee
-                </span>
-                <p className="font-semibold text-foreground truncate">
-                  {task.assigneeName || 'Belum ditugaskan'}
-                </p>
-                {task.assigneeEmail && (
-                  <p className="text-2xs text-muted-foreground truncate">{task.assigneeEmail}</p>
-                )}
-              </div>
-
-              <div className="p-3 rounded-lg border bg-card space-y-1">
-                <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
-                  <Calendar className="size-3 text-primary" />
-                  Tenggat Waktu
-                </span>
-                <p className="font-semibold text-foreground">
-                  {task.dueDate
-                    ? new Date(task.dueDate).toLocaleDateString('id-ID', { dateStyle: 'medium' })
-                    : 'Tidak ada tenggat'}
-                </p>
-                {task.completedAt && (
-                  <p className="text-2xs text-emerald-600 dark:text-emerald-400">
-                    Selesai: {new Date(task.completedAt).toLocaleDateString('id-ID')}
+                  </div>
+                  <p className="text-xs text-rose-700 dark:text-rose-300 pl-6">
+                    {task.blockedReason || 'Tidak ada alasan kendala tercatat.'}
                   </p>
-                )}
-              </div>
-            </div>
+                </div>
+              )}
 
-            {/* Activity Logs (Audit Trail Timeline) */}
-            <div className="space-y-3 pt-2 border-t">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <History className="size-3.5 text-primary" />
-                  Riwayat Aktivitas & Audit ({task.activityLogs?.length ?? 0})
+              {/* Toggle Blocker Form */}
+              {!task.isBlocked && isEditingBlocker && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-xs font-semibold text-amber-700">Tandai Hambatan / Kendala:</p>
+                  <Input
+                    value={blockerReasonInput}
+                    onChange={(e) => setBlockerReasonInput(e.target.value)}
+                    placeholder="Jelaskan alasan blocker (cth: menunggu approval anggaran)..."
+                    className="text-xs bg-background"
+                  />
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setIsEditingBlocker(false)}
+                      className="h-7 text-xs"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={handleConfirmBlock}
+                      disabled={!blockerReasonInput.trim() || updateMutation.isPending}
+                      className="h-7 text-xs"
+                    >
+                      Pasang Blocker
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Deskripsi
                 </h4>
+                <div className="rounded-lg border bg-muted/20 p-3 text-xs leading-relaxed text-foreground min-h-16 whitespace-pre-wrap">
+                  {task.description || (
+                    <span className="italic text-muted-foreground">Tidak ada deskripsi.</span>
+                  )}
+                </div>
               </div>
 
-              {task.activityLogs && task.activityLogs.length > 0 ? (
-                <div className="relative pl-4 space-y-3 border-l-2 border-border/80">
-                  {task.activityLogs.map((log) => {
-                    const dateStr = new Date(log.createdAt).toLocaleString('id-ID', {
-                      dateStyle: 'short',
-                      timeStyle: 'short',
-                    });
-
+              {/* Quick Status Bar */}
+              <div className="space-y-2 rounded-xl border p-3.5 bg-card">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-foreground">Ubah Status Alur Kerja:</span>
+                  {!task.isBlocked && !isEditingBlocker && (
+                    <button
+                      onClick={handleToggleBlocker}
+                      className="text-2xs text-rose-600 hover:underline flex items-center gap-1 font-medium"
+                    >
+                      <AlertTriangle className="size-3" />
+                      Tandai Blocker
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-5 gap-1.5 pt-1">
+                  {(['BACKLOG', 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'] as TaskStatus[]).map((s) => {
+                    const isCurrent = task.status === s;
                     return (
-                      <div key={log.id} className="relative group text-xs space-y-0.5">
-                        {/* Dot indicator */}
-                        <div className="absolute -left-5.25 top-1.5 size-2 rounded-full bg-primary ring-4 ring-background" />
-
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-semibold text-foreground">
-                            {log.action.replace(/_/g, ' ')}
-                          </span>
-                          <span className="text-2xs text-muted-foreground">{dateStr}</span>
-                        </div>
-
-                        <p className="text-2xs text-muted-foreground">
-                          Oleh:{' '}
-                          <span className="font-medium text-foreground">
-                            {log.actorName || log.actorEmail || 'Sistem'}
-                          </span>
-                        </p>
-
-                        {/* Details diff if status changed */}
-                        {log.action === 'TASK_STATUS_CHANGED' && log.before && log.after && (
-                          <div className="mt-1 text-2xs px-2 py-1 rounded bg-muted/60 text-muted-foreground font-mono">
-                            {log.before.status} → {log.after.status}
-                          </div>
-                        )}
-                      </div>
+                      <Button
+                        key={s}
+                        type="button"
+                        size="sm"
+                        variant={isCurrent ? 'default' : 'outline'}
+                        onClick={() => handleStatusChange(s)}
+                        disabled={updateMutation.isPending || isCurrent}
+                        className={`h-7 px-1 text-2xs truncate ${
+                          isCurrent ? 'font-bold' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {statusColors[s].label}
+                      </Button>
                     );
                   })}
                 </div>
-              ) : (
-                <p className="text-2xs text-muted-foreground italic">
-                  Belum ada catatan aktivitas tambahan untuk task ini.
-                </p>
+              </div>
+
+              {/* Story Point & Lock Section */}
+              <div className="rounded-xl border p-3.5 bg-card space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold">
+                    <Zap className="size-4 text-violet-500" />
+                    <span>Story Point (Estimasi Beban Kerja)</span>
+                  </div>
+                  {isSpLocked ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                      <Lock className="size-3" />
+                      Terkunci Sejak In Progress
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-muted-foreground">Belum Dikunci</span>
+                  )}
+                </div>
+
+                {!isEditingSp ? (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold font-mono text-violet-600 dark:text-violet-400">
+                        {task.storyPoints ?? '–'} SP
+                      </span>
+                      {task.storyPoints && (
+                        <span className="text-xs text-muted-foreground">
+                          ({task.storyPoints <= 2 ? 'Ringan' : task.storyPoints <= 5 ? 'Sedang' : 'Kompleks'})
+                        </span>
+                      )}
+                    </div>
+
+                    {(isCoordinatorOrAdmin || !isSpLocked) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setTargetSp(task.storyPoints ?? 1);
+                          setIsEditingSp(true);
+                        }}
+                        className="h-7 text-xs gap-1"
+                      >
+                        <Edit2 className="size-3" />
+                        {isSpLocked ? 'Ubah SP (Koordinator)' : 'Atur SP'}
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Pilih Skala Story Point:</Label>
+                      <div className="flex items-center gap-1.5">
+                        {STORY_POINTS_SCALE.map((sp) => (
+                          <button
+                            key={sp}
+                            type="button"
+                            onClick={() => setTargetSp(sp)}
+                            className={cn(
+                              'flex-1 py-1 rounded text-xs font-mono font-bold border transition-colors',
+                              targetSp === sp
+                                ? 'bg-violet-600 text-white border-violet-600'
+                                : 'bg-background hover:bg-muted text-muted-foreground'
+                            )}
+                          >
+                            {sp} SP
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {isSpLocked && (
+                      <div className="space-y-1">
+                        <Label htmlFor="spReason" className="text-xs font-medium text-destructive">
+                          Alasan Perubahan SP (Wajib karena sudah terkunci) *
+                        </Label>
+                        <Input
+                          id="spReason"
+                          value={spReasonInput}
+                          onChange={(e) => setSpReasonInput(e.target.value)}
+                          placeholder="Contoh: Klien menambah spesifikasi deliverable..."
+                          className="text-xs"
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setIsEditingSp(false)}
+                        className="h-7 text-xs"
+                      >
+                        Batal
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveSp}
+                        disabled={updateMutation.isPending || (isSpLocked && !spReasonInput.trim())}
+                        className="h-7 text-xs"
+                      >
+                        {updateMutation.isPending ? 'Menyimpan...' : 'Simpan SP'}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Key Information Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                {/* Assignee Card with picker for coordinator/admin */}
+                <div className="p-3 rounded-lg border bg-card space-y-1.5">
+                  <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
+                    <User className="size-3 text-primary" />
+                    Assignee
+                  </span>
+                  {isCoordinatorOrAdmin ? (
+                    <select
+                      value={task.assigneeId || 'NONE'}
+                      onChange={(e) => handleAssigneeChange(e.target.value)}
+                      disabled={updateMutation.isPending}
+                      className="w-full h-8 rounded border border-input bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary truncate"
+                    >
+                      <option value="NONE">-- Belum Ditugaskan --</option>
+                      {members.map((m) => {
+                        const cap = memberCapacities.find((c) => c.userId === m.id);
+                        const utilText = cap ? ` [${cap.utilizationPercentage}%]` : '';
+                        return (
+                          <option key={m.id} value={m.id}>
+                            {m.name} ({m.role}){utilText}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  ) : (
+                    <div>
+                      <p className="font-semibold text-foreground truncate">
+                        {task.assigneeName || 'Belum ditugaskan'}
+                      </p>
+                      {task.assigneeEmail && (
+                        <p className="text-2xs text-muted-foreground truncate">{task.assigneeEmail}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 rounded-lg border bg-card space-y-1">
+                  <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
+                    <Calendar className="size-3 text-primary" />
+                    Tenggat Waktu
+                  </span>
+                  <p className="font-semibold text-foreground">
+                    {task.dueDate
+                      ? new Date(task.dueDate).toLocaleDateString('id-ID', { dateStyle: 'medium' })
+                      : 'Tidak ada tenggat'}
+                  </p>
+                  {task.completedAt && (
+                    <p className="text-2xs text-emerald-600 dark:text-emerald-400">
+                      Selesai: {new Date(task.completedAt).toLocaleDateString('id-ID')}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Riwayat Perubahan Story Point jika ada */}
+              {task.spLogs && task.spLogs.length > 0 && (
+                <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20 text-xs">
+                  <h4 className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Zap className="size-3.5 text-violet-500" />
+                    Log Perubahan Story Point ({task.spLogs.length})
+                  </h4>
+                  <div className="space-y-2 pt-1 divide-y divide-border/60">
+                    {task.spLogs.map((log) => (
+                      <div key={log.id} className="pt-2 first:pt-0 space-y-0.5">
+                        <div className="flex items-center justify-between text-2xs">
+                          <span className="font-mono font-bold text-violet-700 dark:text-violet-300">
+                            {log.oldSp ?? 0} SP → {log.newSp} SP
+                          </span>
+                          <span className="text-muted-foreground">
+                            {new Date(log.createdAt).toLocaleDateString('id-ID')}
+                          </span>
+                        </div>
+                        <p className="text-2xs italic text-foreground">"{log.reason}"</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Oleh: {log.changedByName || 'Koordinator'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
-          </>
-        )}
-      </SheetContent>
-    </Sheet>
+
+              {/* Activity Logs (Audit Trail Timeline) */}
+              <div className="space-y-3 pt-2 border-t">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                    <History className="size-3.5 text-primary" />
+                    Riwayat Aktivitas & Audit ({task.activityLogs?.length ?? 0})
+                  </h4>
+                </div>
+
+                {task.activityLogs && task.activityLogs.length > 0 ? (
+                  <div className="relative pl-4 space-y-3 border-l-2 border-border/80">
+                    {task.activityLogs.map((log) => {
+                      const dateStr = new Date(log.createdAt).toLocaleString('id-ID', {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      });
+
+                      return (
+                        <div key={log.id} className="relative group text-xs space-y-0.5">
+                          <div className="absolute -left-5.25 top-1.5 size-2 rounded-full bg-primary ring-4 ring-background" />
+
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-foreground">
+                              {log.action.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-2xs text-muted-foreground">{dateStr}</span>
+                          </div>
+
+                          <p className="text-2xs text-muted-foreground">
+                            Oleh:{' '}
+                            <span className="font-medium text-foreground">
+                              {log.actorName || log.actorEmail || 'Sistem'}
+                            </span>
+                          </p>
+
+                          {log.action === 'TASK_STATUS_CHANGED' && log.before && log.after && (
+                            <div className="mt-1 text-2xs px-2 py-1 rounded bg-muted/60 text-muted-foreground font-mono">
+                              {log.before.status} → {log.after.status}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-2xs text-muted-foreground italic">
+                    Belum ada catatan aktivitas tambahan untuk task ini.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <OvercapacityDialog
+        open={isOvercapacityOpen}
+        onOpenChange={setIsOvercapacityOpen}
+        data={overcapacityData}
+        onConfirmOverride={async () => {
+          if (!pendingUpdate) return;
+          await executeUpdate({
+            ...pendingUpdate,
+            override: true,
+          });
+        }}
+        onCancel={() => {
+          setIsOvercapacityOpen(false);
+          setOvercapacityData(null);
+        }}
+        isLoading={updateMutation.isPending}
+      />
+    </>
   );
 }
+

@@ -11,13 +11,16 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
+import { isAxiosError } from 'axios';
 import type { TaskItem, TaskStatus } from '@/features/tasks/types';
-import type { BoardColumns, SwimlaneMode } from '../types';
+import type { BoardColumns, MoveTaskDTO, SwimlaneMode } from '../types';
 import { useMoveTask } from '../api/use-mutations';
 import { KanbanColumn } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
+import { OvercapacityDialog } from '@/features/capacity/components/overcapacity-dialog';
+import type { OvercapacityWarningData } from '@/features/capacity/types';
 import { Badge } from '@/components/ui/badge';
 import { Bookmark, User, Target } from 'lucide-react';
 
@@ -47,7 +50,13 @@ export function KanbanBoard({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus | null>(null);
 
+  // Overcapacity dialog state for moves
+  const [overcapacityData, setOvercapacityData] = useState<OvercapacityWarningData | null>(null);
+  const [pendingMove, setPendingMove] = useState<{ id: string; dto: MoveTaskDTO } | null>(null);
+  const [isOvercapacityOpen, setIsOvercapacityOpen] = useState(false);
+
   const moveMutation = useMoveTask(divisionId);
+
 
   // Sync board with query data
   useEffect(() => {
@@ -137,8 +146,34 @@ export function KanbanBoard({
           position,
         },
       });
+    } catch (err: any) {
+      if (
+        isAxiosError(err) &&
+        err.response?.status === 409 &&
+        err.response?.data?.error === 'OVERCAPACITY_WARNING'
+      ) {
+        setPendingMove({ id: activeId, dto: { status: targetCol, position } });
+        setOvercapacityData(err.response.data.data);
+        setIsOvercapacityOpen(true);
+      }
+    }
+  };
+
+  const handleConfirmMoveOverride = async () => {
+    if (!pendingMove) return;
+    try {
+      await moveMutation.mutateAsync({
+        id: pendingMove.id,
+        dto: {
+          ...pendingMove.dto,
+          override: true,
+        },
+      });
+      setIsOvercapacityOpen(false);
+      setPendingMove(null);
+      setOvercapacityData(null);
     } catch {
-      // Handled in mutation onError (toast and rollback)
+      // Handled in mutation
     }
   };
 
@@ -317,6 +352,21 @@ export function KanbanBoard({
           divisionId={divisionId}
         />
       )}
+
+      {/* Overcapacity Warning Dialog for Drag & Drop */}
+      <OvercapacityDialog
+        open={isOvercapacityOpen}
+        onOpenChange={setIsOvercapacityOpen}
+        data={overcapacityData}
+        onConfirmOverride={handleConfirmMoveOverride}
+        onCancel={() => {
+          setIsOvercapacityOpen(false);
+          setPendingMove(null);
+          setOvercapacityData(null);
+        }}
+        isLoading={moveMutation.isPending}
+      />
     </DndContext>
   );
 }
+

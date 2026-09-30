@@ -22,8 +22,10 @@ export type SwimlaneMode = 'NONE' | 'EPIC' | 'STORY' | 'ASSIGNEE';
 export const moveTaskSchema = z.object({
   status: kanbanColumnEnum,
   position: z.string().min(1, { error: 'Posisi tidak boleh kosong.' }),
+  override: z.boolean().optional(),
 });
 export type MoveTaskDTO = z.infer<typeof moveTaskSchema>;
+
 
 export const blockTaskSchema = z.object({
   reason: z

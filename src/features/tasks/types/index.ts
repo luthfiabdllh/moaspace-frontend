@@ -26,6 +26,20 @@ export const taskActivityLogSchema = z.object({
 });
 export type TaskActivityLog = z.infer<typeof taskActivityLogSchema>;
 
+export const STORY_POINTS_SCALE = [1, 2, 3, 5, 8] as const;
+export type StoryPointValue = (typeof STORY_POINTS_SCALE)[number];
+
+export const taskSpLogSchema = z.object({
+  id: z.string(),
+  oldSp: z.number().nullable().optional(),
+  newSp: z.number(),
+  reason: z.string(),
+  changedById: z.string(),
+  changedByName: z.string().nullable().optional(),
+  createdAt: z.string(),
+});
+export type TaskSpLog = z.infer<typeof taskSpLogSchema>;
+
 export const taskItemSchema = z.object({
   id: z.string(),
   storyId: z.string(),
@@ -38,6 +52,8 @@ export const taskItemSchema = z.object({
   description: z.string().nullable().optional(),
   status: taskStatusEnum,
   priority: taskPriorityEnum,
+  storyPoints: z.number().nullable().optional(),
+  spLockedAt: z.string().nullable().optional(),
   dueDate: z.string().nullable().optional(),
   position: z.string().optional(),
   isBlocked: z.boolean().default(false),
@@ -55,6 +71,7 @@ export type TaskItem = z.infer<typeof taskItemSchema>;
 
 export const taskDetailSchema = taskItemSchema.extend({
   activityLogs: z.array(taskActivityLogSchema).default([]),
+  spLogs: z.array(taskSpLogSchema).default([]),
 });
 export type TaskDetailItem = z.infer<typeof taskDetailSchema>;
 
@@ -69,6 +86,8 @@ export const createTaskSchema = z.object({
   assigneeId: z.string().optional(),
   status: taskStatusEnum.optional(),
   priority: taskPriorityEnum.optional(),
+  storyPoints: z.number().optional(),
+  override: z.boolean().optional(),
   dueDate: z.string().optional(),
   isBlocked: z.boolean().optional(),
   blockedReason: z.string().optional(),
@@ -81,9 +100,13 @@ export const updateTaskSchema = z.object({
   assigneeId: z.string().nullable().optional(),
   status: taskStatusEnum.optional(),
   priority: taskPriorityEnum.optional(),
+  storyPoints: z.number().nullable().optional(),
+  spReason: z.string().optional(),
+  override: z.boolean().optional(),
   dueDate: z.string().nullable().optional(),
   position: z.string().optional(),
   isBlocked: z.boolean().optional(),
   blockedReason: z.string().nullable().optional(),
 });
 export type UpdateTaskDTO = z.infer<typeof updateTaskSchema>;
+

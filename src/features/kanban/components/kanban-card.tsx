@@ -11,7 +11,9 @@ import {
   Target,
   Bookmark,
   GripVertical,
+  Lock,
 } from 'lucide-react';
+
 import type { TaskItem, TaskPriority } from '@/features/tasks/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -114,12 +116,23 @@ export function KanbanCard({
                 {priorityColors[task.priority].label}
               </Badge>
 
+              {task.storyPoints !== null && task.storyPoints !== undefined && (
+                <span
+                  title={`Story Point: ${task.storyPoints}${task.spLockedAt ? ' (Terkunci)' : ''}`}
+                  className="inline-flex items-center gap-0.5 text-3xs font-mono font-bold px-1.5 py-0.5 rounded bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60"
+                >
+                  {task.storyPoints} SP
+                  {task.spLockedAt && <Lock className="size-2 text-violet-500 ml-0.5" />}
+                </span>
+              )}
+
               {task.revisionCount > 0 && (
                 <span className="text-3xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 px-1 rounded border border-amber-300/40">
                   Rev {task.revisionCount}x
                 </span>
               )}
             </div>
+
 
             {/* Drag Handle Grip Icon */}
             <div
