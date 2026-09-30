@@ -214,6 +214,14 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
                                   Super Admin
                                 </Badge>
                               )}
+                              {user.isKormanit && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-0 h-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
+                                >
+                                  Kormanit
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
@@ -294,7 +302,7 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
                           )}
 
                           {/* Toggle Active / Inactive status */}
-                          {!user.isSuperAdmin && (
+                          {!user.isSuperAdmin && !user.isKormanit && (
                             <Button
                               size="sm"
                               variant={user.status === 'ACTIVE' ? 'ghost' : 'outline'}

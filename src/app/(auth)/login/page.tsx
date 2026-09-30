@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { LoginForm } from '@/features/auth/components/login-form';
 import {
@@ -34,7 +35,9 @@ export default function LoginPage() {
             <h2>Formulir Masuk</h2>
           </CardHeader>
           <CardContent className="pt-6">
-            <LoginForm />
+            <Suspense fallback={<div className="py-8 text-center text-sm text-muted-foreground">Memuat formulir...</div>}>
+              <LoginForm />
+            </Suspense>
           </CardContent>
         </Card>
 

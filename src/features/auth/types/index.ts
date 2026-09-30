@@ -58,6 +58,7 @@ export const userSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
   isSuperAdmin: z.boolean().default(false),
+  isKormanit: z.boolean().default(false),
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   role: z.string().default('user'),
   divisions: z.array(divisionMembershipSchema).default([]),

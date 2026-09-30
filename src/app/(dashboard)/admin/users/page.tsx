@@ -16,12 +16,13 @@ export default async function AdminUsersPage() {
     redirect('/login');
   }
 
-  // Authoritative Super Admin check: only super admin can access this page
-  if (!session.isSuperAdmin) {
+  // Authoritative check: only Super Admin or Kormanit can access this page
+  if (!session.isSuperAdmin && !session.isKormanit) {
     redirect('/dashboard');
   }
 
-  const userName = typeof session.name === 'string' ? session.name : 'Super Admin';
+  const roleName = session.isSuperAdmin ? 'Super Admin' : 'Kormanit';
+  const userName = typeof session.name === 'string' ? session.name : roleName;
 
   return (
     <div className="flex h-screen overflow-hidden">

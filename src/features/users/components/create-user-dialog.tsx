@@ -199,7 +199,7 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
 
             {/* Role */}
             <div className="space-y-1.5">
-              <Label htmlFor="create-role">Role di Divisi</Label>
+              <Label htmlFor="create-role">Role Anggota</Label>
               <select
                 id="create-role"
                 className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -207,6 +207,7 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
               >
                 <option value="MEMBER">Member Divisi</option>
                 <option value="COORDINATOR">Koordinator Divisi</option>
+                <option value="KORMANIT">Kormanit (Koordinator Mahasiswa Unit - Akses Penuh)</option>
               </select>
             </div>
 

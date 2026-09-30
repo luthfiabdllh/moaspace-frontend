@@ -11,6 +11,7 @@ export interface SessionPayload extends JWTPayload {
   email: string;
   name?: string;
   isSuperAdmin?: boolean;
+  isKormanit?: boolean;
   role?: string;
 }
 

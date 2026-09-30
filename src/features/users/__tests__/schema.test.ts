@@ -22,6 +22,16 @@ describe('createUserSchema', () => {
     expect(res.success).toBe(true);
   });
 
+  it('accepts valid kormanit registration data', () => {
+    const res = createUserSchema.safeParse({
+      name: 'Kormanit Unit',
+      email: 'kormanit@example.com',
+      divisionId: 'div-789',
+      role: 'KORMANIT',
+    });
+    expect(res.success).toBe(true);
+  });
+
   it('rejects empty name', () => {
     const res = createUserSchema.safeParse({
       name: '',

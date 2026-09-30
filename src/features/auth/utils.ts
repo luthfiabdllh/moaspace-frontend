@@ -7,7 +7,7 @@ import type { User } from './types';
  * - Member -> Tugas Saya (/me)
  */
 export function getPostLoginRedirect(user: User): string {
-  if (user.isSuperAdmin) {
+  if (user.isSuperAdmin || user.isKormanit) {
     return '/dashboard';
   }
 

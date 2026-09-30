@@ -4,7 +4,7 @@ export const createUserSchema = z.object({
   name: z.string().min(1, { error: 'Nama lengkap wajib diisi.' }),
   email: z.email({ error: 'Masukkan alamat email yang valid.' }),
   divisionId: z.string().min(1, { error: 'Divisi wajib dipilih.' }),
-  role: z.enum(['MEMBER', 'COORDINATOR']),
+  role: z.enum(['MEMBER', 'COORDINATOR', 'KORMANIT']),
 });
 
 export type CreateUserDTO = z.infer<typeof createUserSchema>;
@@ -29,6 +29,7 @@ export interface UserListItem {
   name: string;
   email: string;
   isSuperAdmin: boolean;
+  isKormanit?: boolean;
   status: 'ACTIVE' | 'INACTIVE';
   isActivated: boolean;
   createdAt: string;

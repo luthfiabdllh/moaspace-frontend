@@ -9,6 +9,7 @@ describe('getPostLoginRedirect', () => {
       email: 'admin@moaspace.com',
       name: 'Super Admin',
       isSuperAdmin: true,
+      isKormanit: false,
       status: 'ACTIVE',
       role: 'admin',
       divisions: [],
@@ -17,12 +18,28 @@ describe('getPostLoginRedirect', () => {
     expect(getPostLoginRedirect(adminUser)).toBe('/dashboard');
   });
 
+  it('should redirect kormanit to /dashboard like super admin', () => {
+    const kormanitUser: User = {
+      id: 'kormanit-1',
+      email: 'kormanit@moaspace.com',
+      name: 'Kormanit Unit KKN',
+      isSuperAdmin: false,
+      isKormanit: true,
+      status: 'ACTIVE',
+      role: 'kormanit',
+      divisions: [],
+    };
+
+    expect(getPostLoginRedirect(kormanitUser)).toBe('/dashboard');
+  });
+
   it('should redirect division coordinator to their division board', () => {
     const coordinatorUser: User = {
       id: 'coord-1',
       email: 'coord@moaspace.com',
       name: 'Koordinator Sponsorship',
       isSuperAdmin: false,
+      isKormanit: false,
       status: 'ACTIVE',
       role: 'user',
       divisions: [
@@ -44,6 +61,7 @@ describe('getPostLoginRedirect', () => {
       email: 'member@moaspace.com',
       name: 'Member Media Kreatif',
       isSuperAdmin: false,
+      isKormanit: false,
       status: 'ACTIVE',
       role: 'user',
       divisions: [
@@ -65,6 +83,7 @@ describe('getPostLoginRedirect', () => {
       email: 'user@moaspace.com',
       name: 'Unassigned User',
       isSuperAdmin: false,
+      isKormanit: false,
       status: 'ACTIVE',
       role: 'user',
       divisions: [],

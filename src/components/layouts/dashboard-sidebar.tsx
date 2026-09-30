@@ -14,7 +14,7 @@ export function DashboardSidebar() {
 
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    ...(user?.isSuperAdmin
+    ...(user?.isSuperAdmin || user?.isKormanit
       ? [{ key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' }]
       : []),
     { key: 'profile', label: 'Profile', icon: User, href: '/profile' },

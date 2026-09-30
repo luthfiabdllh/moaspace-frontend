@@ -6,6 +6,32 @@ const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 const ACCESS_TOKEN_TTL = Number(process.env.ACCESS_TOKEN_TTL ?? 900);
 const REFRESH_TOKEN_TTL = Number(process.env.REFRESH_TOKEN_TTL ?? 604800);
 
+export async function GET(request: NextRequest) {
+  const clientId =
+    process.env.GOOGLE_CLIENT_ID ||
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  if (!clientId) {
+    return NextResponse.json(
+      { success: false, error: { code: 500, message: 'Google Client ID belum dikonfigurasi di server.' } },
+      { status: 500 }
+    );
+  }
+
+  const origin = request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+  const redirectUri = process.env.GOOGLE_CALLBACK_URL || `${origin}/api/auth/google/callback`;
+
+  const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+  googleAuthUrl.searchParams.set('client_id', clientId);
+  googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
+  googleAuthUrl.searchParams.set('response_type', 'code');
+  googleAuthUrl.searchParams.set('scope', 'openid email profile');
+  googleAuthUrl.searchParams.set('access_type', 'offline');
+  googleAuthUrl.searchParams.set('prompt', 'select_account');
+
+  return NextResponse.redirect(googleAuthUrl.toString());
+}
+
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
