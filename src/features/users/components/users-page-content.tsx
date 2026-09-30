@@ -1,6 +1,8 @@
 'use client';
 
-import { Users, UserCheck, Clock, Layers } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Users, UserCheck, Clock, Layers, History } from 'lucide-react';
 import { useUsers, useDivisions } from '../api/use-queries';
 import { CreateUserDialog } from './create-user-dialog';
 import { UsersTable } from './users-table';
@@ -27,7 +29,15 @@ export function UsersPageContent() {
           </p>
         </div>
 
-        <CreateUserDialog divisions={divisions} />
+        <div className="flex items-center gap-2">
+          <Link href="/admin/activity-logs">
+            <Button variant="outline" className="gap-1.5 h-9 text-xs">
+              <History size={14} />
+              <span>Activity Log</span>
+            </Button>
+          </Link>
+          <CreateUserDialog divisions={divisions} />
+        </div>
       </div>
 
       {/* Metrics / Stats Cards */}

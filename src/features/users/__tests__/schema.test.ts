@@ -32,6 +32,16 @@ describe('createUserSchema', () => {
     expect(res.success).toBe(true);
   });
 
+  it('accepts valid koordinator mahasiswa unit registration data', () => {
+    const res = createUserSchema.safeParse({
+      name: 'Koordinator Mahasiswa Unit',
+      email: 'kormanit@example.com',
+      divisionId: 'div-789',
+      role: 'KOORDINATOR_MAHASISWA_UNIT',
+    });
+    expect(res.success).toBe(true);
+  });
+
   it('rejects empty name', () => {
     const res = createUserSchema.safeParse({
       name: '',

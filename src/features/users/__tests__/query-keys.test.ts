@@ -16,6 +16,16 @@ describe('userKeys query factory', () => {
     const key = userKeys.detail('user-123');
     expect(key).toEqual(['users', 'detail', 'user-123']);
   });
+
+  it('userKeys.activityLogs(entityType, entityId) contains parameters', () => {
+    const key = userKeys.activityLogs('USER', 'user-123');
+    expect(key).toEqual(['activity-logs', 'USER', 'user-123']);
+  });
+
+  it('userKeys.activityLogsInfinite(params) contains infinite and params', () => {
+    const key = userKeys.activityLogsInfinite({ search: 'test' });
+    expect(key).toEqual(['activity-logs', 'infinite', { search: 'test' }]);
+  });
 });
 
 describe('divisionKeys query factory', () => {

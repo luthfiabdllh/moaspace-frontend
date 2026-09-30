@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, User, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, User, Settings, Users, History } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,10 @@ export function DashboardSidebar() {
   const navItems = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     ...(user?.isSuperAdmin || user?.isKormanit
-      ? [{ key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' }]
+      ? [
+          { key: 'admin-users', label: 'Kelola Anggota', icon: Users, href: '/admin/users' },
+          { key: 'admin-activity-logs', label: 'Activity Log', icon: History, href: '/admin/activity-logs' },
+        ]
       : []),
     { key: 'profile', label: 'Profile', icon: User, href: '/profile' },
     { key: 'settings', label: 'Settings', icon: Settings, href: '/settings' },

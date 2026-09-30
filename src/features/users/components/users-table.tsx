@@ -15,11 +15,13 @@ import {
   MoreVertical,
   UserX,
   UserCheck,
+  UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { UserListItem, DivisionItem } from '../types';
 import { useUpdateUserStatus, useResendActivation } from '../api/use-mutations';
+import { ManageUserDialog } from './manage-user-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +51,9 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
     activationUrl: string;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [selectedUserIdForManage, setSelectedUserIdForManage] = useState<string | null>(null);
+  const currentUserForManage =
+    users.find((u) => u.id === selectedUserIdForManage) || null;
 
   const updateStatusMutation = useUpdateUserStatus();
   const resendActivationMutation = useResendActivation();
@@ -219,7 +224,7 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
                                   variant="secondary"
                                   className="text-[10px] px-1.5 py-0 h-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20"
                                 >
-                                  Kormanit
+                                  Koordinator Mahasiswa Unit
                                 </Badge>
                               )}
                             </div>
@@ -286,6 +291,18 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
                       {/* Actions */}
                       <td className="px-4 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Manage Divisions & Roles */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedUserIdForManage(user.id)}
+                            title="Kelola divisi, peran, dan riwayat audit"
+                            className="h-8 gap-1.5 text-xs text-primary hover:text-primary hover:bg-primary/5"
+                          >
+                            <UserCog size={13} />
+                            <span className="hidden sm:inline">Kelola Peran</span>
+                          </Button>
+
                           {/* Resend activation link if not activated */}
                           {!user.isActivated && (
                             <Button
@@ -386,6 +403,14 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Manage User Role & Division Dialog */}
+      <ManageUserDialog
+        user={currentUserForManage}
+        divisions={divisions}
+        isOpen={Boolean(currentUserForManage)}
+        onClose={() => setSelectedUserIdForManage(null)}
+      />
     </div>
   );
 }

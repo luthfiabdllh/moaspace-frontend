@@ -4,7 +4,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { userKeys } from './query-keys';
 import { toast } from 'sonner';
-import type { CreateUserDTO } from '../types';
+import type {
+  CreateUserDTO,
+  AddUserDivisionDTO,
+  UpdateUserDivisionRoleDTO,
+  MoveUserDivisionDTO,
+  UpdateUserGlobalRoleDTO,
+} from '../types';
 
 interface CreateUserResponse {
   success: boolean;
@@ -49,6 +55,7 @@ export const useUpdateUserStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success('Status anggota berhasil diperbarui.');
     },
     onError: (err: any) => {
@@ -74,6 +81,168 @@ export const useResendActivation = () => {
     },
     onError: (err: any) => {
       const msg = err.response?.data?.error?.message || err.message || 'Gagal membuat tautan aktivasi.';
+      toast.error(msg);
+    },
+  });
+};
+
+export const useAddUserDivision = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      payload,
+    }: {
+      userId: string;
+      payload: AddUserDivisionDTO;
+    }) => {
+      const { data } = await apiClient.post<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/divisions`, payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Divisi berhasil ditambahkan.');
+    },
+    onError: (err: any) => {
+      const msg =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Gagal menambahkan divisi.';
+      toast.error(msg);
+    },
+  });
+};
+
+export const useUpdateUserDivisionRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      divisionId,
+      payload,
+    }: {
+      userId: string;
+      divisionId: string;
+      payload: UpdateUserDivisionRoleDTO;
+    }) => {
+      const { data } = await apiClient.patch<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/divisions/${divisionId}/role`, payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Role divisi berhasil diubah.');
+    },
+    onError: (err: any) => {
+      const msg =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Gagal mengubah role divisi.';
+      toast.error(msg);
+    },
+  });
+};
+
+export const useRemoveUserDivision = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      divisionId,
+    }: {
+      userId: string;
+      divisionId: string;
+    }) => {
+      const { data } = await apiClient.delete<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/divisions/${divisionId}`);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Keanggotaan divisi berhasil dihapus.');
+    },
+    onError: (err: any) => {
+      const msg =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Gagal menghapus keanggotaan divisi.';
+      toast.error(msg);
+    },
+  });
+};
+
+export const useMoveUserDivision = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      payload,
+    }: {
+      userId: string;
+      payload: MoveUserDivisionDTO;
+    }) => {
+      const { data } = await apiClient.post<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/divisions/move`, payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Anggota berhasil dipindahkan ke divisi baru.');
+    },
+    onError: (err: any) => {
+      const msg =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Gagal memindahkan divisi.';
+      toast.error(msg);
+    },
+  });
+};
+
+export const useUpdateUserGlobalRole = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      payload,
+    }: {
+      userId: string;
+      payload: UpdateUserGlobalRoleDTO;
+    }) => {
+      const { data } = await apiClient.patch<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/global-role`, payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Peran Koordinator Mahasiswa Unit diperbarui.');
+    },
+    onError: (err: any) => {
+      const msg =
+        err.response?.data?.error?.message ||
+        err.message ||
+        'Gagal mengubah peran Koordinator Mahasiswa Unit.';
       toast.error(msg);
     },
   });

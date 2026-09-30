@@ -205,9 +205,9 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
                 className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 {...register('role')}
               >
-                <option value="MEMBER">Member Divisi</option>
+                <option value="MEMBER">Anggota Divisi</option>
                 <option value="COORDINATOR">Koordinator Divisi</option>
-                <option value="KORMANIT">Kormanit (Koordinator Mahasiswa Unit - Akses Penuh)</option>
+                <option value="KOORDINATOR_MAHASISWA_UNIT">Koordinator Mahasiswa Unit (Akses Penuh)</option>
               </select>
             </div>
 
