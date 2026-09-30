@@ -78,7 +78,7 @@ export function ProfileInfoForm({ user }: ProfileInfoFormProps) {
           {/* Avatar & Badges Header */}
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 p-4 rounded-xl bg-muted/40 border border-border/50">
             <Avatar className="size-20 ring-2 ring-primary/20 shrink-0">
-              <AvatarFallback className="bg-gradient-to-tr from-primary to-indigo-600 text-white font-semibold text-2xl">
+              <AvatarFallback className="bg-linear-to-tr from-primary to-indigo-600 text-white font-semibold text-2xl">
                 {initials}
               </AvatarFallback>
             </Avatar>
