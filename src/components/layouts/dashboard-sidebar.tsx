@@ -13,6 +13,7 @@ import {
   Award,
   Target,
   CheckSquare,
+  GitPullRequest,
 } from 'lucide-react';
 import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -33,6 +34,7 @@ export function DashboardSidebar() {
     { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { key: 'board', label: 'Papan Kanban', icon: FolderKanban, href: '/board' },
     { key: 'epics', label: 'Inisiatif & Epics', icon: Target, href: '/epics' },
+    { key: 'requests', label: 'Request Antar Divisi', icon: GitPullRequest, href: '/requests' },
     { key: 'my-tasks', label: 'Tugas Saya', icon: CheckSquare, href: '/my-tasks' },
     ...(isAdmin
       ? [
