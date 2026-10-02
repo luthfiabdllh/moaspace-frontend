@@ -215,7 +215,7 @@ export function HierarchyBreakdownView({
 
                         <div className="space-y-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-3xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                            <span className="text-3xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary">
                               Level 1: Epic
                             </span>
                             {epic.scope === 'CROSS' ? (
@@ -466,7 +466,7 @@ export function HierarchyBreakdownView({
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-3xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        <span className="text-3xs font-semibold px-2 py-0.5 rounded bg-muted text-muted-foreground">
                           Pekerjaan Rutin
                         </span>
                         <Badge variant="outline" className="text-3xs py-0">

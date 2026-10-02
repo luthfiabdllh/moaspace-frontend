@@ -163,18 +163,21 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {Object.entries(groupedRoutes).map(([groupName, groupRoutes]) => (
-        <SidebarGroup key={groupName} className="p-0">
-          {groupName !== 'MAIN' && !isCollapsed && (
-            <SidebarGroupLabel className="px-2 pb-1 text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {groupName}
-            </SidebarGroupLabel>
-          )}
-          <SidebarMenu className="gap-1.5">
-            {groupRoutes.map(renderRoute)}
-          </SidebarMenu>
-        </SidebarGroup>
-      ))}
+      {Object.entries(groupedRoutes).map(([groupName, groupRoutes]) => {
+        const isMainGroup = groupName === 'MAIN' || groupName === 'Menu Utama';
+        return (
+          <SidebarGroup key={groupName} className="p-0">
+            {!isMainGroup && !isCollapsed && (
+              <SidebarGroupLabel className="h-6 px-2.5 pt-2 pb-0.5 text-[11px] font-medium tracking-normal text-sidebar-foreground/60 select-none">
+                {groupName}
+              </SidebarGroupLabel>
+            )}
+            <SidebarMenu className="gap-1.5">
+              {groupRoutes.map(renderRoute)}
+            </SidebarMenu>
+          </SidebarGroup>
+        );
+      })}
     </div>
   );
 }

@@ -204,6 +204,16 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
+@utility text-2xs {
+  font-size: 0.6875rem;
+  line-height: 0.875rem;
+}
+
+@utility text-3xs {
+  font-size: 0.625rem;
+  line-height: 0.75rem;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

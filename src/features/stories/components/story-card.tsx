@@ -172,7 +172,7 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
         {isExpanded && (
           <div className="border-t border-border/60 bg-muted/20 p-4 space-y-2">
             <div className="flex items-center justify-between pb-1">
-              <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground">
                 Daftar Task ({tasks.length})
               </span>
               <Button

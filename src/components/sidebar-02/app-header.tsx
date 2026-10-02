@@ -76,7 +76,12 @@ export function AppHeader({
       const seg = segments[i];
       accumulatedPath += `/${seg}`;
       const isLast = i === segments.length - 1;
-      const label = routeMap[seg] || seg.toUpperCase();
+      const label =
+        routeMap[seg] ||
+        seg
+          .split('-')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
 
       items.push({
         label,

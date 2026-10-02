@@ -342,7 +342,7 @@ export function TaskDetailSheet({
 
               {/* Description */}
               <div className="space-y-1.5">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <h4 className="text-xs font-semibold text-muted-foreground">
                   Deskripsi
                 </h4>
                 <div className="rounded-lg border bg-muted/20 p-3 text-xs leading-relaxed text-foreground min-h-16 whitespace-pre-wrap">
@@ -580,7 +580,7 @@ export function TaskDetailSheet({
               {/* Activity Logs (Audit Trail Timeline) */}
               <div className="space-y-3 pt-2 border-t">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <h4 className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
                     <History className="size-3.5 text-primary" />
                     Riwayat Aktivitas & Audit ({task.activityLogs?.length ?? 0})
                   </h4>

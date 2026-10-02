@@ -80,7 +80,7 @@ export function DashboardSidebar() {
         icon: <LayoutDashboard className="size-4" />,
         link: '/dashboard',
         isActive: pathname === '/dashboard',
-        group: 'Menu Utama',
+        group: 'MAIN',
       },
       {
         id: 'board',
@@ -88,7 +88,7 @@ export function DashboardSidebar() {
         icon: <FolderKanban className="size-4" />,
         link: '/board',
         isActive: pathname === '/board',
-        group: 'Menu Utama',
+        group: 'MAIN',
       },
       {
         id: 'epics',
@@ -96,7 +96,7 @@ export function DashboardSidebar() {
         icon: <Target className="size-4" />,
         link: '/epics',
         isActive: pathname === '/epics' || pathname.startsWith('/epics/'),
-        group: 'Menu Utama',
+        group: 'MAIN',
       },
       {
         id: 'requests',
@@ -104,7 +104,7 @@ export function DashboardSidebar() {
         icon: <GitPullRequest className="size-4" />,
         link: '/requests',
         isActive: pathname.startsWith('/requests'),
-        group: 'Menu Utama',
+        group: 'MAIN',
         subs: [
           {
             title: 'Semua Request',
@@ -126,7 +126,7 @@ export function DashboardSidebar() {
         icon: <CheckSquare className="size-4" />,
         link: '/my-tasks',
         isActive: pathname === '/my-tasks' || pathname.startsWith('/my-tasks/'),
-        group: 'Menu Utama',
+        group: 'MAIN',
       },
     ];
 
