@@ -15,8 +15,7 @@ import {
   Send,
   Calendar,
   Layers,
-  Sparkles,
-  Filter,
+
 } from 'lucide-react';
 
 export function RequestsListContent() {
