@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { RequestStatusBadge } from './request-status-badge';
 import { RequestTimeline } from './request-timeline';
+import { RequestStepper } from './request-stepper';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
 import {
   OriginApprovalDialog,
@@ -89,6 +90,13 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         .toUpperCase()
         .slice(0, 2)
     : 'U';
+
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(sectionId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const briefEntries = Object.entries(request.brief || {});
 
@@ -223,6 +231,18 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         </CardContent>
       </Card>
 
+      {/* Interactive Lifecycle Stepper */}
+      <RequestStepper
+        request={request}
+        scrollToSection={scrollToSection}
+        onOpenOriginApproval={() => setOpenOriginApproval(true)}
+        onOpenTriage={() => setOpenTriage(true)}
+        onOpenRespondInfo={() => setOpenRespondInfo(true)}
+        onOpenConvertToStory={() => setOpenConvertToStory(true)}
+        onOpenDeliver={() => setOpenDeliver(true)}
+        onOpenConfirm={() => setOpenConfirm(true)}
+      />
+
       {/* Special Status Banners */}
       {request.status === 'NEED_INFO' && request.reason && (
         <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-purple-900 dark:text-purple-200 space-y-1">
@@ -256,7 +276,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
 
       {/* Deliverable Results Card (if DELIVERED or CONFIRMED) */}
       {(request.status === 'DELIVERED' || request.status === 'CONFIRMED') && (
-        <Card className="border-indigo-500/30 bg-indigo-500/5">
+        <Card id="section-delivery" className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
               <PackageCheck className="h-4 w-4" />
@@ -298,7 +318,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
 
       {/* Linked Story Progress Card (if converted) */}
       {request.linkedStory && (
-        <Card className="border-primary/30 bg-primary/5">
+        <Card id="section-story" className="border-primary/30 bg-primary/5 scroll-mt-6">
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5 flex-1 min-w-0">
               <div className="flex items-center gap-2 text-xs text-primary font-semibold">
@@ -340,7 +360,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       )}
 
       {/* Brief Content Card */}
-      <Card>
+      <Card id="section-brief" className="scroll-mt-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -372,7 +392,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       </Card>
 
       {/* Timeline Section */}
-      <Card>
+      <Card id="section-timeline" className="scroll-mt-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-semibold">
             Riwayat Aktivitas &amp; Lifecycle
