@@ -8,18 +8,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import {
+  Stepper,
+  StepperItem,
+  StepperTrigger,
+  StepperIndicator,
+  StepperTitle,
+  StepperDescription,
+  StepperSeparator,
+  type StepState,
+} from '@/components/ui/stepper';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useDivisionTemplates } from '../api/use-queries';
 import { useCreateRequest } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
-import { ArrowLeft, ArrowRight, Calendar, Layers, Send, Sparkles, Save, FileText } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Layers,
+  Send,
+  Sparkles,
+  FileText,
+  Check,
+  CheckCircle2,
+  FileEdit,
+  FolderGit2,
+} from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export function CreateRequestContent() {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { data: divisions } = useDivisions();
+
+  // Wizard state: 1 = Rute Divisi, 2 = Template, 3 = Rincian & Brief
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   const [fromDivisionId, setFromDivisionId] = useState('');
   const [toDivisionId, setToDivisionId] = useState('');
@@ -63,17 +90,64 @@ export function CreateRequestContent() {
   const availableTargetDivisions =
     divisions?.filter((d) => d.id !== fromDivisionId) || [];
 
+  const fromDivisionName =
+    availableOriginDivisions.find((d) => d.id === fromDivisionId)?.name || 'Pilih Divisi';
+  const toDivisionName =
+    divisions?.find((d) => d.id === toDivisionId)?.name || 'Pilih Divisi';
+
+  // Navigation handlers
+  const handleNextFromStep1 = () => {
+    if (!fromDivisionId) {
+      toast.error('Pilih divisi asal pemohon.');
+      return;
+    }
+    if (!toDivisionId) {
+      toast.error('Pilih divisi tujuan permohonan.');
+      return;
+    }
+    setCurrentStep(2);
+  };
+
+  const handleNextFromStep2 = () => {
+    setCurrentStep(3);
+  };
+
+  const handleStepClick = (stepIndex: 1 | 2 | 3) => {
+    if (stepIndex === 1) {
+      setCurrentStep(1);
+      return;
+    }
+    if (stepIndex === 2) {
+      if (!fromDivisionId || !toDivisionId) {
+        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+    if (stepIndex === 3) {
+      if (!fromDivisionId || !toDivisionId) {
+        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+        return;
+      }
+      setCurrentStep(3);
+    }
+  };
+
   const handleSaveDraft = async () => {
     if (!fromDivisionId) {
       toast.error('Pilih divisi asal pembuat request.');
+      setCurrentStep(1);
       return;
     }
     if (!toDivisionId) {
       toast.error('Pilih divisi tujuan.');
+      setCurrentStep(1);
       return;
     }
     if (!title.trim()) {
       toast.error('Judul permohonan wajib diisi untuk menyimpan draft.');
+      setCurrentStep(3);
       return;
     }
 
@@ -99,14 +173,17 @@ export function CreateRequestContent() {
 
     if (!fromDivisionId) {
       toast.error('Pilih divisi asal pembuat request.');
+      setCurrentStep(1);
       return;
     }
     if (!toDivisionId) {
       toast.error('Pilih divisi tujuan.');
+      setCurrentStep(1);
       return;
     }
     if (!title.trim()) {
       toast.error('Judul permohonan wajib diisi.');
+      setCurrentStep(3);
       return;
     }
 
@@ -115,12 +192,14 @@ export function CreateRequestContent() {
       for (const f of selectedTemplate.fields) {
         if (f.required && (brief[f.key] === undefined || brief[f.key] === '')) {
           toast.error(`Field "${f.label}" wajib diisi.`);
+          setCurrentStep(3);
           return;
         }
       }
     } else {
       if (!brief.deskripsi || !String(brief.deskripsi).trim()) {
         toast.error('Deskripsi brief permohonan wajib diisi.');
+        setCurrentStep(3);
         return;
       }
     }
@@ -142,6 +221,45 @@ export function CreateRequestContent() {
     }
   };
 
+  // Stepper state calculation
+  const step1State: StepState =
+    currentStep === 1
+      ? 'active'
+      : fromDivisionId && toDivisionId
+        ? 'completed'
+        : 'active';
+
+  const step2State: StepState =
+    currentStep === 2
+      ? 'active'
+      : currentStep > 2
+        ? 'completed'
+        : 'upcoming';
+
+  const step3State: StepState =
+    currentStep === 3 ? 'active' : 'upcoming';
+
+  const steps = [
+    {
+      step: 1 as const,
+      title: 'Rute Divisi',
+      desc: fromDivisionId && toDivisionId ? `${fromDivisionName} ➔ ${toDivisionName}` : 'Pilih divisi asal & tujuan',
+      state: step1State,
+    },
+    {
+      step: 2 as const,
+      title: 'Format Template',
+      desc: selectedTemplate ? selectedTemplate.name : 'Formulir Umum',
+      state: step2State,
+    },
+    {
+      step: 3 as const,
+      title: 'Rincian & Brief',
+      desc: title ? title : 'Isi formulir kebutuhan',
+      state: step3State,
+    },
+  ];
+
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-16">
       {/* Back button */}
@@ -156,135 +274,326 @@ export function CreateRequestContent() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
           <Layers className="h-6 w-6 text-primary" />
-          Buat Request Antar Divisi
+          Pengajuan Request Kolaborasi Antar Divisi
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Ajukan permohonan bantuan pengerjaan tugas kepada divisi lain menggunakan formulir terstruktur.
+          Ajukan permohonan bantuan pengerjaan tugas kepada divisi lain menggunakan formulir bertahap yang terstruktur.
         </p>
       </div>
 
+      {/* Interactive Form Stepper Header */}
+      <Card className="border-border/80 shadow-xs overflow-hidden">
+        <CardContent className="p-4 sm:p-5">
+          <div className="overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
+            <Stepper className="min-w-140 sm:min-w-0">
+              {steps.map((st, index) => {
+                const isLast = index === steps.length - 1;
+                return (
+                  <React.Fragment key={st.step}>
+                    <StepperItem step={st.step} state={st.state}>
+                      <StepperTrigger
+                        onClick={() => handleStepClick(st.step)}
+                        title={`Lompat ke Tahap ${st.step}: ${st.title}`}
+                        className="cursor-pointer hover:bg-muted/40"
+                      >
+                        <StepperIndicator state={st.state} stepNumber={st.step} />
+                        <div className="flex flex-col text-left min-w-0">
+                          <StepperTitle className={cn(st.state === 'active' && 'text-primary font-bold')}>
+                            {st.title}
+                          </StepperTitle>
+                          <StepperDescription className="max-w-[160px] truncate">
+                            {st.desc}
+                          </StepperDescription>
+                        </div>
+                      </StepperTrigger>
+                    </StepperItem>
+                    {!isLast && <StepperSeparator state={st.state} />}
+                  </React.Fragment>
+                );
+              })}
+            </Stepper>
+          </div>
+        </CardContent>
+      </Card>
+
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Routing Card */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                1
-              </span>
-              Pilih Divisi Asal &amp; Divisi Tujuan
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Tentukan divisi Anda sebagai pemohon dan divisi yang dituju untuk berkolaborasi.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="fromDivision" className="text-xs font-medium">
-                Divisi Asal (Pemohon) <span className="text-destructive">*</span>
-              </Label>
-              <select
-                id="fromDivision"
-                value={fromDivisionId}
-                onChange={(e) => {
-                  setFromDivisionId(e.target.value);
-                  if (toDivisionId === e.target.value) {
-                    setToDivisionId('');
-                  }
-                }}
-                className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
-              >
-                <option value="">Pilih Divisi Asal...</option>
-                {availableOriginDivisions.map((div) => (
-                  <option key={div.id} value={div.id}>
-                    {div.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="toDivision" className="text-xs font-medium">
-                Divisi Tujuan <span className="text-destructive">*</span>
-              </Label>
-              <select
-                id="toDivision"
-                value={toDivisionId}
-                onChange={(e) => handleToDivisionChange(e.target.value)}
-                disabled={!fromDivisionId}
-                className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900 disabled:opacity-50"
-              >
-                <option value="">Pilih Divisi Tujuan...</option>
-                {availableTargetDivisions.map((div) => (
-                  <option key={div.id} value={div.id}>
-                    {div.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Template Selection Card (Active when toDivision selected) */}
-        {toDivisionId && (
+        {/* ─── TAHAP 1: RUTE DIVISI ────────────────────────────────────────── */}
+        {currentStep === 1 && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                  2
-                </span>
-                Pilih Template Formulir Permohonan
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    1
+                  </span>
+                  Pilih Divisi Asal (Pemohon) &amp; Divisi Tujuan
+                </CardTitle>
+                <Badge variant="outline" className="text-3xs font-mono">
+                  Langkah 1 dari 3
+                </Badge>
+              </div>
               <CardDescription className="text-xs">
-                Divisi tujuan dapat menyediakan template formulir dengan format field spesifik.
+                Tentukan divisi Anda sebagai pemohon dan divisi yang dituju untuk berkolaborasi.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {loadingTemplates ? (
-                <div className="h-9 bg-muted animate-pulse rounded-lg" />
-              ) : (
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="templateSelect" className="text-xs font-medium">
-                    Template Tersedia
+                  <Label htmlFor="fromDivision" className="text-xs font-medium">
+                    Divisi Asal (Pemohon) <span className="text-destructive">*</span>
                   </Label>
                   <select
-                    id="templateSelect"
-                    value={templateId}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
+                    id="fromDivision"
+                    value={fromDivisionId}
+                    onChange={(e) => {
+                      setFromDivisionId(e.target.value);
+                      if (toDivisionId === e.target.value) {
+                        setToDivisionId('');
+                      }
+                    }}
                     className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
                   >
-                    <option value="">Formulir Umum (Tanpa Template Khusus)</option>
-                    {templates?.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
+                    <option value="">Pilih Divisi Asal...</option>
+                    {availableOriginDivisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
                       </option>
                     ))}
                   </select>
-                  {selectedTemplate?.description && (
-                    <p className="text-xs text-muted-foreground mt-1 bg-muted/30 p-2 rounded">
-                      {selectedTemplate.description}
-                    </p>
-                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="toDivision" className="text-xs font-medium">
+                    Divisi Tujuan <span className="text-destructive">*</span>
+                  </Label>
+                  <select
+                    id="toDivision"
+                    value={toDivisionId}
+                    onChange={(e) => handleToDivisionChange(e.target.value)}
+                    disabled={!fromDivisionId}
+                    className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900 disabled:opacity-50"
+                  >
+                    <option value="">Pilih Divisi Tujuan...</option>
+                    {availableTargetDivisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {fromDivisionId && toDivisionId && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs">
+                  <Sparkles className="size-4 text-primary shrink-0" />
+                  <span className="text-muted-foreground">
+                    Rute kolaborasi:{' '}
+                    <strong className="text-foreground">{fromDivisionName}</strong>{' '}
+                    akan mengajukan permohonan ke{' '}
+                    <strong className="text-foreground">{toDivisionName}</strong>.
+                  </span>
                 </div>
               )}
+
+              <div className="flex items-center justify-between pt-3 border-t">
+                <Link href="/requests">
+                  <Button type="button" variant="outline" size="sm">
+                    Batal
+                  </Button>
+                </Link>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleNextFromStep1}
+                  disabled={!fromDivisionId || !toDivisionId}
+                  className="gap-2"
+                >
+                  Lanjut ke Pilih Template
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Step 3: Request Title, Deadline & Brief */}
-        {toDivisionId && (
+        {/* ─── TAHAP 2: TEMPLATE PERMOHONAN ─────────────────────────────────── */}
+        {currentStep === 2 && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                  3
-                </span>
-                Rincian Permohonan &amp; Brief
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    2
+                  </span>
+                  Pilih Format Template Formulir
+                </CardTitle>
+                <Badge variant="outline" className="text-3xs font-mono">
+                  Langkah 2 dari 3
+                </Badge>
+              </div>
               <CardDescription className="text-xs">
-                Lengkapi judul, tenggat waktu (deadline), dan data brief kebutuhan kerja.
+                Pilih format formulir umum atau gunakan template khusus yang telah disediakan oleh divisi {toDivisionName}.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {loadingTemplates ? (
+                <div className="space-y-2">
+                  <div className="h-16 bg-muted animate-pulse rounded-lg" />
+                  <div className="h-16 bg-muted animate-pulse rounded-lg" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2.5">
+                  {/* Option 1: Formulir Umum */}
+                  <div
+                    onClick={() => handleTemplateChange('')}
+                    className={cn(
+                      'flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none',
+                      templateId === ''
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
+                        : 'border-border/80 bg-background hover:bg-muted/40'
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        'flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5',
+                        templateId === ''
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-muted-foreground/40'
+                      )}
+                    >
+                      {templateId === '' && <Check className="size-3 stroke-[3]" />}
+                    </div>
+                    <div className="space-y-0.5 flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-foreground">
+                          Formulir Umum
+                        </span>
+                        <Badge variant="secondary" className="text-3xs font-normal">
+                          Bebas Deskripsi
+                        </Badge>
+                      </div>
+                      <p className="text-2xs text-muted-foreground">
+                        Cocok untuk kebutuhan permohonan umum tanpa spesifikasi field dinamis khusus.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Option 2+: Divisi Templates */}
+                  {templates && templates.length > 0 ? (
+                    templates.map((t) => {
+                      const isSelected = templateId === t.id;
+                      return (
+                        <div
+                          key={t.id}
+                          onClick={() => handleTemplateChange(t.id)}
+                          className={cn(
+                            'flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none',
+                            isSelected
+                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
+                              : 'border-border/80 bg-background hover:bg-muted/40'
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              'flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5',
+                              isSelected
+                                ? 'border-primary bg-primary text-primary-foreground'
+                                : 'border-muted-foreground/40'
+                            )}
+                          >
+                            {isSelected && <Check className="size-3 stroke-[3]" />}
+                          </div>
+                          <div className="space-y-0.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-semibold text-foreground">
+                                {t.name}
+                              </span>
+                              <Badge variant="outline" className="text-3xs font-mono text-primary border-primary/30">
+                                {t.fields?.length || 0} Field Terstruktur
+                              </Badge>
+                            </div>
+                            {t.description && (
+                              <p className="text-2xs text-muted-foreground line-clamp-2">
+                                {t.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-2xs text-muted-foreground italic px-1">
+                      Divisi {toDivisionName} belum mendaftarkan template khusus. Anda dapat menggunakan Formulir Umum di atas.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between pt-3 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(1)}
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Kembali
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleNextFromStep2}
+                  className="gap-2"
+                >
+                  Lanjut ke Rincian Brief
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── TAHAP 3: RINCIAN & BRIEF ─────────────────────────────────────── */}
+        {currentStep === 3 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                    3
+                  </span>
+                  Rincian Permohonan &amp; Pengisian Brief
+                </CardTitle>
+                <Badge variant="outline" className="text-3xs font-mono">
+                  Langkah 3 dari 3
+                </Badge>
+              </div>
+              <CardDescription className="text-xs">
+                Lengkapi judul, tenggat waktu (deadline), dan data brief spesifikasi kebutuhan kerja.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Summary of route & template with quick change */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border text-2xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-semibold text-foreground">{fromDivisionName}</span>
+                  <ArrowRight className="size-3 text-muted-foreground" />
+                  <span className="font-semibold text-foreground">{toDivisionName}</span>
+                  <span className="text-muted-foreground/60">•</span>
+                  <span>
+                    Template: <strong className="text-foreground">{selectedTemplate ? selectedTemplate.name : 'Formulir Umum'}</strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(2)}
+                  className="text-primary hover:underline text-2xs font-medium shrink-0 ml-2"
+                >
+                  Ubah Format
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label htmlFor="reqTitle" className="text-xs font-medium">
@@ -295,6 +604,7 @@ export function CreateRequestContent() {
                     placeholder="Contoh: Kebutuhan Poster dan Feed Expo KKN 2026"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
+                    autoFocus
                   />
                 </div>
 
@@ -340,37 +650,48 @@ export function CreateRequestContent() {
                   </div>
                 )}
               </div>
+
+              {/* Submit Actions */}
+              <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-3 pt-3 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentStep(2)}
+                  className="gap-2 w-full sm:w-auto"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Kembali
+                </Button>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleSaveDraft}
+                    disabled={createMutation.isPending || !toDivisionId}
+                    className="gap-2"
+                  >
+                    <FileText className="h-4 w-4" />
+                    {createMutation.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
+                  </Button>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={createMutation.isPending || !toDivisionId}
+                    className="gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {createMutation.isPending ? 'Mengajukan...' : 'Kirim Permohonan'}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
-
-        {/* Submit Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link href="/requests">
-            <Button type="button" variant="outline">
-              Batal
-            </Button>
-          </Link>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleSaveDraft}
-            disabled={createMutation.isPending || !toDivisionId}
-            className="gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            {createMutation.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
-          </Button>
-          <Button
-            type="submit"
-            disabled={createMutation.isPending || !toDivisionId}
-            className="gap-2"
-          >
-            <Send className="h-4 w-4" />
-            {createMutation.isPending ? 'Mengajukan...' : 'Kirim Permohonan'}
-          </Button>
-        </div>
       </form>
     </div>
   );
 }
+
