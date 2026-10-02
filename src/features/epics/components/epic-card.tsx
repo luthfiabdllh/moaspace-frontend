@@ -93,7 +93,7 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
           </h3>
           {epic.description && (
             <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-              {epic.description}
+              {epic.description.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()}
             </p>
           )}
         </div>

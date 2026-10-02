@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 import {
   Sheet,
   SheetContent,
@@ -23,11 +24,15 @@ import {
   Sparkles,
   GitPullRequest,
   ExternalLink,
+  FileText,
+  FileEdit,
 } from 'lucide-react';
 import type { EpicItem } from '../types';
 import { useStories } from '@/features/stories/api/use-queries';
 import { useTasks } from '@/features/tasks/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useUpdateEpic } from '../api/use-mutations';
+import { NotionEditor } from '@/components/ui/notion-editor';
 import { CreateStoryDialog } from '@/features/stories/components/create-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
@@ -60,6 +65,24 @@ export function EpicDetailSheet({
   const [selectedStory, setSelectedStory] = useState<{ id: string; title: string; divisionId: string } | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [expandedStories, setExpandedStories] = useState<Record<string, boolean>>({});
+
+  const updateEpicMutation = useUpdateEpic();
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [editedDesc, setEditedDesc] = useState(epic?.description || '');
+
+  useEffect(() => {
+    setEditedDesc(epic?.description || '');
+    setIsEditingDesc(false);
+  }, [epic?.id, epic?.description]);
+
+  const handleSaveDesc = async () => {
+    if (!epic) return;
+    await updateEpicMutation.mutateAsync({
+      id: epic.id,
+      dto: { description: editedDesc },
+    });
+    setIsEditingDesc(false);
+  };
 
   const toggleStory = (storyId: string) => {
     setExpandedStories((prev) => ({
@@ -124,11 +147,88 @@ export function EpicDetailSheet({
               {epic.title}
             </SheetTitle>
 
-            {epic.description && (
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {epic.description}
-              </p>
-            )}
+            {/* Description Section with Notion Editor */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <FileText className="size-3.5 text-primary" /> Deskripsi Inisiatif
+                </span>
+                {isCoordinator && !isEditingDesc && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditingDesc(true)}
+                    className="h-6 px-2 text-3xs text-muted-foreground hover:text-foreground gap-1"
+                  >
+                    <FileEdit className="size-3" />
+                    Edit Deskripsi
+                  </Button>
+                )}
+              </div>
+
+              {isEditingDesc ? (
+                <div className="space-y-2 animate-in fade-in duration-150">
+                  <NotionEditor
+                    value={editedDesc}
+                    onChange={setEditedDesc}
+                    placeholder="Tuliskan deskripsi dan rincian sasaran inisiatif... (Ketik '/' untuk opsi format blok)"
+                    minHeight="min-h-[160px]"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setEditedDesc(epic.description || '');
+                        setIsEditingDesc(false);
+                      }}
+                      className="h-7 text-xs"
+                      disabled={updateEpicMutation.isPending}
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveDesc}
+                      disabled={updateEpicMutation.isPending}
+                      className="h-7 text-xs gap-1.5"
+                    >
+                      {updateEpicMutation.isPending ? 'Menyimpan...' : 'Simpan Deskripsi'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {epic.description ? (
+                    /<[a-z][\s\S]*>/i.test(epic.description) ? (
+                      <div
+                        className="prose-notion text-xs leading-relaxed text-foreground bg-muted/15 border border-border/60 rounded-xl p-3.5 overflow-hidden"
+                        dangerouslySetInnerHTML={{ __html: epic.description }}
+                      />
+                    ) : (
+                      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap bg-muted/15 border border-border/60 rounded-xl p-3.5">
+                        {epic.description}
+                      </p>
+                    )
+                  ) : (
+                    <div
+                      onClick={() => isCoordinator && setIsEditingDesc(true)}
+                      className={cn(
+                        'text-xs text-muted-foreground italic p-3 rounded-lg border border-dashed border-border/70',
+                        isCoordinator && 'cursor-pointer hover:bg-muted/30 transition-colors'
+                      )}
+                    >
+                      {isCoordinator
+                        ? '+ Klik untuk menambahkan deskripsi inisiatif (mendukung format Notion)...'
+                        : 'Belum ada deskripsi inisiatif.'}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
             {/* Meta Info */}
             <div className="flex flex-wrap gap-4 text-2xs text-muted-foreground pt-1">

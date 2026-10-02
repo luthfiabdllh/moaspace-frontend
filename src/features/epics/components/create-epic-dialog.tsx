@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NotionEditor } from '@/components/ui/notion-editor';
 
 interface CreateEpicDialogProps {
   open: boolean;
@@ -238,14 +239,18 @@ export function CreateEpicDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="epic-description">Deskripsi Lengkap (Opsional)</Label>
-            <textarea
-              id="epic-description"
-              rows={3}
-              placeholder="Jelaskan tujuan akhir atau sasaran dari inisiatif ini..."
-              {...register('description')}
-              className="w-full rounded-md border border-input bg-background p-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="epic-description">Deskripsi Lengkap (Opsional)</Label>
+              <span className="text-3xs text-muted-foreground font-normal">
+                Ketik &apos;/&apos; untuk opsi format blok (Heading, Checklist, dll)
+              </span>
+            </div>
+            <NotionEditor
+              value={watch('description') || ''}
+              onChange={(html) => setValue('description', html, { shouldDirty: true })}
+              placeholder="Jelaskan tujuan akhir atau sasaran dari inisiatif ini... (Ketik '/' untuk format blok Notion)"
+              minHeight="min-h-[140px]"
             />
           </div>
 

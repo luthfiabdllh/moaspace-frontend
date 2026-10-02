@@ -605,12 +605,11 @@ export function ConvertToEpicDialog({
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="epicDescription">Deskripsi &amp; Sasaran Inisiatif</Label>
-            <Textarea
-              id="epicDescription"
-              rows={3}
-              placeholder="Jelaskan tujuan dan sasaran besar inisiatif ini..."
+            <NotionEditor
               value={description}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
+              onChange={setDescription}
+              placeholder="Jelaskan tujuan dan sasaran besar inisiatif ini... (Ketik '/' untuk opsi format blok)"
+              minHeight="min-h-[140px]"
             />
           </div>
 
