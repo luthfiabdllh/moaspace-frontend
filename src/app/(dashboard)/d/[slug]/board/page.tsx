@@ -19,7 +19,7 @@ export default async function DivisionBoardPage({ params }: BoardPageProps) {
   const { slug } = await params;
 
   return (
-    <div className="container max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-8">
       <DivisionBoardContent divisionSlug={slug} />
     </div>
   );

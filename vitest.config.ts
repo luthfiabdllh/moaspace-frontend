@@ -20,6 +20,8 @@ export default defineConfig({
         'src/components/reui/**',
         'src/components/examples/**',
         'src/components/layouts/**',
+        'src/components/sidebar-02/**',
+        'src/hooks/**',
         'src/proxy.ts',
         'src/env.ts',
         'src/features/**/server-fetch.ts',

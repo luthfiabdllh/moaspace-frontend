@@ -6,14 +6,12 @@ import {
   FolderKanban,
   Bookmark,
   Search,
-  Filter,
   Layers,
-  Sparkles,
   ShieldAlert,
   Columns,
   X,
-  Plus,
   Award,
+  RotateCcw,
 } from 'lucide-react';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -23,13 +21,25 @@ import { KanbanBoard } from './kanban-board';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import type { SwimlaneMode } from '../types';
 
 interface DivisionBoardContentProps {
   divisionSlug: string;
+  hideHeader?: boolean;
 }
 
-export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps) {
+export function DivisionBoardContent({
+  divisionSlug,
+  hideHeader = false,
+}: DivisionBoardContentProps) {
   const { data: user } = useCurrentUser();
   const { data: divisions = [], isLoading: isDivisionsLoading } = useDivisions();
 
@@ -69,6 +79,22 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
       )
   );
 
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() ||
+      selectedPriority !== 'ALL' ||
+      selectedEpicId !== 'ALL' ||
+      onlyBlocked ||
+      swimlaneMode !== 'NONE'
+  );
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedPriority('ALL');
+    setSelectedEpicId('ALL');
+    setOnlyBlocked(false);
+    setSwimlaneMode('NONE');
+  };
+
   if (isDivisionsLoading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -95,121 +121,180 @@ export function DivisionBoardContent({ divisionSlug }: DivisionBoardContentProps
     : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Top Header & View Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <FolderKanban className="size-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                {division.name}
-                {isCoordinator && (
-                  <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300 gap-1 font-normal">
-                    <Award className="size-3 text-amber-500" />
-                    Koordinator
-                  </Badge>
-                )}
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Papan Kerja Kanban Interaktif • {totalTasks} Total Task
-              </p>
+    <div className="space-y-4">
+      {/* Top Header & View Switcher (Only shown when not embedded) */}
+      {!hideHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+                <FolderKanban className="size-5" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                  {division.name}
+                  {isCoordinator && (
+                    <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300 gap-1 font-normal">
+                      <Award className="size-3 text-amber-500" />
+                      Koordinator
+                    </Badge>
+                  )}
+                </h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Papan Kerja Kanban Interaktif • {totalTasks} Total Task
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* View Switcher: Stories vs Kanban */}
-        <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
-          <Link
-            href={`/d/${divisionSlug}/stories`}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Bookmark className="size-3.5" />
-            Deliverable Stories
-          </Link>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background text-foreground shadow-2xs font-semibold">
-            <Columns className="size-3.5 text-primary" />
-            Papan Kanban
-          </div>
-        </div>
-      </div>
-
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-card p-3 rounded-xl border border-border/80 shadow-2xs">
-        {/* Search */}
-        <div className="relative flex-1 min-w-60">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari task di papan..."
-            className="pl-9 h-9 text-sm"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          {/* View Switcher: Stories vs Kanban */}
+          <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
+            <Link
+              href={`/d/${divisionSlug}/stories`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
             >
-              <X className="size-3.5" />
-            </button>
-          )}
+              <Bookmark className="size-3.5" />
+              Deliverable Stories
+            </Link>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background text-foreground shadow-2xs font-semibold">
+              <Columns className="size-3.5 text-primary" />
+              Papan Kanban
+            </div>
+          </div>
         </div>
+      )}
 
-        {/* Filter Controls */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Epic Selector */}
-          <select
-            value={selectedEpicId}
-            onChange={(e) => setSelectedEpicId(e.target.value)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-36 truncate"
-          >
-            <option value="ALL">Semua Epic</option>
-            {epics.map((epic) => (
-              <option key={epic.id} value={epic.id}>
-                {epic.title}
-              </option>
-            ))}
-          </select>
+      {/* Modern Filter and Search Bar */}
+      <div className="flex flex-col gap-3 p-3 rounded-xl border border-border/80 bg-card shadow-2xs">
+        <div className="flex flex-col md:flex-row gap-2.5 items-stretch md:items-center justify-between">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-56">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari task di papan..."
+              className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/70 focus-visible:bg-background"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded"
+                title="Hapus pencarian"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
 
-          {/* Priority Selector */}
-          <select
-            value={selectedPriority}
-            onChange={(e) => setSelectedPriority(e.target.value)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="ALL">Semua Prioritas</option>
-            <option value="LOW">Low</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="HIGH">High</option>
-            <option value="URGENT">Urgent</option>
-          </select>
+          {/* Filter Controls Group */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Epic Filter */}
+            <Select value={selectedEpicId} onValueChange={setSelectedEpicId}>
+              <SelectTrigger className="h-9 min-w-36 max-w-52 text-xs bg-background">
+                <SelectValue placeholder="Semua Epic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Semua Epic</SelectItem>
+                {epics.map((epic) => (
+                  <SelectItem key={epic.id} value={epic.id}>
+                    {epic.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {/* Swimlane Selector */}
-          <select
-            value={swimlaneMode}
-            onChange={(e) => setSwimlaneMode(e.target.value as SwimlaneMode)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="NONE">Swimlane: Tanpa Grup</option>
-            <option value="EPIC">Swimlane: Per Epic / Inisiatif</option>
-            <option value="STORY">Swimlane: Per Story</option>
-            <option value="ASSIGNEE">Swimlane: Per Assignee</option>
-          </select>
+            {/* Priority Filter */}
+            <Select value={selectedPriority} onValueChange={setSelectedPriority}>
+              <SelectTrigger className="h-9 min-w-32 text-xs bg-background">
+                <SelectValue placeholder="Semua Prioritas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Semua Prioritas</SelectItem>
+                <SelectItem value="LOW">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-slate-400" />
+                    <span>Low</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="MEDIUM">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-sky-500" />
+                    <span>Medium</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="HIGH">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-orange-500" />
+                    <span>High</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="URGENT">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-rose-500" />
+                    <span>Urgent</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Blocked Only Toggle */}
-          <button
-            onClick={() => setOnlyBlocked(!onlyBlocked)}
-            className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-xs font-medium transition-colors ${
-              onlyBlocked
-                ? 'bg-rose-50 border-rose-300 text-rose-700 dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-300'
-                : 'bg-background text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <ShieldAlert className="size-3.5" />
-            Terkendala Saja
-          </button>
+            {/* Swimlane Filter */}
+            <Select
+              value={swimlaneMode}
+              onValueChange={(val) => setSwimlaneMode(val as SwimlaneMode)}
+            >
+              <SelectTrigger className="h-9 min-w-36 text-xs bg-background">
+                <SelectValue placeholder="Swimlane" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Tanpa Grup (Standar)</SelectItem>
+                <SelectItem value="EPIC">Grup: Per Inisiatif / Epic</SelectItem>
+                <SelectItem value="STORY">Grup: Per Deliverable Story</SelectItem>
+                <SelectItem value="ASSIGNEE">Grup: Per Anggota</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Blocked Only Toggle */}
+            <Button
+              type="button"
+              variant={onlyBlocked ? 'destructive' : 'outline'}
+              size="sm"
+              onClick={() => setOnlyBlocked(!onlyBlocked)}
+              className={cn(
+                'h-9 gap-1.5 text-xs font-medium transition-all shadow-2xs',
+                onlyBlocked
+                  ? 'bg-destructive/15 text-destructive border-destructive/40 hover:bg-destructive/25'
+                  : 'text-muted-foreground hover:text-foreground bg-background'
+              )}
+            >
+              <ShieldAlert className="size-3.5" />
+              <span>Terkendala</span>
+              {onlyBlocked && (
+                <span className="size-1.5 rounded-full bg-destructive animate-pulse" />
+              )}
+            </Button>
+
+            {/* Reset Filters Button */}
+            {hasActiveFilters && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1 px-2.5"
+                title="Reset semua filter"
+              >
+                <RotateCcw className="size-3.5" />
+                <span className="hidden sm:inline">Reset</span>
+              </Button>
+            )}
+
+            {/* Total Task Count Pill */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/60 border text-3xs font-mono text-muted-foreground shrink-0 ml-auto">
+              <span>{totalTasks} Task</span>
+            </div>
+          </div>
         </div>
       </div>
 

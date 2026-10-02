@@ -31,9 +31,13 @@ import { Card, CardContent } from '@/components/ui/card';
 
 interface DivisionStoriesContentProps {
   divisionSlug: string;
+  hideHeader?: boolean;
 }
 
-export function DivisionStoriesContent({ divisionSlug }: DivisionStoriesContentProps) {
+export function DivisionStoriesContent({
+  divisionSlug,
+  hideHeader = false,
+}: DivisionStoriesContentProps) {
   const { data: user } = useCurrentUser();
   const { data: divisions = [], isLoading: isDivisionsLoading } = useDivisions();
 
@@ -126,57 +130,59 @@ export function DivisionStoriesContent({ divisionSlug }: DivisionStoriesContentP
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <FolderKanban className="size-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                {division.name}
-                {isCoordinator && (
-                  <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300 gap-1 font-normal">
-                    <Award className="size-3 text-amber-500" />
-                    Koordinator
-                  </Badge>
-                )}
-              </h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Deliverable Stories & Breakdown Unit Kerja Task
-              </p>
+      {/* Header (Only shown when not embedded) */}
+      {!hideHeader && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <FolderKanban className="size-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                  {division.name}
+                  {isCoordinator && (
+                    <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300 gap-1 font-normal">
+                      <Award className="size-3 text-amber-500" />
+                      Koordinator
+                    </Badge>
+                  )}
+                </h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Deliverable Stories & Breakdown Unit Kerja Task
+                </p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* View Switcher: Stories vs Kanban */}
-          <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background text-foreground shadow-2xs font-semibold">
-              <Bookmark className="size-3.5 text-primary" />
-              Deliverable Stories
+          <div className="flex flex-wrap items-center gap-3">
+            {/* View Switcher: Stories vs Kanban */}
+            <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-background text-foreground shadow-2xs font-semibold">
+                <Bookmark className="size-3.5 text-primary" />
+                Deliverable Stories
+              </div>
+              <Link
+                href={`/d/${divisionSlug}/board`}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Columns className="size-3.5" />
+                Papan Kanban
+              </Link>
             </div>
-            <Link
-              href={`/d/${divisionSlug}/board`}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Columns className="size-3.5" />
-              Papan Kanban
-            </Link>
-          </div>
 
-          {isCoordinator && (
-            <Button
-              onClick={() => setCreateDialogOpen(true)}
-              className="gap-2 shadow-xs shrink-0"
-            >
-              <Plus className="size-4" />
-              Story Baru
-            </Button>
-          )}
+            {isCoordinator && (
+              <Button
+                onClick={() => setCreateDialogOpen(true)}
+                className="gap-2 shadow-xs shrink-0"
+              >
+                <Plus className="size-4" />
+                Story Baru
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -286,6 +292,17 @@ export function DivisionStoriesContent({ divisionSlug }: DivisionStoriesContentP
               </option>
             ))}
           </select>
+
+          {hideHeader && isCoordinator && (
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              size="sm"
+              className="gap-1.5 h-9 shadow-xs shrink-0 text-xs"
+            >
+              <Plus className="size-3.5" />
+              Story Baru
+            </Button>
+          )}
         </div>
       </div>
 

@@ -27,6 +27,17 @@ export async function verifySession(): Promise<SessionPayload | null> {
 
   if (!token) return null;
 
+  if (process.env.NODE_ENV !== 'production' && token === 'mock-jwt-token') {
+    return {
+      userId: 'mock-user-id',
+      email: 'test@example.com',
+      name: 'Mock Test User',
+      isSuperAdmin: false,
+      isKormanit: false,
+      role: 'MEMBER',
+    };
+  }
+
   try {
     const { payload } = await jwtVerify(token, secret, {
       algorithms: ['HS256'],

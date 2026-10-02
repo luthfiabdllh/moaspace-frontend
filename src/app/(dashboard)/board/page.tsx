@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function BoardPage() {
   return (
-    <div className="container max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full min-w-0 space-y-6 pb-8">
       <GlobalBoardContent />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   FolderKanban,
   Columns,
@@ -9,6 +10,7 @@ import {
   Bookmark,
   Layers,
   Award,
+  ExternalLink,
 } from 'lucide-react';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
@@ -55,6 +57,14 @@ export function GlobalBoardContent() {
     return divisions.find((d) => d.slug === selectedSlug);
   }, [divisions, selectedSlug]);
 
+  const isUserCoord = Boolean(
+    isGlobalAdmin ||
+      (activeDivision &&
+        userDivisions.some(
+          (ud) => ud.divisionId === activeDivision.id && ud.role === 'COORDINATOR'
+        ))
+  );
+
   const [activeTab, setActiveTab] = useState<'KANBAN' | 'HIERARCHY' | 'STORIES'>('KANBAN');
 
   const handleSelectDivision = (slug: string) => {
@@ -84,24 +94,57 @@ export function GlobalBoardContent() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Division Selector Pill Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Pilih Divisi Kerja KKN:
-          </span>
-          {activeDivision && (
-            <span className="text-2xs text-muted-foreground">
-              Slug: <code className="font-mono text-primary">{activeDivision.slug}</code>
-            </span>
-          )}
+    <div className="space-y-5">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs">
+              <FolderKanban className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                  {activeDivision ? activeDivision.name : 'Papan Kanban Divisi'}
+                  {activeDivision && isUserCoord && (
+                    <Badge variant="outline" className="text-2xs text-amber-600 border-amber-300 gap-1 font-normal">
+                      <Award className="size-3 text-amber-500" />
+                      Koordinator
+                    </Badge>
+                  )}
+                </h1>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Papan kerja terintegrasi: pantau unit task, alur kerja sprint, dan deliverable divisi KKN.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* Action Link to Full Division Workspace */}
+        {activeDivision && (
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/d/${activeDivision.slug}`}
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-lg border bg-card hover:bg-muted transition-colors shadow-2xs"
+            >
+              <span>Ruang Kerja Divisi</span>
+              <ExternalLink className="size-3 text-muted-foreground" />
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Control Deck: Division Pills + View Tabs */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-2.5 rounded-xl border border-border/80 bg-card shadow-2xs">
+        {/* Division Selector Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+          <span className="text-xs font-semibold text-muted-foreground px-1 shrink-0">
+            Divisi:
+          </span>
           {availableDivisions.map((div) => {
             const isSelected = div.slug === selectedSlug;
-            const isUserCoord = userDivisions.some(
+            const isDivCoord = userDivisions.some(
               (ud) => ud.divisionId === div.id && ud.role === 'COORDINATOR'
             );
 
@@ -110,74 +153,74 @@ export function GlobalBoardContent() {
                 key={div.id}
                 onClick={() => handleSelectDivision(div.slug)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 border shadow-2xs',
+                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all shrink-0 border select-none',
                   isSelected
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card text-muted-foreground border-border/80 hover:bg-muted hover:text-foreground'
+                    ? 'bg-primary text-primary-foreground border-primary shadow-xs font-semibold'
+                    : 'bg-background text-muted-foreground border-border/70 hover:bg-muted hover:text-foreground'
                 )}
               >
-                <FolderKanban className="size-3.5 shrink-0" />
                 <span>{div.name}</span>
-                {isUserCoord && (
-                  <span title="Koordinator Divisi">
-                    <Award className="size-3 text-amber-400 shrink-0" />
-                  </span>
+                {isDivCoord && (
+                  <Award
+                    className={cn(
+                      'size-3 shrink-0',
+                      isSelected ? 'text-primary-foreground' : 'text-amber-500'
+                    )}
+                  />
                 )}
               </button>
             );
           })}
         </div>
-      </div>
 
-      {/* Main Tabs Navigation: Papan Kanban vs Pohon Hierarki vs Deliverables */}
-      <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-3">
-        <div className="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1 text-xs font-medium">
+        {/* View Switcher Tabs */}
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0 self-start lg:self-auto">
           <button
             onClick={() => setActiveTab('KANBAN')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
               activeTab === 'KANBAN'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Columns className="size-3.5 text-primary" />
-            Papan Kanban (5 Kolom)
+            <span>Papan Kanban</span>
           </button>
 
           <button
             onClick={() => setActiveTab('HIERARCHY')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
               activeTab === 'HIERARCHY'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Sparkles className="size-3.5 text-indigo-500" />
-            Pohon Hierarki (Epic &rarr; Story &rarr; Task)
+            <span>Pohon Hierarki</span>
           </button>
 
           <button
             onClick={() => setActiveTab('STORIES')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-colors',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
               activeTab === 'STORIES'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Bookmark className="size-3.5 text-emerald-500" />
-            Daftar Deliverables
+            <span>Deliverables</span>
           </button>
         </div>
       </div>
 
       {/* Content depending on Active Tab */}
       {selectedSlug && (
-        <div>
+        <div className="min-w-0">
           {activeTab === 'KANBAN' && (
-            <DivisionBoardContent divisionSlug={selectedSlug} />
+            <DivisionBoardContent divisionSlug={selectedSlug} hideHeader={true} />
           )}
 
           {activeTab === 'HIERARCHY' && activeDivision && (
@@ -188,7 +231,7 @@ export function GlobalBoardContent() {
           )}
 
           {activeTab === 'STORIES' && (
-            <DivisionStoriesContent divisionSlug={selectedSlug} />
+            <DivisionStoriesContent divisionSlug={selectedSlug} hideHeader={true} />
           )}
         </div>
       )}

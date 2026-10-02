@@ -144,7 +144,7 @@ export function DivisionWorkspaceContent({
 
       {/* Tab Content */}
       {activeTab === 'KANBAN' && (
-        <DivisionBoardContent divisionSlug={divisionSlug} />
+        <DivisionBoardContent divisionSlug={divisionSlug} hideHeader={true} />
       )}
 
       {activeTab === 'HIERARCHY' && (
@@ -155,7 +155,7 @@ export function DivisionWorkspaceContent({
       )}
 
       {activeTab === 'STORIES' && (
-        <DivisionStoriesContent divisionSlug={divisionSlug} />
+        <DivisionStoriesContent divisionSlug={divisionSlug} hideHeader={true} />
       )}
     </div>
   );

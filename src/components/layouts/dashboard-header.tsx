@@ -3,6 +3,7 @@
 import { Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useUIStore } from '@/store/ui.store';
 import { useLogout } from '@/features/auth/api/use-mutations';
 
@@ -44,7 +45,10 @@ export function DashboardHeader({
       </Button>
 
       {/* Right side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Theme mode toggle */}
+        <ThemeToggle />
+
         {/* User avatar */}
         <Avatar aria-label={`Logged in as ${userName}`}>
           <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">

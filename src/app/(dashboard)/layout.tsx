@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import { verifySession } from '@/lib/verify-session';
-import { DashboardSidebar } from '@/components/layouts/dashboard-sidebar';
-import { DashboardHeader } from '@/components/layouts/dashboard-header';
+import { AppShell } from '@/components/sidebar-02';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -10,9 +9,10 @@ interface DashboardLayoutProps {
 /**
  * Dashboard Layout — AUTHORITATIVE auth check and global layout shell.
  *
- * This is the second layer of the two-layer auth pattern:
- * 1. proxy.ts: thin check — only verifies cookie existence
- * 2. THIS layout: cryptographic JWT verification via jose
+ * Fully integrated with @blocks-so/sidebar-02 application shell:
+ * - SidebarProvider, collapsible Sidebar, and SidebarInset
+ * - Dynamic breadcrumbs, division switcher, and role-based navigation
+ * - Dark & light mode toggle and accessible user sign-out
  */
 export default async function DashboardLayout({
   children,
@@ -31,18 +31,8 @@ export default async function DashboardLayout({
   const userName = typeof session.name === 'string' ? session.name : roleName;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <DashboardSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader userName={userName} />
-        <main
-          id="main-content"
-          className="flex-1 overflow-y-auto bg-background"
-          aria-label="Konten Utama"
-        >
-          {children}
-        </main>
-      </div>
-    </div>
+    <AppShell userName={userName} roleName={roleName}>
+      {children}
+    </AppShell>
   );
 }
