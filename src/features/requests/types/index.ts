@@ -57,6 +57,16 @@ export interface LinkedStorySummary {
   doneTasksCount: number;
 }
 
+export interface LinkedEpicSummary {
+  id: string;
+  title: string;
+  scope: 'DIVISION' | 'CROSS';
+  progressPercentage: number;
+  totalTasks: number;
+  doneTasks: number;
+  storiesCount: number;
+}
+
 export interface RequestPermissions {
   canSubmitDraft: boolean;
   canEditDraft: boolean;
@@ -64,6 +74,7 @@ export interface RequestPermissions {
   canTriage: boolean;
   canRespondInfo: boolean;
   canConvertToStory: boolean;
+  canConvertToEpic: boolean;
   canDeliver: boolean;
   canConfirmOrRevise: boolean;
 }
@@ -78,6 +89,7 @@ export const requestListItemSchema = z.object({
   requesterId: z.string(),
   templateId: z.string().nullable().optional(),
   linkedStoryId: z.string().nullable().optional(),
+  linkedEpicId: z.string().nullable().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   fromDivisionName: z.string(),
@@ -106,6 +118,7 @@ export const requestDetailSchema = requestListItemSchema.extend({
   requesterEmail: z.string().optional(),
   events: z.array(z.any()).default([]),
   linkedStory: z.any().nullable().optional(),
+  linkedEpic: z.any().nullable().optional(),
   permissions: z.object({
     canSubmitDraft: z.boolean().default(false),
     canEditDraft: z.boolean().default(false),
@@ -113,6 +126,7 @@ export const requestDetailSchema = requestListItemSchema.extend({
     canTriage: z.boolean(),
     canRespondInfo: z.boolean(),
     canConvertToStory: z.boolean(),
+    canConvertToEpic: z.boolean().default(false),
     canDeliver: z.boolean(),
     canConfirmOrRevise: z.boolean(),
   }),
@@ -167,6 +181,17 @@ export const convertToStorySchema = z.object({
   createInitialTask: z.boolean().optional(),
 });
 export type ConvertToStoryDTO = z.infer<typeof convertToStorySchema>;
+
+export const convertToEpicSchema = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  scope: z.enum(['DIVISION', 'CROSS']).default('CROSS'),
+  prokerTag: z.string().optional(),
+  targetDate: z.string().optional(),
+  createInitialStory: z.boolean().default(true),
+  participatingDivisionIds: z.array(z.string()).optional(),
+});
+export type ConvertToEpicDTO = z.infer<typeof convertToEpicSchema>;
 
 export const deliverRequestSchema = z.object({
   deliveryNotes: z.string().min(3, 'Catatan pengiriman wajib diisi'),

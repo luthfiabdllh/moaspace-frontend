@@ -24,6 +24,7 @@ import {
   ArrowRight,
   FileEdit,
   Send,
+  Target,
 } from 'lucide-react';
 import type { RequestDetail } from '../types';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ interface RequestStepperProps {
   onOpenTriage?: () => void;
   onOpenRespondInfo?: () => void;
   onOpenConvertToStory?: () => void;
+  onOpenConvertToEpic?: () => void;
   onOpenDeliver?: () => void;
   onOpenConfirm?: () => void;
 }
@@ -50,6 +52,7 @@ export function RequestStepper({
   onOpenTriage,
   onOpenRespondInfo,
   onOpenConvertToStory,
+  onOpenConvertToEpic,
   onOpenDeliver,
   onOpenConfirm,
 }: RequestStepperProps) {
@@ -91,14 +94,17 @@ export function RequestStepper({
     step2Desc = 'Diterima divisi tujuan';
   }
 
-  // Step 3: Pengerjaan (Kanban Execution)
+  // Step 3: Pengerjaan (Kanban / Inisiatif Execution)
   let step3State: StepState = 'upcoming';
   let step3Desc = 'Menunggu persetujuan';
   const linkedStory = request.linkedStory;
+  const linkedEpic = request.linkedEpic;
   const progressPercent =
     linkedStory && linkedStory.tasksCount > 0
       ? Math.round((linkedStory.doneTasksCount / linkedStory.tasksCount) * 100)
-      : null;
+      : linkedEpic
+        ? linkedEpic.progressPercent
+        : null;
 
   if (
     status === 'DRAFT' ||
@@ -111,13 +117,16 @@ export function RequestStepper({
     step3Desc = 'Belum dimulai';
   } else if (status === 'ACCEPTED') {
     step3State = 'active';
-    step3Desc = 'Siap dikonversi ke Story';
+    step3Desc = 'Siap dikonversi ke Epic/Story';
   } else if (status === 'IN_PROGRESS') {
     step3State = 'active';
-    step3Desc =
-      progressPercent !== null
-        ? `${linkedStory?.doneTasksCount}/${linkedStory?.tasksCount} task (${progressPercent}%)`
-        : 'Sedang dikerjakan di Kanban';
+    if (linkedEpic) {
+      step3Desc = `Inisiatif /epics: ${linkedEpic.doneTasksCount}/${linkedEpic.tasksCount} task (${linkedEpic.progressPercent}%)`;
+    } else if (progressPercent !== null) {
+      step3Desc = `${linkedStory?.doneTasksCount}/${linkedStory?.tasksCount} task (${progressPercent}%)`;
+    } else {
+      step3Desc = 'Sedang dikerjakan';
+    }
   } else {
     step3State = 'completed';
     step3Desc = 'Pengerjaan selesai';
@@ -349,21 +358,38 @@ export function RequestStepper({
       );
     }
 
-    if (status === 'ACCEPTED' && request.permissions.canConvertToStory) {
+    if (
+      status === 'ACCEPTED' &&
+      (request.permissions.canConvertToStory || request.permissions.canConvertToEpic)
+    ) {
       return (
-        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs">
           <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-200">
             <Sparkles className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-            <span>Permohonan telah diterima! Konversikan menjadi Story di papan Kanban untuk memulai pengerjaan.</span>
+            <span>Permohonan telah diterima! Anda dapat menjadikannya Inisiatif/Epic di /epics atau Story langsung di board Kanban.</span>
           </div>
-          <Button
-            size="sm"
-            onClick={onOpenConvertToStory}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 text-xs gap-1.5"
-          >
-            <Sparkles className="size-3.5" />
-            Konversi ke Story Kanban
-          </Button>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {request.permissions.canConvertToEpic && onOpenConvertToEpic && (
+              <Button
+                size="sm"
+                onClick={onOpenConvertToEpic}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 text-xs gap-1.5"
+              >
+                <Target className="size-3.5" />
+                Jadikan Inisiatif / Epic
+              </Button>
+            )}
+            {request.permissions.canConvertToStory && onOpenConvertToStory && (
+              <Button
+                size="sm"
+                onClick={onOpenConvertToStory}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 text-xs gap-1.5"
+              >
+                <Sparkles className="size-3.5" />
+                Konversi ke Story Kanban
+              </Button>
+            )}
+          </div>
         </div>
       );
     }

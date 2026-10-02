@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   Target,
   Calendar,
@@ -9,6 +10,7 @@ import {
   Clock,
   ArrowRight,
   Sparkles,
+  GitPullRequest,
 } from 'lucide-react';
 import type { EpicItem } from '../types';
 import { Badge } from '@/components/ui/badge';
@@ -54,6 +56,18 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
               <Badge variant="secondary" className="font-mono text-2xs">
                 #{epic.prokerTag}
               </Badge>
+            )}
+
+            {epic.sourceRequestId && (
+              <Link
+                href={`/requests/${epic.sourceRequestId}`}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1 text-2xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors border border-amber-500/30"
+                title={`Berasal dari Permohonan: ${epic.requestTitle || epic.sourceRequestId}`}
+              >
+                <GitPullRequest className="size-3 text-amber-600 dark:text-amber-400" />
+                <span>Req: Kolaborasi</span>
+              </Link>
             )}
           </div>
 

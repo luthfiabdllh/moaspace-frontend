@@ -25,6 +25,7 @@ const baseMockRequest: RequestDetail = {
     canTriage: false,
     canRespondInfo: false,
     canConvertToStory: false,
+    canConvertToEpic: false,
     canDeliver: false,
     canConfirmOrRevise: false,
   },
@@ -181,6 +182,38 @@ describe('RequestStepper', () => {
     const submitBtn = screen.getByRole('button', { name: /ajukan sekarang/i });
     fireEvent.click(submitBtn);
     expect(onOpenSubmitDraft).toHaveBeenCalled();
+  });
+
+  it('displays action strip with Jadikan Inisiatif / Epic button when in ACCEPTED status with canConvertToEpic', () => {
+    const onOpenConvertToEpic = vi.fn();
+    const onOpenConvertToStory = vi.fn();
+    const req: RequestDetail = {
+      ...baseMockRequest,
+      status: 'ACCEPTED',
+      permissions: {
+        ...baseMockRequest.permissions,
+        canConvertToEpic: true,
+        canConvertToStory: true,
+      },
+    };
+
+    render(
+      <RequestStepper
+        request={req}
+        scrollToSection={vi.fn()}
+        onOpenConvertToEpic={onOpenConvertToEpic}
+        onOpenConvertToStory={onOpenConvertToStory}
+      />
+    );
+
+    expect(screen.getByText(/permohonan telah diterima!/i)).toBeDefined();
+    const epicBtn = screen.getByRole('button', { name: /jadikan inisiatif \/ epic/i });
+    fireEvent.click(epicBtn);
+    expect(onOpenConvertToEpic).toHaveBeenCalled();
+
+    const storyBtn = screen.getByRole('button', { name: /konversi ke story kanban/i });
+    fireEvent.click(storyBtn);
+    expect(onOpenConvertToStory).toHaveBeenCalled();
   });
 });
 

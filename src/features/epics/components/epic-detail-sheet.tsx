@@ -21,6 +21,8 @@ import {
   AlertTriangle,
   Columns,
   Sparkles,
+  GitPullRequest,
+  ExternalLink,
 } from 'lucide-react';
 import type { EpicItem } from '../types';
 import { useStories } from '@/features/stories/api/use-queries';
@@ -149,6 +151,25 @@ export function EpicDetailSheet({
               )}
             </div>
           </SheetHeader>
+
+          {/* Origin Request Banner */}
+          {epic.sourceRequestId && (
+            <div className="flex items-center justify-between p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200">
+              <div className="flex items-center gap-2 min-w-0">
+                <GitPullRequest className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="truncate">
+                  Berasal dari permohonan: <strong>{epic.requestTitle || 'Permohonan Kolaborasi'}</strong>
+                </span>
+              </div>
+              <Link
+                href={`/requests/${epic.sourceRequestId}`}
+                className="inline-flex items-center gap-1 font-semibold text-primary hover:underline shrink-0 ml-2"
+              >
+                Lihat Brief
+                <ExternalLink className="size-3" />
+              </Link>
+            </div>
+          )}
 
           {/* Progress Card */}
           <div className="p-4 rounded-xl border bg-muted/20 space-y-2">

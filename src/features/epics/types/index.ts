@@ -18,6 +18,8 @@ export const epicItemSchema = z.object({
   ownerDivisionName: z.string().nullable().optional(),
   createdById: z.string(),
   creatorName: z.string().optional(),
+  sourceRequestId: z.string().nullable().optional(),
+  requestTitle: z.string().nullable().optional(),
   closedAt: z.string().nullable().optional(),
   isClosed: z.boolean().default(false),
   participatingDivisions: z.array(epicDivisionSchema).default([]),

@@ -14,6 +14,7 @@ import {
   TriageDialog,
   RespondInfoDialog,
   ConvertToStoryDialog,
+  ConvertToEpicDialog,
   DeliverDialog,
   ConfirmDialog,
   SubmitDraftDialog,
@@ -34,6 +35,7 @@ import {
   RotateCcw,
   Sparkles,
   Kanban,
+  Target,
   XCircle,
 } from 'lucide-react';
 
@@ -52,6 +54,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
   const [openTriage, setOpenTriage] = useState(false);
   const [openRespondInfo, setOpenRespondInfo] = useState(false);
   const [openConvertToStory, setOpenConvertToStory] = useState(false);
+  const [openConvertToEpic, setOpenConvertToEpic] = useState(false);
   const [openDeliver, setOpenDeliver] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
 
@@ -226,6 +229,17 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
               </Button>
             )}
 
+            {request.permissions.canConvertToEpic && (
+              <Button
+                size="sm"
+                onClick={() => setOpenConvertToEpic(true)}
+                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+              >
+                <Target className="h-4 w-4" />
+                Jadikan Inisiatif / Epic
+              </Button>
+            )}
+
             {request.permissions.canConvertToStory && (
               <Button
                 size="sm"
@@ -272,6 +286,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         onOpenTriage={() => setOpenTriage(true)}
         onOpenRespondInfo={() => setOpenRespondInfo(true)}
         onOpenConvertToStory={() => setOpenConvertToStory(true)}
+        onOpenConvertToEpic={() => setOpenConvertToEpic(true)}
         onOpenDeliver={() => setOpenDeliver(true)}
         onOpenConfirm={() => setOpenConfirm(true)}
       />
@@ -357,6 +372,53 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Linked Epic Progress Card (if converted to Epic) */}
+      {request.linkedEpic && (
+        <Card id="section-epic" className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6">
+          <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-400 font-semibold flex-wrap">
+                <Target className="h-4 w-4" />
+                <span>Inisiatif / Epic di /epics</span>
+                <span className="text-3xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-medium">
+                  {request.linkedEpic.scope === 'CROSS' ? 'Lintas Divisi' : 'Divisi'}
+                </span>
+                {request.linkedEpic.prokerTag && (
+                  <span className="text-3xs px-1.5 py-0.5 rounded bg-muted font-mono text-muted-foreground">
+                    #{request.linkedEpic.prokerTag}
+                  </span>
+                )}
+              </div>
+              <h4 className="text-sm font-bold text-foreground truncate">
+                {request.linkedEpic.title}
+              </h4>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                <span>
+                  Progres Task: {request.linkedEpic.doneTasksCount} / {request.linkedEpic.tasksCount} selesai ({request.linkedEpic.progressPercent}%)
+                </span>
+                <span>•</span>
+                <span>{request.linkedEpic.storiesCount} deliverable stories</span>
+                {request.linkedEpic.tasksCount > 0 && (
+                  <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-indigo-600 rounded-full transition-all"
+                      style={{ width: `${request.linkedEpic.progressPercent}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <Link href={`/epics?epicId=${request.linkedEpic.id}`}>
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950">
+                Buka di /epics
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       )}
@@ -480,6 +542,11 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         request={request}
         open={openConvertToStory}
         onOpenChange={setOpenConvertToStory}
+      />
+      <ConvertToEpicDialog
+        request={request}
+        open={openConvertToEpic}
+        onOpenChange={setOpenConvertToEpic}
       />
       <DeliverDialog
         request={request}

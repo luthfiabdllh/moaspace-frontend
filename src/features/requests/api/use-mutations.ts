@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { requestsKeys } from './query-keys';
 import { storyKeys } from '@/features/stories/api/query-keys';
+import { epicKeys } from '@/features/epics/api/query-keys';
 import type {
   CreateRequestDTO,
   UpdateRequestDTO,
@@ -10,6 +11,7 @@ import type {
   TriageRequestDTO,
   RespondInfoDTO,
   ConvertToStoryDTO,
+  ConvertToEpicDTO,
   DeliverRequestDTO,
   ConfirmRequestDTO,
 } from '../types';
@@ -119,6 +121,27 @@ export function useConvertToStory(requestId: string) {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Gagal mengonversi permohonan ke Story.');
+    },
+  });
+}
+
+export function useConvertToEpic(requestId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ConvertToEpicDTO) => {
+      const res = await axios.post(`/api/requests/${requestId}/convert-to-epic`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('Permohonan berhasil dikonversi menjadi Inisiatif/Epic di /epics!');
+      queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
+      queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: storyKeys.all });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Gagal mengonversi permohonan ke Inisiatif/Epic.');
     },
   });
 }

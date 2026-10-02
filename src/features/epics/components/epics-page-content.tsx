@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Target,
   Plus,
@@ -27,6 +28,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { EpicItem } from '../types';
 
 export function EpicsPageContent() {
+  const searchParams = useSearchParams();
+  const urlEpicId = searchParams.get('epicId');
+
   const { data: user } = useCurrentUser();
   const { data: divisions = [] } = useDivisions();
   const { data: epics = [], isLoading, error } = useEpics();
@@ -37,6 +41,16 @@ export function EpicsPageContent() {
   const [selectedScope, setSelectedScope] = useState<'ALL' | 'DIVISION' | 'CROSS'>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('ALL');
+
+  // Auto-open epic if epicId query param exists
+  useEffect(() => {
+    if (urlEpicId && epics.length > 0) {
+      const found = epics.find((e) => e.id === urlEpicId);
+      if (found) {
+        setSelectedEpic(found);
+      }
+    }
+  }, [urlEpicId, epics]);
 
   // Can the user create epics?
   // Superadmin, kormanit, or coordinator of any division
