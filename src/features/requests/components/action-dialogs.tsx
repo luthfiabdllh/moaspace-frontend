@@ -57,7 +57,7 @@ export function OriginApprovalDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-120">
         <DialogHeader>
           <DialogTitle>Persetujuan Koordinator Divisi Asal</DialogTitle>
           <DialogDescription>
@@ -139,7 +139,7 @@ export function TriageDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle>Triage Permohonan Masuk</DialogTitle>
           <DialogDescription>
@@ -240,7 +240,7 @@ export function RespondInfoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-137.5 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Lengkapi Informasi Permohonan</DialogTitle>
           <DialogDescription>
@@ -729,7 +729,7 @@ export function DeliverDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-130">
         <DialogHeader>
           <DialogTitle>Kirim Hasil Pengerjaan</DialogTitle>
           <DialogDescription>
@@ -764,7 +764,7 @@ export function DeliverDialog({
               </Button>
             </div>
 
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            <div className="space-y-2 max-h-50 overflow-y-auto">
               {attachments.map((att, idx) => (
                 <div key={idx} className="flex items-center gap-2">
                   <Input
@@ -842,7 +842,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-120">
         <DialogHeader>
           <DialogTitle>Konfirmasi Hasil Permohonan</DialogTitle>
           <DialogDescription>
@@ -918,7 +918,7 @@ export function SubmitDraftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-120">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Send className="h-5 w-5 text-primary" />
@@ -987,7 +987,7 @@ export function EditDraftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-137.5 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
