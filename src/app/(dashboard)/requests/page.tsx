@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function RequestsPage() {
   return (
-    <div className="container max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full min-w-0 pb-8">
       <RequestsListContent />
     </div>
   );
