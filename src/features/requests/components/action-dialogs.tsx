@@ -25,6 +25,7 @@ import {
   useSubmitDraft,
 } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
+import { NotionEditor } from '@/components/ui/notion-editor';
 import type { RequestDetail, RequestTemplate } from '../types';
 import { useEpics } from '@/features/epics/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
@@ -257,13 +258,11 @@ export function RespondInfoDialog({
           ) : (
             <div className="space-y-1.5">
               <Label htmlFor="generalBrief">Perbarui Brief Permohonan</Label>
-              <Textarea
-                id="generalBrief"
-                rows={4}
+              <NotionEditor
                 value={brief.deskripsi || ''}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setBrief({ ...brief, deskripsi: e.target.value })
-                }
+                onChange={(html) => setBrief({ ...brief, deskripsi: html })}
+                placeholder="Perbarui rincian kebutuhan... (Ketik '/' untuk opsi format blok)"
+                minHeight="min-h-[160px]"
               />
             </div>
           )}
@@ -1033,13 +1032,11 @@ export function EditDraftDialog({
           ) : (
             <div className="space-y-1.5 pt-2 border-t">
               <Label htmlFor="editDraftDeskripsi">Deskripsi Kebutuhan Brief</Label>
-              <Textarea
-                id="editDraftDeskripsi"
-                rows={4}
+              <NotionEditor
                 value={brief.deskripsi || ''}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setBrief({ ...brief, deskripsi: e.target.value })
-                }
+                onChange={(html) => setBrief({ ...brief, deskripsi: html })}
+                placeholder="Perbarui rincian kebutuhan... (Ketik '/' untuk opsi format blok)"
+                minHeight="min-h-[180px]"
               />
             </div>
           )}

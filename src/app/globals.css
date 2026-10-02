@@ -328,3 +328,301 @@
   border-bottom: 2px solid var(--primary-foreground);
   transform: rotate(-45deg) translate(1px, -1px);
 }
+
+/* ─── Tiptap & Notion-like Editor Styles ─── */
+.ProseMirror,
+.prose-notion {
+  outline: none;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before,
+.ProseMirror p.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted-foreground);
+  pointer-events: none;
+  height: 0;
+  opacity: 0.5;
+}
+
+/* Paragraphs */
+.ProseMirror p,
+.prose-notion p {
+  margin: 0.35rem 0;
+  line-height: 1.65;
+}
+
+/* Headings */
+.ProseMirror h1,
+.prose-notion h1 {
+  font-size: 1.65rem !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.4rem !important;
+  color: var(--foreground) !important;
+  letter-spacing: -0.02em;
+}
+
+.ProseMirror h2,
+.prose-notion h2 {
+  font-size: 1.35rem !important;
+  font-weight: 650 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.1rem !important;
+  margin-bottom: 0.35rem !important;
+  color: var(--foreground) !important;
+  letter-spacing: -0.015em;
+}
+
+.ProseMirror h3,
+.prose-notion h3 {
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  margin-top: 0.9rem !important;
+  margin-bottom: 0.3rem !important;
+  color: var(--foreground) !important;
+  letter-spacing: -0.01em;
+}
+
+/* Inline marks */
+.ProseMirror strong,
+.prose-notion strong {
+  font-weight: 700 !important;
+  color: var(--foreground);
+}
+
+.ProseMirror em,
+.prose-notion em {
+  font-style: italic !important;
+}
+
+.ProseMirror u,
+.prose-notion u {
+  text-decoration: underline !important;
+}
+
+.ProseMirror s,
+.prose-notion s {
+  text-decoration: line-through !important;
+}
+
+/* Bullet & Ordered Lists */
+.ProseMirror ul:not([data-type="taskList"]),
+.prose-notion ul:not([data-type="taskList"]) {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin: 0.4rem 0 !important;
+}
+
+.ProseMirror ol,
+.prose-notion ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin: 0.4rem 0 !important;
+}
+
+.ProseMirror li,
+.prose-notion li {
+  margin: 0.2rem 0;
+}
+
+.ProseMirror li > p,
+.prose-notion li > p {
+  margin: 0;
+  display: inline;
+}
+
+/* Task List */
+.ProseMirror ul[data-type="taskList"],
+.prose-notion ul[data-type="taskList"] {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0.4rem 0 !important;
+}
+
+.ProseMirror ul[data-type="taskList"] li,
+.prose-notion ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label,
+.prose-notion ul[data-type="taskList"] li > label {
+  user-select: none;
+  margin-top: 0.18rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div,
+.prose-notion ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"],
+.prose-notion ul[data-type="taskList"] input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: all 0.15s ease;
+  background-color: var(--background);
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked,
+.prose-notion ul[data-type="taskList"] input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked::before,
+.prose-notion ul[data-type="taskList"] input[type="checkbox"]:checked::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.25rem;
+  border-left: 2px solid var(--primary-foreground);
+  border-bottom: 2px solid var(--primary-foreground);
+  transform: rotate(-45deg) translate(0.5px, -0.5px);
+}
+
+.ProseMirror ul[data-type="taskList"] li[data-checked="true"] > div,
+.prose-notion ul[data-type="taskList"] li[data-checked="true"] > div {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+}
+
+/* Blockquote */
+.ProseMirror blockquote,
+.prose-notion blockquote {
+  border-left: 3px solid var(--primary);
+  padding-left: 0.85rem;
+  margin: 0.75rem 0;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+/* Code & Pre */
+.ProseMirror pre,
+.prose-notion pre {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+
+.ProseMirror code,
+.prose-notion code {
+  background: var(--muted);
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  border: 1px solid var(--border);
+}
+
+.ProseMirror pre code,
+.prose-notion pre code {
+  background: transparent;
+  padding: 0;
+  border: none;
+  font-size: inherit;
+}
+
+/* Horizontal Rule */
+.ProseMirror hr,
+.prose-notion hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.25rem 0;
+}
+
+/* ─── Notion-Style Dynamic Tables ─── */
+.ProseMirror .tableWrapper,
+.prose-notion .tableWrapper {
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0.85rem 0;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+}
+
+.ProseMirror table,
+.prose-notion table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.ProseMirror th,
+.ProseMirror td,
+.prose-notion th,
+.prose-notion td {
+  min-width: 90px;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border);
+  vertical-align: top;
+  box-sizing: border-box;
+  position: relative;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.ProseMirror th,
+.prose-notion th {
+  font-weight: 600;
+  text-align: left;
+  background-color: var(--muted);
+  color: var(--foreground);
+}
+
+.ProseMirror th > p,
+.ProseMirror td > p,
+.prose-notion th > p,
+.prose-notion td > p {
+  margin: 0;
+}
+
+.ProseMirror .selectedCell:after {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(var(--primary), 0.15);
+  pointer-events: none;
+}
+
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--primary);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize !important;
+}
+
+
+

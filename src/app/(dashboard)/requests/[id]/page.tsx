@@ -14,7 +14,7 @@ export default async function RequestDetailPage({
   const { id } = await params;
 
   return (
-    <div className="container max-w-5xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div className="w-full min-w-0 pb-8">
       <RequestDetailContent requestId={id} />
     </div>
   );

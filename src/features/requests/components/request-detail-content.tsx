@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { RequestStatusBadge } from './request-status-badge';
-import { RequestTimeline } from './request-timeline';
-import { RequestStepper } from './request-stepper';
-import { DynamicFormRenderer } from './dynamic-form-renderer';
+import React, { useState } from "react";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { RequestStatusBadge } from "./request-status-badge";
+import { RequestTimeline } from "./request-timeline";
+import { RequestStepper } from "./request-stepper";
+import { DynamicFormRenderer } from "./dynamic-form-renderer";
 import {
   OriginApprovalDialog,
   TriageDialog,
@@ -19,8 +19,8 @@ import {
   ConfirmDialog,
   SubmitDraftDialog,
   EditDraftDialog,
-} from './action-dialogs';
-import { useRequest, useTemplate } from '../api/use-queries';
+} from "./action-dialogs";
+import { useRequest, useTemplate } from "../api/use-queries";
 import {
   ArrowLeft,
   ArrowRight,
@@ -37,7 +37,7 @@ import {
   Kanban,
   Target,
   XCircle,
-} from 'lucide-react';
+} from "lucide-react";
 
 interface RequestDetailContentProps {
   requestId: string;
@@ -72,7 +72,8 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       <div className="max-w-4xl mx-auto py-12 text-center space-y-3">
         <h2 className="text-xl font-bold">Request Tidak Ditemukan</h2>
         <p className="text-sm text-muted-foreground">
-          Permohonan yang Anda cari mungkin telah dihapus atau Anda tidak memiliki akses.
+          Permohonan yang Anda cari mungkin telah dihapus atau Anda tidak
+          memiliki akses.
         </p>
         <Link href="/requests">
           <Button variant="outline" className="gap-2">
@@ -87,7 +88,9 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
   const formatDate = (dateStr?: string | null) => {
     if (!dateStr) return null;
     try {
-      return new Intl.DateTimeFormat('id-ID', { dateStyle: 'long' }).format(new Date(dateStr));
+      return new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(
+        new Date(dateStr),
+      );
     } catch {
       return dateStr;
     }
@@ -95,50 +98,52 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
 
   const initials = request.requesterName
     ? request.requesterName
-        .split(' ')
+        .split(" ")
         .map((n) => n[0])
-        .join('')
+        .join("")
         .toUpperCase()
         .slice(0, 2)
-    : 'U';
+    : "U";
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(sectionId);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
   const briefEntries = Object.entries(request.brief || {});
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-12">
+    <div className="w-full min-w-0 space-y-6 pb-8">
       {/* Back button */}
       <Link
         href="/requests"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors group"
       >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Kembali ke Daftar Request
+        <div className="flex size-6 items-center justify-center rounded-md border border-border/80 bg-background group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors">
+          <ArrowLeft className="size-3.5" />
+        </div>
+        <span>Kembali ke Daftar Permohonan</span>
       </Link>
 
       {/* Main Header Card */}
-      <Card className="shadow-xs border-border/80">
+      <Card className="shadow-xs border-border/80 overflow-hidden">
         <CardContent className="p-5 sm:p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Division Route & Template */}
             <div className="flex items-center gap-2 flex-wrap text-xs">
-              <span className="font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border/60">
+              <span className="font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border/60 shadow-2xs">
                 {request.fromDivisionName}
               </span>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border/60">
+              <span className="font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border/60 shadow-2xs">
                 {request.toDivisionName}
               </span>
               <RequestStatusBadge status={request.status} />
               {request.templateName && (
-                <span className="text-xs text-muted-foreground">
-                  ({request.templateName})
+                <span className="text-3xs font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                  {request.templateName}
                 </span>
               )}
             </div>
@@ -146,29 +151,41 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
             {/* Requester Info */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={request.requesterAvatar || ''} />
-                <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                <AvatarImage src={request.requesterAvatar || ""} />
+                <AvatarFallback className="text-[10px]">
+                  {initials}
+                </AvatarFallback>
               </Avatar>
               <div>
-                <span className="font-medium text-foreground">{request.requesterName}</span>
+                <span className="font-medium text-foreground">
+                  {request.requesterName}
+                </span>
                 {request.requesterEmail && (
-                  <span className="hidden sm:inline text-muted-foreground"> ({request.requesterEmail})</span>
+                  <span className="hidden sm:inline text-muted-foreground">
+                    {" "}
+                    ({request.requesterEmail})
+                  </span>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Title */}
+          {/* Title and metadata */}
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {request.title}
             </h1>
-            {request.deadline && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Target Deadline: {formatDate(request.deadline)}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1.5 flex-wrap">
+              {request.createdAt && (
+                <span>Diajukan pada {formatDate(request.createdAt)}</span>
+              )}
+              {request.deadline && (
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span>Target Deadline: {formatDate(request.deadline)}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Action Bar (Permission-driven) */}
@@ -292,19 +309,21 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       />
 
       {/* Special Status Banners */}
-      {request.status === 'DRAFT' && (
+      {request.status === "DRAFT" && (
         <div className="rounded-xl border border-zinc-500/30 bg-zinc-500/10 p-4 text-zinc-900 dark:text-zinc-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <FileEdit className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
             Permohonan Masih Berupa Draft
           </div>
           <p className="text-xs text-muted-foreground">
-            Permohonan ini belum resmi diajukan. Anda dapat mengedit rincian atau langsung mengajukannya agar diproses oleh koordinator dan divisi tujuan.
+            Permohonan ini belum resmi diajukan. Anda dapat mengedit rincian
+            atau langsung mengajukannya agar diproses oleh koordinator dan
+            divisi tujuan.
           </p>
         </div>
       )}
 
-      {request.status === 'NEED_INFO' && request.reason && (
+      {request.status === "NEED_INFO" && request.reason && (
         <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-purple-900 dark:text-purple-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <HelpCircle className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -314,7 +333,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         </div>
       )}
 
-      {request.status === 'REJECTED' && request.reason && (
+      {request.status === "REJECTED" && request.reason && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-900 dark:text-red-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -324,7 +343,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         </div>
       )}
 
-      {request.status === 'REVISION' && request.reason && (
+      {request.status === "REVISION" && request.reason && (
         <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-900 dark:text-rose-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <RotateCcw className="h-4 w-4 text-rose-600 dark:text-rose-400" />
@@ -335,8 +354,11 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       )}
 
       {/* Deliverable Results Card (if DELIVERED or CONFIRMED) */}
-      {(request.status === 'DELIVERED' || request.status === 'CONFIRMED') && (
-        <Card id="section-delivery" className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6">
+      {(request.status === "DELIVERED" || request.status === "CONFIRMED") && (
+        <Card
+          id="section-delivery"
+          className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6"
+        >
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
               <PackageCheck className="h-4 w-4" />
@@ -346,46 +368,56 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
           <CardContent className="space-y-3">
             {request.deliveryNotes && (
               <div className="text-xs text-foreground bg-background/80 p-3 rounded-lg border">
-                <span className="font-semibold block mb-1">Catatan Pengerja:</span>
+                <span className="font-semibold block mb-1">
+                  Catatan Pengerja:
+                </span>
                 <p className="whitespace-pre-wrap">{request.deliveryNotes}</p>
               </div>
             )}
 
-            {request.deliveryAttachments && request.deliveryAttachments.length > 0 && (
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-foreground">Berkas / Lampiran Hasil:</span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {request.deliveryAttachments.map((att, idx) => (
-                    <a
-                      key={idx}
-                      href={att.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-2.5 rounded-lg border bg-background hover:border-primary transition-colors text-xs group"
-                    >
-                      <span className="font-medium text-foreground truncate pr-2">
-                        {att.title || 'Tautan Hasil Kerja'}
-                      </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-                    </a>
-                  ))}
+            {request.deliveryAttachments &&
+              request.deliveryAttachments.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="text-xs font-semibold text-foreground">
+                    Berkas / Lampiran Hasil:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {request.deliveryAttachments.map((att, idx) => (
+                      <a
+                        key={idx}
+                        href={att.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2.5 rounded-lg border bg-background hover:border-primary transition-colors text-xs group"
+                      >
+                        <span className="font-medium text-foreground truncate pr-2">
+                          {att.title || "Tautan Hasil Kerja"}
+                        </span>
+                        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </CardContent>
         </Card>
       )}
 
       {/* Linked Epic Progress Card (if converted to Epic) */}
       {request.linkedEpic && (
-        <Card id="section-epic" className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6">
+        <Card
+          id="section-epic"
+          className="border-indigo-500/30 bg-indigo-500/5 scroll-mt-6"
+        >
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5 flex-1 min-w-0">
               <div className="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-400 font-semibold flex-wrap">
                 <Target className="h-4 w-4" />
                 <span>Inisiatif / Epic di /epics</span>
                 <span className="text-3xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-medium">
-                  {request.linkedEpic.scope === 'CROSS' ? 'Lintas Divisi' : 'Divisi'}
+                  {request.linkedEpic.scope === "CROSS"
+                    ? "Lintas Divisi"
+                    : "Divisi"}
                 </span>
                 {request.linkedEpic.prokerTag && (
                   <span className="text-3xs px-1.5 py-0.5 rounded bg-muted font-mono text-muted-foreground">
@@ -398,15 +430,21 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
               </h4>
               <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                 <span>
-                  Progres Task: {request.linkedEpic.doneTasksCount} / {request.linkedEpic.tasksCount} selesai ({request.linkedEpic.progressPercent}%)
+                  Progres Task: {request.linkedEpic.doneTasksCount} /{" "}
+                  {request.linkedEpic.tasksCount} selesai (
+                  {request.linkedEpic.progressPercent}%)
                 </span>
                 <span>•</span>
-                <span>{request.linkedEpic.storiesCount} deliverable stories</span>
+                <span>
+                  {request.linkedEpic.storiesCount} deliverable stories
+                </span>
                 {request.linkedEpic.tasksCount > 0 && (
                   <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-indigo-600 rounded-full transition-all"
-                      style={{ width: `${request.linkedEpic.progressPercent}%` }}
+                      style={{
+                        width: `${request.linkedEpic.progressPercent}%`,
+                      }}
                     />
                   </div>
                 )}
@@ -414,7 +452,11 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
             </div>
 
             <Link href={`/epics?epicId=${request.linkedEpic.id}`}>
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs shrink-0 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-50 dark:hover:bg-indigo-950"
+              >
                 Buka di /epics
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -425,7 +467,10 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
 
       {/* Linked Story Progress Card (if converted) */}
       {request.linkedStory && (
-        <Card id="section-story" className="border-primary/30 bg-primary/5 scroll-mt-6">
+        <Card
+          id="section-story"
+          className="border-primary/30 bg-primary/5 scroll-mt-6"
+        >
           <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1.5 flex-1 min-w-0">
               <div className="flex items-center gap-2 text-xs text-primary font-semibold">
@@ -437,7 +482,8 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
               </h4>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>
-                  Progres Task: {request.linkedStory.doneTasksCount} / {request.linkedStory.tasksCount} selesai
+                  Progres Task: {request.linkedStory.doneTasksCount} /{" "}
+                  {request.linkedStory.tasksCount} selesai
                 </span>
                 {request.linkedStory.tasksCount > 0 && (
                   <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -447,7 +493,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
                         width: `${Math.round(
                           (request.linkedStory.doneTasksCount /
                             request.linkedStory.tasksCount) *
-                            100
+                            100,
                         )}%`,
                       }}
                     />
@@ -457,7 +503,11 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
             </div>
 
             <Link href={`/board?divisionId=${request.toDivisionId}`}>
-              <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5 text-xs shrink-0"
+              >
                 Lihat Board Kanban
                 <ExternalLink className="h-3.5 w-3.5" />
               </Button>
@@ -467,14 +517,28 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       )}
 
       {/* Brief Content Card */}
-      <Card id="section-brief" className="scroll-mt-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            Rincian Brief Permohonan
-          </CardTitle>
+      <Card
+        id="section-brief"
+        className="scroll-mt-6 border-border/80 shadow-xs"
+      >
+        <CardHeader className="pb-3 border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <FileText className="h-4 w-4 text-primary" />
+              Rincian Brief Permohonan
+            </CardTitle>
+            {request.templateName ? (
+              <span className="text-3xs font-mono text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                Template: {request.templateName}
+              </span>
+            ) : (
+              <span className="text-3xs text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/50">
+                Formulir Bebas / Umum
+              </span>
+            )}
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           {template?.fields && template.fields.length > 0 ? (
             <DynamicFormRenderer
               fields={template.fields}
@@ -482,16 +546,39 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
               readOnly
             />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-4">
               {briefEntries.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Tidak ada detail brief tambahan.</p>
+                <p className="text-xs text-muted-foreground italic">
+                  Tidak ada detail brief tambahan.
+                </p>
               ) : (
-                briefEntries.map(([k, v]) => (
-                  <div key={k} className="text-xs space-y-0.5">
-                    <span className="font-semibold text-muted-foreground capitalize">{k}:</span>
-                    <p className="text-foreground whitespace-pre-wrap">{String(v)}</p>
-                  </div>
-                ))
+                briefEntries.map(([k, v]) => {
+                  const valStr = String(v ?? "");
+                  const isHtml = /<[a-z][\s\S]*>/i.test(valStr);
+                  const isMainDescription =
+                    k.toLowerCase() === "deskripsi" ||
+                    k.toLowerCase() === "description";
+
+                  return (
+                    <div key={k} className="space-y-1.5">
+                      {!isMainDescription && (
+                        <span className="text-xs font-semibold text-muted-foreground capitalize tracking-wide block">
+                          {k.replace(/_/g, " ")}:
+                        </span>
+                      )}
+                      {isHtml ? (
+                        <div
+                          className="prose-notion text-sm leading-relaxed text-foreground bg-muted/10 border border-border/60 rounded-xl p-4 sm:p-5 overflow-hidden"
+                          dangerouslySetInnerHTML={{ __html: valStr }}
+                        />
+                      ) : (
+                        <div className="text-sm text-foreground bg-muted/10 border border-border/60 rounded-xl p-4 whitespace-pre-wrap leading-relaxed">
+                          {valStr}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

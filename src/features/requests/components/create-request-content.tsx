@@ -1,14 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { NotionEditor } from "@/components/ui/notion-editor";
 import {
   Stepper,
   StepperItem,
@@ -18,27 +24,23 @@ import {
   StepperDescription,
   StepperSeparator,
   type StepState,
-} from '@/components/ui/stepper';
-import { useCurrentUser } from '@/features/auth/api/use-queries';
-import { useDivisions } from '@/features/divisions/api/use-queries';
-import { useDivisionTemplates } from '../api/use-queries';
-import { useCreateRequest } from '../api/use-mutations';
-import { DynamicFormRenderer } from './dynamic-form-renderer';
+} from "@/components/ui/stepper";
+import { useCurrentUser } from "@/features/auth/api/use-queries";
+import { useDivisions } from "@/features/divisions/api/use-queries";
+import { useDivisionTemplates } from "../api/use-queries";
+import { useCreateRequest } from "../api/use-mutations";
+import { DynamicFormRenderer } from "./dynamic-form-renderer";
 import {
   ArrowLeft,
   ArrowRight,
-  Calendar,
-  Layers,
   Send,
   Sparkles,
   FileText,
   Check,
-  CheckCircle2,
-  FileEdit,
-  FolderGit2,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+  GitPullRequest,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export function CreateRequestContent() {
   const router = useRouter();
@@ -48,14 +50,15 @@ export function CreateRequestContent() {
   // Wizard state: 1 = Rute Divisi, 2 = Template, 3 = Rincian & Brief
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
-  const [fromDivisionId, setFromDivisionId] = useState('');
-  const [toDivisionId, setToDivisionId] = useState('');
-  const [templateId, setTemplateId] = useState('');
-  const [title, setTitle] = useState('');
-  const [deadline, setDeadline] = useState('');
+  const [fromDivisionId, setFromDivisionId] = useState("");
+  const [toDivisionId, setToDivisionId] = useState("");
+  const [templateId, setTemplateId] = useState("");
+  const [title, setTitle] = useState("");
+  const [deadline, setDeadline] = useState("");
   const [brief, setBrief] = useState<Record<string, any>>({});
 
-  const { data: templates, isLoading: loadingTemplates } = useDivisionTemplates(toDivisionId);
+  const { data: templates, isLoading: loadingTemplates } =
+    useDivisionTemplates(toDivisionId);
   const createMutation = useCreateRequest();
 
   // Set default origin division to user's first division
@@ -68,7 +71,7 @@ export function CreateRequestContent() {
   // When toDivisionId changes, reset templateId and brief
   const handleToDivisionChange = (newToDivId: string) => {
     setToDivisionId(newToDivId);
-    setTemplateId('');
+    setTemplateId("");
     setBrief({});
   };
 
@@ -84,25 +87,29 @@ export function CreateRequestContent() {
   const availableOriginDivisions =
     user?.isSuperAdmin || user?.isKormanit
       ? divisions || []
-      : user?.divisions?.map((d) => ({ id: d.divisionId, name: d.divisionName })) || [];
+      : user?.divisions?.map((d) => ({
+          id: d.divisionId,
+          name: d.divisionName,
+        })) || [];
 
   // Available destination divisions (exclude chosen origin division)
   const availableTargetDivisions =
     divisions?.filter((d) => d.id !== fromDivisionId) || [];
 
   const fromDivisionName =
-    availableOriginDivisions.find((d) => d.id === fromDivisionId)?.name || 'Pilih Divisi';
+    availableOriginDivisions.find((d) => d.id === fromDivisionId)?.name ||
+    "Pilih Divisi";
   const toDivisionName =
-    divisions?.find((d) => d.id === toDivisionId)?.name || 'Pilih Divisi';
+    divisions?.find((d) => d.id === toDivisionId)?.name || "Pilih Divisi";
 
   // Navigation handlers
   const handleNextFromStep1 = () => {
     if (!fromDivisionId) {
-      toast.error('Pilih divisi asal pemohon.');
+      toast.error("Pilih divisi asal pemohon.");
       return;
     }
     if (!toDivisionId) {
-      toast.error('Pilih divisi tujuan permohonan.');
+      toast.error("Pilih divisi tujuan permohonan.");
       return;
     }
     setCurrentStep(2);
@@ -119,7 +126,7 @@ export function CreateRequestContent() {
     }
     if (stepIndex === 2) {
       if (!fromDivisionId || !toDivisionId) {
-        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+        toast.info("Lengkapi divisi asal dan tujuan terlebih dahulu.");
         return;
       }
       setCurrentStep(2);
@@ -127,7 +134,7 @@ export function CreateRequestContent() {
     }
     if (stepIndex === 3) {
       if (!fromDivisionId || !toDivisionId) {
-        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+        toast.info("Lengkapi divisi asal dan tujuan terlebih dahulu.");
         return;
       }
       setCurrentStep(3);
@@ -136,17 +143,17 @@ export function CreateRequestContent() {
 
   const handleSaveDraft = async () => {
     if (!fromDivisionId) {
-      toast.error('Pilih divisi asal pembuat request.');
+      toast.error("Pilih divisi asal pembuat request.");
       setCurrentStep(1);
       return;
     }
     if (!toDivisionId) {
-      toast.error('Pilih divisi tujuan.');
+      toast.error("Pilih divisi tujuan.");
       setCurrentStep(1);
       return;
     }
     if (!title.trim()) {
-      toast.error('Judul permohonan wajib diisi untuk menyimpan draft.');
+      toast.error("Judul permohonan wajib diisi untuk menyimpan draft.");
       setCurrentStep(3);
       return;
     }
@@ -162,7 +169,7 @@ export function CreateRequestContent() {
         isDraft: true,
       });
 
-      router.push('/requests');
+      router.push("/requests");
     } catch {
       // Error handled by mutation
     }
@@ -172,17 +179,17 @@ export function CreateRequestContent() {
     e.preventDefault();
 
     if (!fromDivisionId) {
-      toast.error('Pilih divisi asal pembuat request.');
+      toast.error("Pilih divisi asal pembuat request.");
       setCurrentStep(1);
       return;
     }
     if (!toDivisionId) {
-      toast.error('Pilih divisi tujuan.');
+      toast.error("Pilih divisi tujuan.");
       setCurrentStep(1);
       return;
     }
     if (!title.trim()) {
-      toast.error('Judul permohonan wajib diisi.');
+      toast.error("Judul permohonan wajib diisi.");
       setCurrentStep(3);
       return;
     }
@@ -190,15 +197,18 @@ export function CreateRequestContent() {
     // Validate required fields in template
     if (selectedTemplate?.fields) {
       for (const f of selectedTemplate.fields) {
-        if (f.required && (brief[f.key] === undefined || brief[f.key] === '')) {
+        if (f.required && (brief[f.key] === undefined || brief[f.key] === "")) {
           toast.error(`Field "${f.label}" wajib diisi.`);
           setCurrentStep(3);
           return;
         }
       }
     } else {
-      if (!brief.deskripsi || !String(brief.deskripsi).trim()) {
-        toast.error('Deskripsi brief permohonan wajib diisi.');
+      const plainText = String(brief.deskripsi || "")
+        .replace(/<[^>]*>/g, "")
+        .trim();
+      if (!plainText) {
+        toast.error("Deskripsi brief permohonan wajib diisi.");
         setCurrentStep(3);
         return;
       }
@@ -215,7 +225,7 @@ export function CreateRequestContent() {
         isDraft: false,
       });
 
-      router.push('/requests');
+      router.push("/requests");
     } catch {
       // Error handled by mutation
     }
@@ -224,68 +234,73 @@ export function CreateRequestContent() {
   // Stepper state calculation
   const step1State: StepState =
     currentStep === 1
-      ? 'active'
+      ? "active"
       : fromDivisionId && toDivisionId
-        ? 'completed'
-        : 'active';
+        ? "completed"
+        : "active";
 
   const step2State: StepState =
-    currentStep === 2
-      ? 'active'
-      : currentStep > 2
-        ? 'completed'
-        : 'upcoming';
+    currentStep === 2 ? "active" : currentStep > 2 ? "completed" : "upcoming";
 
-  const step3State: StepState =
-    currentStep === 3 ? 'active' : 'upcoming';
+  const step3State: StepState = currentStep === 3 ? "active" : "upcoming";
 
   const steps = [
     {
       step: 1 as const,
-      title: 'Rute Divisi',
-      desc: fromDivisionId && toDivisionId ? `${fromDivisionName} ➔ ${toDivisionName}` : 'Pilih divisi asal & tujuan',
+      title: "Rute Divisi",
+      desc:
+        fromDivisionId && toDivisionId
+          ? `${fromDivisionName} ➔ ${toDivisionName}`
+          : "Pilih divisi asal & tujuan",
       state: step1State,
     },
     {
       step: 2 as const,
-      title: 'Format Template',
-      desc: selectedTemplate ? selectedTemplate.name : 'Formulir Umum',
+      title: "Format Template",
+      desc: selectedTemplate ? selectedTemplate.name : "Formulir Umum",
       state: step2State,
     },
     {
       step: 3 as const,
-      title: 'Rincian & Brief',
-      desc: title ? title : 'Isi formulir kebutuhan',
+      title: "Rincian & Brief",
+      desc: title ? title : "Isi formulir kebutuhan",
       state: step3State,
     },
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-16">
+    <div className="w-full min-w-0 space-y-6 pb-16">
       {/* Back button */}
-      <Link
-        href="/requests"
-        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
-        Kembali ke Daftar Request
-      </Link>
-
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Layers className="h-6 w-6 text-primary" />
-          Pengajuan Request Kolaborasi Antar Divisi
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Ajukan permohonan bantuan pengerjaan tugas kepada divisi lain menggunakan formulir bertahap yang terstruktur.
-        </p>
+        <Link
+          href="/requests"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="size-3.5" />
+          <span>Kembali ke Daftar Request</span>
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-2xs shrink-0">
+          <GitPullRequest className="size-5" />
+        </div>
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            Pengajuan Request Kolaborasi Antar Divisi
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Ajukan permohonan bantuan pengerjaan tugas kepada divisi lain
+            menggunakan formulir bertahap yang terstruktur.
+          </p>
+        </div>
       </div>
 
       {/* Interactive Form Stepper Header */}
       <Card className="border-border/80 shadow-xs overflow-hidden">
         <CardContent className="p-4 sm:p-5">
           <div className="overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-            <Stepper className="min-w-140 sm:min-w-0">
+            <Stepper className="min-w-140 sm:min-w-0 max-w-4xl mx-auto">
               {steps.map((st, index) => {
                 const isLast = index === steps.length - 1;
                 return (
@@ -296,12 +311,19 @@ export function CreateRequestContent() {
                         title={`Lompat ke Tahap ${st.step}: ${st.title}`}
                         className="cursor-pointer hover:bg-muted/40"
                       >
-                        <StepperIndicator state={st.state} stepNumber={st.step} />
+                        <StepperIndicator
+                          state={st.state}
+                          stepNumber={st.step}
+                        />
                         <div className="flex flex-col text-left min-w-0">
-                          <StepperTitle className={cn(st.state === 'active' && 'text-primary font-bold')}>
+                          <StepperTitle
+                            className={cn(
+                              st.state === "active" && "text-primary font-bold",
+                            )}
+                          >
                             {st.title}
                           </StepperTitle>
-                          <StepperDescription className="max-w-[160px] truncate">
+                          <StepperDescription className="max-w-40 truncate">
                             {st.desc}
                           </StepperDescription>
                         </div>
@@ -333,14 +355,16 @@ export function CreateRequestContent() {
                 </Badge>
               </div>
               <CardDescription className="text-xs">
-                Tentukan divisi Anda sebagai pemohon dan divisi yang dituju untuk berkolaborasi.
+                Tentukan divisi Anda sebagai pemohon dan divisi yang dituju
+                untuk berkolaborasi.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="fromDivision" className="text-xs font-medium">
-                    Divisi Asal (Pemohon) <span className="text-destructive">*</span>
+                    Divisi Asal (Pemohon){" "}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <select
                     id="fromDivision"
@@ -348,7 +372,7 @@ export function CreateRequestContent() {
                     onChange={(e) => {
                       setFromDivisionId(e.target.value);
                       if (toDivisionId === e.target.value) {
-                        setToDivisionId('');
+                        setToDivisionId("");
                       }
                     }}
                     className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
@@ -387,10 +411,15 @@ export function CreateRequestContent() {
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs">
                   <Sparkles className="size-4 text-primary shrink-0" />
                   <span className="text-muted-foreground">
-                    Rute kolaborasi:{' '}
-                    <strong className="text-foreground">{fromDivisionName}</strong>{' '}
-                    akan mengajukan permohonan ke{' '}
-                    <strong className="text-foreground">{toDivisionName}</strong>.
+                    Rute kolaborasi:{" "}
+                    <strong className="text-foreground">
+                      {fromDivisionName}
+                    </strong>{" "}
+                    akan mengajukan permohonan ke{" "}
+                    <strong className="text-foreground">
+                      {toDivisionName}
+                    </strong>
+                    .
                   </span>
                 </div>
               )}
@@ -432,7 +461,8 @@ export function CreateRequestContent() {
                 </Badge>
               </div>
               <CardDescription className="text-xs">
-                Pilih format formulir umum atau gunakan template khusus yang telah disediakan oleh divisi {toDivisionName}.
+                Pilih format formulir umum atau gunakan template khusus yang
+                telah disediakan oleh divisi {toDivisionName}.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -445,35 +475,41 @@ export function CreateRequestContent() {
                 <div className="grid grid-cols-1 gap-2.5">
                   {/* Option 1: Formulir Umum */}
                   <div
-                    onClick={() => handleTemplateChange('')}
+                    onClick={() => handleTemplateChange("")}
                     className={cn(
-                      'flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none',
-                      templateId === ''
-                        ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
-                        : 'border-border/80 bg-background hover:bg-muted/40'
+                      "flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none",
+                      templateId === ""
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                        : "border-border/80 bg-background hover:bg-muted/40",
                     )}
                   >
                     <div
                       className={cn(
-                        'flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5',
-                        templateId === ''
-                          ? 'border-primary bg-primary text-primary-foreground'
-                          : 'border-muted-foreground/40'
+                        "flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5",
+                        templateId === ""
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-muted-foreground/40",
                       )}
                     >
-                      {templateId === '' && <Check className="size-3 stroke-[3]" />}
+                      {templateId === "" && (
+                        <Check className="size-3 stroke-3" />
+                      )}
                     </div>
                     <div className="space-y-0.5 flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-foreground">
                           Formulir Umum
                         </span>
-                        <Badge variant="secondary" className="text-3xs font-normal">
+                        <Badge
+                          variant="secondary"
+                          className="text-3xs font-normal"
+                        >
                           Bebas Deskripsi
                         </Badge>
                       </div>
                       <p className="text-2xs text-muted-foreground">
-                        Cocok untuk kebutuhan permohonan umum tanpa spesifikasi field dinamis khusus.
+                        Cocok untuk kebutuhan permohonan umum tanpa spesifikasi
+                        field dinamis khusus.
                       </p>
                     </div>
                   </div>
@@ -487,28 +523,33 @@ export function CreateRequestContent() {
                           key={t.id}
                           onClick={() => handleTemplateChange(t.id)}
                           className={cn(
-                            'flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none',
+                            "flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer select-none",
                             isSelected
-                              ? 'border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs'
-                              : 'border-border/80 bg-background hover:bg-muted/40'
+                              ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                              : "border-border/80 bg-background hover:bg-muted/40",
                           )}
                         >
                           <div
                             className={cn(
-                              'flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5',
+                              "flex size-5 shrink-0 items-center justify-center rounded-full border mt-0.5",
                               isSelected
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'border-muted-foreground/40'
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-muted-foreground/40",
                             )}
                           >
-                            {isSelected && <Check className="size-3 stroke-[3]" />}
+                            {isSelected && (
+                              <Check className="size-3 stroke-3" />
+                            )}
                           </div>
                           <div className="space-y-0.5 flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-xs font-semibold text-foreground">
                                 {t.name}
                               </span>
-                              <Badge variant="outline" className="text-3xs font-mono text-primary border-primary/30">
+                              <Badge
+                                variant="outline"
+                                className="text-3xs font-mono text-primary border-primary/30"
+                              >
                                 {t.fields?.length || 0} Field Terstruktur
                               </Badge>
                             </div>
@@ -523,7 +564,8 @@ export function CreateRequestContent() {
                     })
                   ) : (
                     <p className="text-2xs text-muted-foreground italic px-1">
-                      Divisi {toDivisionName} belum mendaftarkan template khusus. Anda dapat menggunakan Formulir Umum di atas.
+                      Divisi {toDivisionName} belum mendaftarkan template
+                      khusus. Anda dapat menggunakan Formulir Umum di atas.
                     </p>
                   )}
                 </div>
@@ -570,19 +612,29 @@ export function CreateRequestContent() {
                 </Badge>
               </div>
               <CardDescription className="text-xs">
-                Lengkapi judul, tenggat waktu (deadline), dan data brief spesifikasi kebutuhan kerja.
+                Lengkapi judul, tenggat waktu (deadline), dan data brief
+                spesifikasi kebutuhan kerja.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Summary of route & template with quick change */}
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border text-2xs text-muted-foreground">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="font-semibold text-foreground">{fromDivisionName}</span>
+                  <span className="font-semibold text-foreground">
+                    {fromDivisionName}
+                  </span>
                   <ArrowRight className="size-3 text-muted-foreground" />
-                  <span className="font-semibold text-foreground">{toDivisionName}</span>
+                  <span className="font-semibold text-foreground">
+                    {toDivisionName}
+                  </span>
                   <span className="text-muted-foreground/60">•</span>
                   <span>
-                    Template: <strong className="text-foreground">{selectedTemplate ? selectedTemplate.name : 'Formulir Umum'}</strong>
+                    Template:{" "}
+                    <strong className="text-foreground">
+                      {selectedTemplate
+                        ? selectedTemplate.name
+                        : "Formulir Umum"}
+                    </strong>
                   </span>
                 </div>
                 <button
@@ -624,28 +676,40 @@ export function CreateRequestContent() {
               {/* Dynamic form or General brief */}
               <div className="pt-2 border-t space-y-3">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {selectedTemplate ? `Brief Khusus: ${selectedTemplate.name}` : 'Brief Permohonan'}
+                  {selectedTemplate
+                    ? `Brief Khusus: ${selectedTemplate.name}`
+                    : "Brief Permohonan"}
                 </Label>
 
-                {selectedTemplate?.fields && selectedTemplate.fields.length > 0 ? (
+                {selectedTemplate?.fields &&
+                selectedTemplate.fields.length > 0 ? (
                   <DynamicFormRenderer
                     fields={selectedTemplate.fields}
                     values={brief}
                     onChange={setBrief}
                   />
                 ) : (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="generalDeskripsi" className="text-xs font-medium">
-                      Deskripsi Kebutuhan &amp; Spesifikasi <span className="text-destructive">*</span>
-                    </Label>
-                    <Textarea
-                      id="generalDeskripsi"
-                      rows={5}
-                      placeholder="Jelaskan secara mendetail apa yang dibutuhkan, konteks program kerja, referensi, dan ekspektasi hasil..."
-                      value={brief.deskripsi || ''}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setBrief({ ...brief, deskripsi: e.target.value })
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor="generalDeskripsi"
+                        className="text-xs font-medium"
+                      >
+                        Deskripsi Kebutuhan &amp; Spesifikasi{" "}
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <span className="text-3xs text-muted-foreground font-normal">
+                        Ketik &apos;/&apos; untuk opsi format blok (Heading,
+                        Checklist, dll)
+                      </span>
+                    </div>
+                    <NotionEditor
+                      value={brief.deskripsi || ""}
+                      onChange={(html) =>
+                        setBrief({ ...brief, deskripsi: html })
                       }
+                      placeholder="Jelaskan kebutuhan secara detail. Ketik '/' untuk format blok Notion (Heading, Checklist, Kutipan, dll)..."
+                      minHeight="min-h-[220px]"
                     />
                   </div>
                 )}
@@ -674,7 +738,9 @@ export function CreateRequestContent() {
                     className="gap-2"
                   >
                     <FileText className="h-4 w-4" />
-                    {createMutation.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
+                    {createMutation.isPending
+                      ? "Menyimpan..."
+                      : "Simpan sebagai Draft"}
                   </Button>
                   <Button
                     type="submit"
@@ -683,7 +749,9 @@ export function CreateRequestContent() {
                     className="gap-2"
                   >
                     <Send className="h-4 w-4" />
-                    {createMutation.isPending ? 'Mengajukan...' : 'Kirim Permohonan'}
+                    {createMutation.isPending
+                      ? "Mengajukan..."
+                      : "Kirim Permohonan"}
                   </Button>
                 </div>
               </div>
@@ -694,4 +762,3 @@ export function CreateRequestContent() {
     </div>
   );
 }
-

@@ -4,6 +4,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { NotionEditor } from '@/components/ui/notion-editor';
 import type { TemplateFieldDefinition } from '../types';
 
 interface DynamicFormRendererProps {
@@ -40,14 +41,29 @@ export function DynamicFormRenderer({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fields.map((f) => {
           const val = values[f.key];
+          const isHtml =
+            typeof val === 'string' &&
+            (val.includes('<p>') ||
+              val.includes('<h') ||
+              val.includes('<ul') ||
+              val.includes('<li>') ||
+              val.includes('<blockquote'));
+
           return (
-            <div key={f.key} className="space-y-1">
+            <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2 space-y-1' : 'space-y-1'}>
               <span className="text-xs font-medium text-muted-foreground">{f.label}</span>
-              <p className="text-sm font-semibold text-foreground whitespace-pre-wrap">
-                {val !== undefined && val !== null && val !== ''
-                  ? String(val)
-                  : '—'}
-              </p>
+              {isHtml ? (
+                <div
+                  className="prose-notion text-xs leading-relaxed text-foreground bg-muted/20 border border-border/60 rounded-lg p-3"
+                  dangerouslySetInnerHTML={{ __html: val }}
+                />
+              ) : (
+                <p className="text-xs font-semibold text-foreground whitespace-pre-wrap">
+                  {val !== undefined && val !== null && val !== ''
+                    ? String(val)
+                    : '—'}
+                </p>
+              )}
             </div>
           );
         })}
@@ -62,20 +78,17 @@ export function DynamicFormRenderer({
 
         return (
           <div key={field.key} className="space-y-1.5">
-            <Label htmlFor={`field-${field.key}`} className="flex items-center gap-1 text-sm font-medium">
+            <Label htmlFor={`field-${field.key}`} className="flex items-center gap-1 text-xs font-medium">
               {field.label}
               {field.required && <span className="text-destructive">*</span>}
             </Label>
 
             {field.type === 'textarea' ? (
-              <Textarea
-                id={`field-${field.key}`}
-                rows={3}
-                placeholder={field.placeholder || `Masukkan ${field.label.toLowerCase()}...`}
+              <NotionEditor
                 value={value}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  handleFieldChange(field.key, e.target.value)
-                }
+                onChange={(html) => handleFieldChange(field.key, html)}
+                placeholder={field.placeholder || `Ketik '/' untuk opsi format blok...`}
+                minHeight="min-h-[140px]"
               />
             ) : field.type === 'select' ? (
               <select

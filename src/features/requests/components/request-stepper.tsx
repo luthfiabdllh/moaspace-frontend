@@ -473,7 +473,7 @@ export function RequestStepper({
 
         {/* Responsive Horizontal Stepper */}
         <div className="overflow-x-auto pb-1 -mx-2 px-2 sm:mx-0 sm:px-0">
-          <Stepper className="min-w-160 sm:min-w-0">
+          <Stepper className="min-w-160 sm:min-w-0 max-w-5xl mx-auto">
             {steps.map((st, index) => {
               const isLast = index === steps.length - 1;
               return (
