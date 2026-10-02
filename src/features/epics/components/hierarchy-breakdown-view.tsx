@@ -14,7 +14,9 @@ import {
   Layers,
   Sparkles,
   ExternalLink,
+  GitPullRequest,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useEpics } from '../api/use-queries';
 import { useStories } from '@/features/stories/api/use-queries';
 import { useTasks } from '@/features/tasks/api/use-queries';
@@ -330,6 +332,17 @@ export function HierarchyBreakdownView({
                                       >
                                         {story.isClosed ? 'Selesai' : 'Aktif'}
                                       </Badge>
+                                      {story.sourceRequestId && (
+                                        <Link
+                                          href={`/requests/${story.sourceRequestId}`}
+                                          onClick={(e) => e.stopPropagation()}
+                                          className="inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-100 transition-colors"
+                                          title="Berasal dari Permohonan Lintas Divisi"
+                                        >
+                                          <GitPullRequest className="size-2.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                          Req Antar-Divisi
+                                        </Link>
+                                      )}
                                       {story.targetDate && (
                                         <span className="text-3xs text-muted-foreground flex items-center gap-1">
                                           <Calendar className="size-2.5" />
@@ -494,6 +507,19 @@ export function HierarchyBreakdownView({
                             </button>
 
                             <div className="space-y-0.5 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {story.sourceRequestId && (
+                                  <Link
+                                    href={`/requests/${story.sourceRequestId}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-100 transition-colors"
+                                    title="Berasal dari Permohonan Lintas Divisi"
+                                  >
+                                    <GitPullRequest className="size-2.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                    Req Antar-Divisi
+                                  </Link>
+                                )}
+                              </div>
                               <h4 className="font-semibold text-xs sm:text-sm text-foreground truncate">
                                 {story.title}
                               </h4>

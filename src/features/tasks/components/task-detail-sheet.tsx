@@ -15,7 +15,10 @@ import {
   Zap,
   Lock,
   Edit2,
+  GitPullRequest,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 import { isAxiosError } from 'axios';
 import { useTask } from '../api/use-queries';
 import { useUpdateTask, useDeleteTask } from '../api/use-mutations';
@@ -244,9 +247,42 @@ export function TaskDetailSheet({
                 <SheetDescription className="text-xs text-muted-foreground">
                   Bagian dari story:{' '}
                   <span className="font-semibold text-foreground">{task.storyTitle || 'Story'}</span>
+                  {task.epicTitle && (
+                    <>
+                      {' • Epic: '}
+                      <span className="font-semibold text-indigo-600 dark:text-indigo-400">{task.epicTitle}</span>
+                    </>
+                  )}
                   {task.divisionName && ` • Divisi ${task.divisionName}`}
                 </SheetDescription>
               </SheetHeader>
+
+              {/* Linked Request Alert if originating from a Request */}
+              {task.sourceRequestId && (
+                <div className="rounded-xl border border-amber-300 dark:border-amber-800/80 bg-amber-50/70 dark:bg-amber-950/30 p-3.5 flex items-center justify-between gap-3">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <GitPullRequest className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-amber-900 dark:text-amber-200">
+                        Berasal dari Permohonan Kolaborasi
+                      </p>
+                      <p className="text-2xs text-muted-foreground truncate">
+                        {task.requestTitle || 'Lihat brief, lampiran, dan status pengerjaan'}
+                      </p>
+                    </div>
+                  </div>
+                  <Link href={`/requests/${task.sourceRequestId}`}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-2xs gap-1 border-amber-300 dark:border-amber-700 bg-background/80 hover:bg-background shrink-0"
+                    >
+                      Buka Request
+                      <ExternalLink className="size-3" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
 
               {/* Blocker Alert if active */}
               {task.isBlocked && (

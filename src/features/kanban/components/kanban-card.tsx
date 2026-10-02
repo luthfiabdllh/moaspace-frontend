@@ -9,7 +9,9 @@ import {
   GripVertical,
   Lock,
   ShieldAlert,
+  GitPullRequest,
 } from 'lucide-react';
+import Link from 'next/link';
 
 import {
   KanbanItem,
@@ -83,6 +85,18 @@ export function KanbanCard({
                 <Bookmark className="size-2.5 shrink-0 text-primary" />
                 <span className="truncate">{task.storyTitle}</span>
               </span>
+            )}
+
+            {task.sourceRequestId && (
+              <Link
+                href={`/requests/${task.sourceRequestId}`}
+                onClick={(e) => e.stopPropagation()}
+                title={`Permohonan Kolaborasi: ${task.requestTitle || 'Lihat Permohonan'}`}
+                className="inline-flex items-center gap-1 text-3xs font-semibold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/60 hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors truncate max-w-32"
+              >
+                <GitPullRequest className="size-2.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span className="truncate">Req: {task.requestTitle || 'Kolaborasi'}</span>
+              </Link>
             )}
 
             <Badge

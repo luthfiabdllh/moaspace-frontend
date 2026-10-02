@@ -394,7 +394,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
               </div>
             </div>
 
-            <Link href={`/d/${request.toDivisionName.toLowerCase().replace(/\\s+/g, '-')}/kanban`}>
+            <Link href={`/board?divisionId=${request.toDivisionId}`}>
               <Button size="sm" variant="outline" className="gap-1.5 text-xs shrink-0">
                 Lihat Board Kanban
                 <ExternalLink className="h-3.5 w-3.5" />

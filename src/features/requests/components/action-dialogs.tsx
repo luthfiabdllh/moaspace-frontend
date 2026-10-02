@@ -25,7 +25,8 @@ import {
 } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
 import type { RequestDetail, RequestTemplate } from '../types';
-import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck } from 'lucide-react';
+import { useEpics } from '@/features/epics/api/use-queries';
+import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck, Target } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ─── 1. ORIGIN APPROVAL DIALOG ───────────────────────────────────────────────
@@ -300,26 +301,35 @@ export function ConvertToStoryDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const [title, setTitle] = useState(request.title);
+  const [epicId, setEpicId] = useState<string>('NONE');
   const [doneCriteria, setDoneCriteria] = useState('');
   const [targetDate, setTargetDate] = useState(
     request.deadline ? request.deadline.split('T')[0] : ''
   );
   const [prokerTag, setProkerTag] = useState('');
+  const [createInitialTask, setCreateInitialTask] = useState(true);
   const mutation = useConvertToStory(request.id);
+
+  const { data: epics = [] } = useEpics({
+    isClosed: false,
+    divisionId: request.toDivisionId,
+  });
 
   const handleSubmit = async () => {
     await mutation.mutateAsync({
       title: title.trim() || request.title,
+      epicId: epicId && epicId !== 'NONE' ? epicId : undefined,
       doneCriteria: doneCriteria.trim() || undefined,
       targetDate: targetDate || undefined,
       prokerTag: prokerTag.trim() || undefined,
+      createInitialTask,
     });
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-120">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -331,6 +341,31 @@ export function ConvertToStoryDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Induk Epic */}
+          <div className="space-y-1.5">
+            <Label htmlFor="epicSelect" className="flex items-center gap-1.5 text-xs font-semibold">
+              <Target className="size-3.5 text-muted-foreground" />
+              Induk Epic / Program Kerja Divisi (Opsional)
+            </Label>
+            <select
+              id="epicSelect"
+              value={epicId}
+              onChange={(e) => setEpicId(e.target.value)}
+              className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</option>
+              {epics.map((epic) => (
+                <option key={epic.id} value={epic.id}>
+                  {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
+                  {epic.title}
+                </option>
+              ))}
+            </select>
+            <p className="text-2xs text-muted-foreground">
+              Pilih Epic agar Story deliverable ini masuk dalam struktur inisiatif / proker {request.toDivisionName}.
+            </p>
+          </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="storyTitle">Judul Deliverable Story</Label>
             <Input
@@ -369,6 +404,20 @@ export function ConvertToStoryDialog({
               value={doneCriteria}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDoneCriteria(e.target.value)}
             />
+          </div>
+
+          {/* Opsi Buat Task Otomatis */}
+          <div className="flex items-center gap-2 pt-1 pb-1">
+            <input
+              type="checkbox"
+              id="createInitialTaskCheck"
+              checked={createInitialTask}
+              onChange={(e) => setCreateInitialTask(e.target.checked)}
+              className="size-4 rounded border-input text-primary focus:ring-primary"
+            />
+            <label htmlFor="createInitialTaskCheck" className="text-xs font-medium text-foreground cursor-pointer">
+              Buat Task pengerjaan otomatis di kolom <span className="font-semibold text-primary">To Do</span> Kanban
+            </label>
           </div>
         </div>
 

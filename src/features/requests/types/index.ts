@@ -164,6 +164,7 @@ export const convertToStorySchema = z.object({
   doneCriteria: z.string().optional(),
   targetDate: z.string().optional(),
   prokerTag: z.string().optional(),
+  createInitialTask: z.boolean().optional(),
 });
 export type ConvertToStoryDTO = z.infer<typeof convertToStorySchema>;
 
