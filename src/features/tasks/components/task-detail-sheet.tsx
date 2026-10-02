@@ -17,6 +17,9 @@ import {
   Edit2,
   GitPullRequest,
   ExternalLink,
+  AlignLeft,
+  Check,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { isAxiosError } from 'axios';
@@ -37,6 +40,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { STORY_POINTS_SCALE, type TaskStatus, type TaskPriority, type UpdateTaskDTO } from '../types';
@@ -86,6 +90,10 @@ export function TaskDetailSheet({
   const [targetSp, setTargetSp] = React.useState<number>(1);
   const [spReasonInput, setSpReasonInput] = React.useState('');
 
+  // Description Editing State
+  const [isEditingDescription, setIsEditingDescription] = React.useState(false);
+  const [descriptionInput, setDescriptionInput] = React.useState('');
+
   // Overcapacity modal state
   const [overcapacityData, setOvercapacityData] = React.useState<OvercapacityWarningData | null>(null);
   const [pendingUpdate, setPendingUpdate] = React.useState<UpdateTaskDTO | null>(null);
@@ -96,6 +104,8 @@ export function TaskDetailSheet({
       setTargetSp(task.storyPoints ?? 1);
       setSpReasonInput('');
       setIsEditingSp(false);
+      setDescriptionInput(task.description || '');
+      setIsEditingDescription(false);
     }
   }, [task]);
 
@@ -141,6 +151,19 @@ export function TaskDetailSheet({
       spReason: isLocked ? spReasonInput.trim() : undefined,
     });
     setIsEditingSp(false);
+  };
+
+  const handleSaveDescription = async () => {
+    if (!task) return;
+    await executeUpdate({
+      description: descriptionInput.trim(),
+    });
+    setIsEditingDescription(false);
+  };
+
+  const handleCancelDescription = () => {
+    setDescriptionInput(task?.description || '');
+    setIsEditingDescription(false);
   };
 
   const handleToggleBlocker = async () => {
@@ -340,16 +363,124 @@ export function TaskDetailSheet({
                 </div>
               )}
 
-              {/* Description */}
-              <div className="space-y-1.5">
-                <h4 className="text-xs font-semibold text-muted-foreground">
-                  Deskripsi
-                </h4>
-                <div className="rounded-lg border bg-muted/20 p-3 text-xs leading-relaxed text-foreground min-h-16 whitespace-pre-wrap">
-                  {task.description || (
-                    <span className="italic text-muted-foreground">Tidak ada deskripsi.</span>
+              {/* Description Section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                    <AlignLeft className="size-3.5 text-primary/70" />
+                    <h4>Deskripsi</h4>
+                  </div>
+                  {!isEditingDescription ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setDescriptionInput(task.description || '');
+                        setIsEditingDescription(true);
+                      }}
+                      className="h-6 px-2 text-2xs text-muted-foreground hover:text-foreground gap-1 transition-colors cursor-pointer"
+                    >
+                      <Edit2 className="size-3" />
+                      <span>Edit Deskripsi</span>
+                    </Button>
+                  ) : (
+                    <span className="text-3xs text-muted-foreground hidden sm:inline">
+                      Esc untuk batal • Ctrl+Enter untuk simpan
+                    </span>
                   )}
                 </div>
+
+                {isEditingDescription ? (
+                  <div className="space-y-2.5 rounded-xl border border-primary/30 bg-primary/5 p-3 animate-in fade-in-50 duration-150">
+                    <Textarea
+                      autoFocus
+                      value={descriptionInput}
+                      onChange={(e) => setDescriptionInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveDescription();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          handleCancelDescription();
+                        }
+                      }}
+                      placeholder="Tuliskan deskripsi lengkap tugas, acceptance criteria, atau instruksi pengerjaan..."
+                      className="min-h-35 text-xs resize-y leading-relaxed bg-background border-border/80 focus-visible:border-primary shadow-2xs"
+                    />
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-3xs text-muted-foreground">
+                        {descriptionInput.length > 0
+                          ? `${descriptionInput.length} karakter`
+                          : 'Shift+Enter untuk baris baru'}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancelDescription}
+                          disabled={updateMutation.isPending}
+                          className="h-7 text-xs px-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                        >
+                          <X className="size-3.5 mr-1" />
+                          Batal
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleSaveDescription}
+                          disabled={updateMutation.isPending}
+                          className="h-7 text-xs px-3 shadow-xs gap-1.5 cursor-pointer"
+                        >
+                          {updateMutation.isPending ? (
+                            <>
+                              <Loader2 className="size-3 animate-spin" />
+                              <span>Menyimpan...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check className="size-3.5" />
+                              <span>Simpan Deskripsi</span>
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => {
+                      setDescriptionInput(task.description || '');
+                      setIsEditingDescription(true);
+                    }}
+                    className={cn(
+                      'group relative rounded-xl border p-3.5 text-xs leading-relaxed transition-all cursor-pointer',
+                      task.description
+                        ? 'bg-muted/20 hover:bg-muted/40 hover:border-border text-foreground min-h-18 whitespace-pre-wrap'
+                        : 'border-dashed border-border/80 bg-muted/10 hover:bg-muted/25 text-muted-foreground text-center py-6'
+                    )}
+                    title="Klik untuk mengedit deskripsi tugas"
+                  >
+                    {task.description ? (
+                      <>
+                        <div>{task.description}</div>
+                        <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span className="text-3xs bg-background/90 backdrop-blur-xs border border-border/80 px-2 py-0.5 rounded-md text-muted-foreground flex items-center gap-1 shadow-2xs">
+                            <Edit2 className="size-2.5 text-primary" />
+                            Edit
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground group-hover:text-foreground">
+                        <Edit2 className="size-3.5 text-muted-foreground/70" />
+                        <span>Belum ada deskripsi. Klik di sini untuk menambahkan...</span>
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Quick Status Bar */}
