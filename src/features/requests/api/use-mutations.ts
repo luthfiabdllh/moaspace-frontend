@@ -5,6 +5,7 @@ import { requestsKeys } from './query-keys';
 import { storyKeys } from '@/features/stories/api/query-keys';
 import type {
   CreateRequestDTO,
+  UpdateRequestDTO,
   OriginApprovalDTO,
   TriageRequestDTO,
   RespondInfoDTO,
@@ -21,12 +22,16 @@ export function useCreateRequest() {
       const res = await axios.post('/api/requests', data);
       return res.data;
     },
-    onSuccess: () => {
-      toast.success('Permohonan kolaborasi berhasil diajukan!');
+    onSuccess: (_, variables) => {
+      if (variables.isDraft) {
+        toast.success('Draft permohonan berhasil disimpan!');
+      } else {
+        toast.success('Permohonan kolaborasi berhasil diajukan!');
+      }
       queryClient.invalidateQueries({ queryKey: requestsKeys.all });
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengajukan permohonan.');
+      toast.error(err.response?.data?.message || 'Gagal menyimpan/mengajukan permohonan.');
     },
   });
 }
@@ -157,6 +162,44 @@ export function useConfirmRequest(requestId: string) {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || 'Gagal mengonfirmasi hasil.');
+    },
+  });
+}
+
+export function useUpdateDraft(requestId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: UpdateRequestDTO) => {
+      const res = await axios.patch(`/api/requests/${requestId}`, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('Draft permohonan berhasil diperbarui!');
+      queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
+      queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Gagal memperbarui draft permohonan.');
+    },
+  });
+}
+
+export function useSubmitDraft(requestId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await axios.patch(`/api/requests/${requestId}/submit-draft`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('Draft permohonan berhasil diajukan!');
+      queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
+      queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Gagal mengajukan draft permohonan.');
     },
   });
 }

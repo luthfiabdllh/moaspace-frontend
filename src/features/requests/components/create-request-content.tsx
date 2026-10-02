@@ -13,7 +13,7 @@ import { useDivisions } from '@/features/divisions/api/use-queries';
 import { useDivisionTemplates } from '../api/use-queries';
 import { useCreateRequest } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
-import { ArrowLeft, ArrowRight, Calendar, Layers, Send, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, Layers, Send, Sparkles, Save, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function CreateRequestContent() {
@@ -63,6 +63,37 @@ export function CreateRequestContent() {
   const availableTargetDivisions =
     divisions?.filter((d) => d.id !== fromDivisionId) || [];
 
+  const handleSaveDraft = async () => {
+    if (!fromDivisionId) {
+      toast.error('Pilih divisi asal pembuat request.');
+      return;
+    }
+    if (!toDivisionId) {
+      toast.error('Pilih divisi tujuan.');
+      return;
+    }
+    if (!title.trim()) {
+      toast.error('Judul permohonan wajib diisi untuk menyimpan draft.');
+      return;
+    }
+
+    try {
+      await createMutation.mutateAsync({
+        fromDivisionId,
+        toDivisionId,
+        templateId: templateId || undefined,
+        title: title.trim(),
+        brief,
+        deadline: deadline || undefined,
+        isDraft: true,
+      });
+
+      router.push('/requests');
+    } catch {
+      // Error handled by mutation
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -102,6 +133,7 @@ export function CreateRequestContent() {
         title: title.trim(),
         brief,
         deadline: deadline || undefined,
+        isDraft: false,
       });
 
       router.push('/requests');
@@ -319,6 +351,16 @@ export function CreateRequestContent() {
               Batal
             </Button>
           </Link>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleSaveDraft}
+            disabled={createMutation.isPending || !toDivisionId}
+            className="gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            {createMutation.isPending ? 'Menyimpan...' : 'Simpan sebagai Draft'}
+          </Button>
           <Button
             type="submit"
             disabled={createMutation.isPending || !toDivisionId}

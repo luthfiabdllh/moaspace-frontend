@@ -19,6 +19,8 @@ const baseMockRequest: RequestDetail = {
   createdAt: '2026-10-01T00:00:00Z',
   updatedAt: '2026-10-01T00:00:00Z',
   permissions: {
+    canSubmitDraft: false,
+    canEditDraft: false,
     canApproveOrigin: false,
     canTriage: false,
     canRespondInfo: false,
@@ -148,4 +150,37 @@ describe('RequestStepper', () => {
     expect(screen.getByText('Permohonan selesai')).toBeDefined();
     expect(screen.getByText('Tuntas')).toBeDefined();
   });
+
+  it('displays draft action strip with edit and submit buttons when in DRAFT status', () => {
+    const onOpenSubmitDraft = vi.fn();
+    const onOpenEditDraft = vi.fn();
+    const req: RequestDetail = {
+      ...baseMockRequest,
+      status: 'DRAFT',
+      permissions: {
+        ...baseMockRequest.permissions,
+        canSubmitDraft: true,
+        canEditDraft: true,
+      },
+    };
+
+    render(
+      <RequestStepper
+        request={req}
+        scrollToSection={vi.fn()}
+        onOpenSubmitDraft={onOpenSubmitDraft}
+        onOpenEditDraft={onOpenEditDraft}
+      />
+    );
+
+    expect(screen.getByText(/permohonan ini masih berupa draft/i)).toBeDefined();
+    const editBtn = screen.getByRole('button', { name: /edit draft/i });
+    fireEvent.click(editBtn);
+    expect(onOpenEditDraft).toHaveBeenCalled();
+
+    const submitBtn = screen.getByRole('button', { name: /ajukan sekarang/i });
+    fireEvent.click(submitBtn);
+    expect(onOpenSubmitDraft).toHaveBeenCalled();
+  });
 });
+

@@ -18,10 +18,12 @@ import {
   useConvertToStory,
   useDeliverRequest,
   useConfirmRequest,
+  useUpdateDraft,
+  useSubmitDraft,
 } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
 import type { RequestDetail, RequestTemplate } from '../types';
-import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 // ─── 1. ORIGIN APPROVAL DIALOG ───────────────────────────────────────────────
@@ -608,3 +610,162 @@ export function ConfirmDialog({
     </Dialog>
   );
 }
+
+// ─── 7. SUBMIT DRAFT DIALOG ──────────────────────────────────────────────────
+export function SubmitDraftDialog({
+  request,
+  open,
+  onOpenChange,
+}: {
+  request: RequestDetail;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const mutation = useSubmitDraft(request.id);
+
+  const handleSubmit = async () => {
+    await mutation.mutateAsync();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Send className="h-5 w-5 text-primary" />
+            Ajukan Permohonan Sekarang
+          </DialogTitle>
+          <DialogDescription>
+            Permohonan draft &quot;{request.title}&quot; akan resmi diajukan ke divisi {request.toDivisionName}.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-2 text-sm text-muted-foreground space-y-2">
+          <p>
+            Setelah diajukan, status permohonan akan diproses oleh koordinator atau tim divisi tujuan sesuai alur persetujuan.
+          </p>
+          <p className="text-xs bg-muted/50 p-2.5 rounded-lg border">
+            Pastikan seluruh rincian dan brief permohonan Anda sudah tepat sebelum melanjutkan.
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Batal
+          </Button>
+          <Button onClick={handleSubmit} disabled={mutation.isPending} className="gap-2">
+            <Send className="h-4 w-4" />
+            {mutation.isPending ? 'Mengajukan...' : 'Ya, Ajukan Permohonan'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── 8. EDIT DRAFT DIALOG ────────────────────────────────────────────────────
+export function EditDraftDialog({
+  request,
+  template,
+  open,
+  onOpenChange,
+}: {
+  request: RequestDetail;
+  template?: RequestTemplate;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [title, setTitle] = useState(request.title);
+  const [deadline, setDeadline] = useState(
+    request.deadline ? request.deadline.split('T')[0] : ''
+  );
+  const [brief, setBrief] = useState<Record<string, any>>(request.brief || {});
+  const mutation = useUpdateDraft(request.id);
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      toast.error('Judul permohonan wajib diisi');
+      return;
+    }
+
+    await mutation.mutateAsync({
+      title: title.trim(),
+      deadline: deadline || undefined,
+      brief,
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Edit Draft Permohonan
+          </DialogTitle>
+          <DialogDescription>
+            Perbarui rincian atau brief permohonan sebelum resmi diajukan.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="editDraftTitle">Judul Permohonan <span className="text-destructive">*</span></Label>
+            <Input
+              id="editDraftTitle"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="editDraftDeadline">Target Deadline (Opsional)</Label>
+            <Input
+              id="editDraftDeadline"
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+            />
+          </div>
+
+          {template?.fields && template.fields.length > 0 ? (
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Brief: {template.name}
+              </Label>
+              <DynamicFormRenderer
+                fields={template.fields}
+                values={brief}
+                onChange={setBrief}
+              />
+            </div>
+          ) : (
+            <div className="space-y-1.5 pt-2 border-t">
+              <Label htmlFor="editDraftDeskripsi">Deskripsi Kebutuhan Brief</Label>
+              <Textarea
+                id="editDraftDeskripsi"
+                rows={4}
+                value={brief.deskripsi || ''}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setBrief({ ...brief, deskripsi: e.target.value })
+                }
+              />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Batal
+          </Button>
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+            {mutation.isPending ? 'Menyimpan...' : 'Simpan Perubahan'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+

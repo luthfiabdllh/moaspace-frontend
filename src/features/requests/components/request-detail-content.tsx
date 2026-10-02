@@ -14,6 +14,8 @@ import {
   ConvertToStoryDialog,
   DeliverDialog,
   ConfirmDialog,
+  SubmitDraftDialog,
+  EditDraftDialog,
 } from './action-dialogs';
 import { useRequest, useTemplate } from '../api/use-queries';
 import {
@@ -23,6 +25,8 @@ import {
   CheckCircle,
   ExternalLink,
   FileText,
+  FileEdit,
+  Send,
   HelpCircle,
   PackageCheck,
   RotateCcw,
@@ -40,6 +44,8 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
   const { data: template } = useTemplate(request?.templateId || undefined);
 
   // Dialog states
+  const [openSubmitDraft, setOpenSubmitDraft] = useState(false);
+  const [openEditDraft, setOpenEditDraft] = useState(false);
   const [openOriginApproval, setOpenOriginApproval] = useState(false);
   const [openTriage, setOpenTriage] = useState(false);
   const [openRespondInfo, setOpenRespondInfo] = useState(false);
@@ -162,6 +168,29 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
 
           {/* Action Bar (Permission-driven) */}
           <div className="flex items-center gap-2 pt-3 border-t flex-wrap">
+            {request.permissions.canEditDraft && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setOpenEditDraft(true)}
+                className="gap-1.5"
+              >
+                <FileEdit className="h-4 w-4" />
+                Edit Draft
+              </Button>
+            )}
+
+            {request.permissions.canSubmitDraft && (
+              <Button
+                size="sm"
+                onClick={() => setOpenSubmitDraft(true)}
+                className="gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <Send className="h-4 w-4" />
+                Ajukan Permohonan
+              </Button>
+            )}
+
             {request.permissions.canApproveOrigin && (
               <Button
                 size="sm"
@@ -235,6 +264,8 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       <RequestStepper
         request={request}
         scrollToSection={scrollToSection}
+        onOpenSubmitDraft={() => setOpenSubmitDraft(true)}
+        onOpenEditDraft={() => setOpenEditDraft(true)}
         onOpenOriginApproval={() => setOpenOriginApproval(true)}
         onOpenTriage={() => setOpenTriage(true)}
         onOpenRespondInfo={() => setOpenRespondInfo(true)}
@@ -244,6 +275,18 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       />
 
       {/* Special Status Banners */}
+      {request.status === 'DRAFT' && (
+        <div className="rounded-xl border border-zinc-500/30 bg-zinc-500/10 p-4 text-zinc-900 dark:text-zinc-200 space-y-1">
+          <div className="flex items-center gap-2 font-semibold text-sm">
+            <FileEdit className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
+            Permohonan Masih Berupa Draft
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Permohonan ini belum resmi diajukan. Anda dapat mengedit rincian atau langsung mengajukannya agar diproses oleh koordinator dan divisi tujuan.
+          </p>
+        </div>
+      )}
+
       {request.status === 'NEED_INFO' && request.reason && (
         <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-purple-900 dark:text-purple-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
@@ -404,6 +447,17 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       </Card>
 
       {/* Dialogs */}
+      <SubmitDraftDialog
+        request={request}
+        open={openSubmitDraft}
+        onOpenChange={setOpenSubmitDraft}
+      />
+      <EditDraftDialog
+        request={request}
+        template={template}
+        open={openEditDraft}
+        onOpenChange={setOpenEditDraft}
+      />
       <OriginApprovalDialog
         request={request}
         open={openOriginApproval}

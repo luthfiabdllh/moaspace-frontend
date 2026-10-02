@@ -22,6 +22,8 @@ import {
   HelpCircle,
   Clock,
   ArrowRight,
+  FileEdit,
+  Send,
 } from 'lucide-react';
 import type { RequestDetail } from '../types';
 import { cn } from '@/lib/utils';
@@ -29,6 +31,8 @@ import { cn } from '@/lib/utils';
 interface RequestStepperProps {
   request: RequestDetail;
   scrollToSection: (sectionId: string) => void;
+  onOpenSubmitDraft?: () => void;
+  onOpenEditDraft?: () => void;
   onOpenOriginApproval?: () => void;
   onOpenTriage?: () => void;
   onOpenRespondInfo?: () => void;
@@ -40,6 +44,8 @@ interface RequestStepperProps {
 export function RequestStepper({
   request,
   scrollToSection,
+  onOpenSubmitDraft,
+  onOpenEditDraft,
   onOpenOriginApproval,
   onOpenTriage,
   onOpenRespondInfo,
@@ -170,12 +176,19 @@ export function RequestStepper({
       state: step1State,
       sectionId: 'section-brief',
       badge:
-        status === 'WAITING_ORIGIN_APPROVAL'
-          ? 'Approval Asal'
-          : status === 'SUBMITTED'
-            ? 'Diajukan'
-            : null,
-      badgeVariant: status === 'WAITING_ORIGIN_APPROVAL' ? 'warning' : 'default',
+        status === 'DRAFT'
+          ? 'Draft'
+          : status === 'WAITING_ORIGIN_APPROVAL'
+            ? 'Approval Asal'
+            : status === 'SUBMITTED'
+              ? 'Diajukan'
+              : null,
+      badgeVariant:
+        status === 'DRAFT'
+          ? 'outline'
+          : status === 'WAITING_ORIGIN_APPROVAL'
+            ? 'warning'
+            : 'default',
     },
     {
       step: 2,
@@ -243,6 +256,43 @@ export function RequestStepper({
 
   // Active contextual banner / actionable CTA
   const renderActiveActionStrip = () => {
+    if (
+      status === 'DRAFT' &&
+      (request.permissions.canSubmitDraft || request.permissions.canEditDraft)
+    ) {
+      return (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg bg-zinc-500/10 border border-zinc-500/20 text-xs">
+          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
+            <FileEdit className="size-4 shrink-0 text-zinc-500 dark:text-zinc-400" />
+            <span>Permohonan ini masih berupa Draft dan belum diteruskan ke divisi tujuan.</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {request.permissions.canEditDraft && onOpenEditDraft && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onOpenEditDraft}
+                className="text-xs gap-1.5 h-8"
+              >
+                <FileEdit className="size-3.5" />
+                Edit Draft
+              </Button>
+            )}
+            {request.permissions.canSubmitDraft && onOpenSubmitDraft && (
+              <Button
+                size="sm"
+                onClick={onOpenSubmitDraft}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs gap-1.5 h-8"
+              >
+                <Send className="size-3.5" />
+                Ajukan Sekarang
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     if (status === 'WAITING_ORIGIN_APPROVAL' && request.permissions.canApproveOrigin) {
       return (
         <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs">

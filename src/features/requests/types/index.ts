@@ -58,6 +58,8 @@ export interface LinkedStorySummary {
 }
 
 export interface RequestPermissions {
+  canSubmitDraft: boolean;
+  canEditDraft: boolean;
   canApproveOrigin: boolean;
   canTriage: boolean;
   canRespondInfo: boolean;
@@ -105,6 +107,8 @@ export const requestDetailSchema = requestListItemSchema.extend({
   events: z.array(z.any()).default([]),
   linkedStory: z.any().nullable().optional(),
   permissions: z.object({
+    canSubmitDraft: z.boolean().default(false),
+    canEditDraft: z.boolean().default(false),
     canApproveOrigin: z.boolean(),
     canTriage: z.boolean(),
     canRespondInfo: z.boolean(),
@@ -124,8 +128,17 @@ export const createRequestSchema = z.object({
   deadline: z.string().optional(),
   sourceTaskId: z.string().optional(),
   sourceStoryId: z.string().optional(),
+  isDraft: z.boolean().optional(),
 });
 export type CreateRequestDTO = z.infer<typeof createRequestSchema>;
+
+export const updateRequestSchema = z.object({
+  title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255).optional(),
+  templateId: z.string().optional(),
+  brief: z.record(z.string(), z.unknown()).optional(),
+  deadline: z.string().optional(),
+});
+export type UpdateRequestDTO = z.infer<typeof updateRequestSchema>;
 
 export const originApprovalSchema = z.object({
   action: z.enum(['APPROVE', 'REJECT']),

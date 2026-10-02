@@ -119,6 +119,7 @@ export function RequestsListContent() {
             className="h-9 rounded-lg border border-input bg-transparent px-2.5 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
           >
             <option value="">Semua Status</option>
+            <option value="DRAFT">Draft</option>
             <option value="WAITING_ORIGIN_APPROVAL">Approval Asal</option>
             <option value="SUBMITTED">Diajukan</option>
             <option value="NEED_INFO">Butuh Info</option>
