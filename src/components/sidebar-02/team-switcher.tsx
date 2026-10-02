@@ -81,7 +81,7 @@ export function TeamSwitcher({
                 key={team.slug || team.name}
                 onClick={() => {
                   if (team.slug) {
-                    router.push(`/d/${team.slug}/board`);
+                    router.push(`/board?division=${team.slug}`);
                   }
                 }}
               >

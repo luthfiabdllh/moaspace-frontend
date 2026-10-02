@@ -33,12 +33,14 @@ export function proxy(req: NextRequest) {
   const isProtectedRoute =
     pathname === '/dashboard' ||
     pathname.startsWith('/dashboard/') ||
+    pathname === '/board' ||
+    pathname.startsWith('/board/') ||
     pathname === '/me' ||
     pathname.startsWith('/me/') ||
-    pathname.startsWith('/d/') ||
     pathname.startsWith('/epics') ||
     pathname.startsWith('/requests') ||
     pathname.startsWith('/admin');
+
 
   const token = req.cookies.get('access_token')?.value;
 

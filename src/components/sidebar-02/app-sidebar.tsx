@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -46,9 +46,11 @@ export function DashboardSidebar() {
   const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
   const userDivisions = user?.divisions ?? [];
 
-  // Detect division slug from URL (/d/[slug]/...)
-  const divisionSlugMatch = pathname.match(/^\/d\/([^/]+)/);
-  const activeDivisionSlug = divisionSlugMatch ? divisionSlugMatch[1] : undefined;
+  // Detect division slug from query param (?division=...) or fallback to user primary division
+  const searchParams = useSearchParams();
+  const queryDivision = searchParams?.get('division');
+  const userPrimaryDivision = userDivisions[0]?.divisionSlug || (isAdmin ? allDivisions[0]?.slug : undefined);
+  const activeDivisionSlug = queryDivision || userPrimaryDivision;
 
   // Build teams list for the division switcher
   const teams: Team[] = useMemo(() => {
@@ -84,9 +86,9 @@ export function DashboardSidebar() {
       },
       {
         id: 'board',
-        title: 'Papan Kanban',
+        title: 'Papan Kerja Divisi',
         icon: <FolderKanban className="size-4" />,
-        link: '/board',
+        link: activeDivisionSlug ? `/board?division=${activeDivisionSlug}` : '/board',
         isActive: pathname === '/board',
         group: 'MAIN',
       },
@@ -129,45 +131,6 @@ export function DashboardSidebar() {
         group: 'MAIN',
       },
     ];
-
-    // If currently inside a division, show contextual division sub-routes
-    if (activeDivisionSlug) {
-      const activeDiv =
-        teams.find((t) => t.slug === activeDivisionSlug) ||
-        allDivisions.find((d) => d.slug === activeDivisionSlug);
-      const divisionName = activeDiv ? activeDiv.name : activeDivisionSlug;
-
-      routes.push({
-        id: 'current-division',
-        title: `Divisi ${divisionName}`,
-        icon: <Layers className="size-4" />,
-        link: `/d/${activeDivisionSlug}/board`,
-        isActive: pathname.startsWith(`/d/${activeDivisionSlug}`),
-        group: 'Papan Divisi',
-        subs: [
-          {
-            title: 'Kanban Divisi',
-            link: `/d/${activeDivisionSlug}/board`,
-            icon: <FolderKanban className="size-4" />,
-            isActive:
-              pathname === `/d/${activeDivisionSlug}/board` ||
-              pathname === `/d/${activeDivisionSlug}`,
-          },
-          {
-            title: 'Stories & Backlog',
-            link: `/d/${activeDivisionSlug}/stories`,
-            icon: <CheckSquare className="size-4" />,
-            isActive: pathname.startsWith(`/d/${activeDivisionSlug}/stories`),
-          },
-          {
-            title: 'Kapasitas Tim',
-            link: `/d/${activeDivisionSlug}/capacity`,
-            icon: <Users className="size-4" />,
-            isActive: pathname.startsWith(`/d/${activeDivisionSlug}/capacity`),
-          },
-        ],
-      });
-    }
 
     // Admin Routes
     if (isAdmin) {

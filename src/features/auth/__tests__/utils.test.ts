@@ -33,7 +33,7 @@ describe('getPostLoginRedirect', () => {
     expect(getPostLoginRedirect(kormanitUser)).toBe('/dashboard');
   });
 
-  it('should redirect division coordinator to their division board', () => {
+  it('should redirect division coordinator to /dashboard', () => {
     const coordinatorUser: User = {
       id: 'coord-1',
       email: 'coord@moaspace.com',
@@ -52,10 +52,10 @@ describe('getPostLoginRedirect', () => {
       ],
     };
 
-    expect(getPostLoginRedirect(coordinatorUser)).toBe('/d/sponsorship/board');
+    expect(getPostLoginRedirect(coordinatorUser)).toBe('/dashboard');
   });
 
-  it('should redirect member to /me (Tugas Saya)', () => {
+  it('should redirect member to /dashboard', () => {
     const memberUser: User = {
       id: 'mem-1',
       email: 'member@moaspace.com',
@@ -74,10 +74,10 @@ describe('getPostLoginRedirect', () => {
       ],
     };
 
-    expect(getPostLoginRedirect(memberUser)).toBe('/me');
+    expect(getPostLoginRedirect(memberUser)).toBe('/dashboard');
   });
 
-  it('should fallback to /dashboard if user has no divisions', () => {
+  it('should redirect unassigned user to /dashboard', () => {
     const userWithoutDivs: User = {
       id: 'u-1',
       email: 'user@moaspace.com',
@@ -92,3 +92,4 @@ describe('getPostLoginRedirect', () => {
     expect(getPostLoginRedirect(userWithoutDivs)).toBe('/dashboard');
   });
 });
+

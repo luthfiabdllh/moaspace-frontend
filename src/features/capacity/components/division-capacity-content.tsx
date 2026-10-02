@@ -28,9 +28,13 @@ import type { MemberUtilization } from '../types';
 
 interface DivisionCapacityContentProps {
   slug: string;
+  hideHeader?: boolean;
 }
 
-export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = ({ slug }) => {
+export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = ({
+  slug,
+  hideHeader = false,
+}) => {
   const router = useRouter();
   const { data: user } = useCurrentUser();
   const { data: divisions = [], isLoading: isDivisionsLoading } = useDivisions();
@@ -131,84 +135,74 @@ export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = (
 
   return (
     <div className="space-y-6">
-      {/* ─── Header & Navigasi Divisi ────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-            <Link href={`/d/${division.slug}`} className="hover:underline">
-              {division.name}
-            </Link>
-            <span>/</span>
-            <span className="text-foreground font-medium">Kapasitas & Beban Kerja</span>
+      {/* ─── Header & Navigasi Divisi (Only shown when not embedded) ────────── */}
+      {!hideHeader && (
+        <>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
+            <div>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <Link href={`/board?division=${division.slug}`} className="hover:underline">
+                  {division.name}
+                </Link>
+                <span>/</span>
+                <span className="text-foreground font-medium">Kapasitas & Beban Kerja</span>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight">Kapasitas & Beban Tim</h1>
+              <p className="text-xs text-muted-foreground">
+                Transparansi alokasi Story Point dan utilisasi anggota divisi lintas tugas.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRequestDialogOpen(true)}
+                className="gap-1.5 text-xs h-9"
+              >
+                <Clock className="h-3.5 w-3.5" />
+                Ajukan Penyesuaian Kapasitas
+              </Button>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Kapasitas & Beban Tim</h1>
-          <p className="text-xs text-muted-foreground">
-            Transparansi alokasi Story Point dan utilisasi anggota divisi lintas tugas.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setRequestDialogOpen(true)}
-            className="gap-1.5 text-xs h-9"
-          >
-            <Clock className="h-3.5 w-3.5" />
-            Ajukan Penyesuaian Kapasitas
-          </Button>
-        </div>
-      </div>
-
-      {/* ─── Navigasi Tab Workspace Divisi ─────────────────────────────────── */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b pb-2 text-xs font-medium text-muted-foreground">
-        <Link
-          href={`/d/${division.slug}`}
-          className="px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-        >
-          Ringkasan Divisi
-        </Link>
-        <Link
-          href={`/d/${division.slug}/board`}
-          className="px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-        >
-          Papan Kanban
-        </Link>
-        <Link
-          href={`/d/${division.slug}/stories`}
-          className="px-3 py-1.5 rounded-lg hover:bg-muted hover:text-foreground transition-colors"
-        >
-          Daftar Story
-        </Link>
-        <Link
-          href={`/d/${division.slug}/capacity`}
-          className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-semibold transition-colors"
-        >
-          Kapasitas & Utilisasi
-        </Link>
-      </div>
+        </>
+      )}
 
       {/* ─── Kontrol Pekan (Week Selector) ─────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-muted/40 p-3 rounded-lg border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3 rounded-xl border border-border/80 shadow-2xs">
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-semibold">Pekan:</span>
-          <span className="text-sm text-foreground bg-background px-2.5 py-1 rounded border shadow-xs">
+          <span className="text-sm text-foreground bg-background px-2.5 py-1 rounded-md border shadow-2xs font-medium">
             {weekDateRangeLabel}
           </span>
           {weekOffset === 0 && (
-            <span className="text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="text-2xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">
               Minggu Ini
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setWeekOffset((prev) => prev - 1)}
+        <div className="flex items-center gap-2">
+          {hideHeader && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRequestDialogOpen(true)}
+              className="gap-1.5 text-xs h-8 shadow-2xs"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Ajukan Penyesuaian</span>
+              <span className="sm:hidden">Ajukan</span>
+            </Button>
+          )}
+
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setWeekOffset((prev) => prev - 1)}
             title="Pekan Sebelumnya"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -234,6 +228,7 @@ export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = (
           </Button>
         </div>
       </div>
+    </div>
 
       {/* ─── Kartu Statistik Ringkasan ──────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

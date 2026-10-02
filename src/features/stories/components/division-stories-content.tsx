@@ -163,7 +163,7 @@ export function DivisionStoriesContent({
                 Deliverable Stories
               </div>
               <Link
-                href={`/d/${divisionSlug}/board`}
+                href={`/board?division=${divisionSlug}&tab=kanban`}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Columns className="size-3.5" />

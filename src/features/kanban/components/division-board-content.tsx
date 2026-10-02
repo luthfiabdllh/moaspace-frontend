@@ -150,7 +150,7 @@ export function DivisionBoardContent({
           {/* View Switcher: Stories vs Kanban */}
           <div className="flex items-center rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0">
             <Link
-              href={`/d/${divisionSlug}/stories`}
+              href={`/board?division=${divisionSlug}&tab=stories`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
             >
               <Bookmark className="size-3.5" />
