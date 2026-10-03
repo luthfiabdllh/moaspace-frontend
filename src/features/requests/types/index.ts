@@ -147,6 +147,8 @@ export const createRequestSchema = z.object({
 export type CreateRequestDTO = z.infer<typeof createRequestSchema>;
 
 export const updateRequestSchema = z.object({
+  fromDivisionId: z.string().optional(),
+  toDivisionId: z.string().optional(),
   title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255).optional(),
   templateId: z.string().optional(),
   brief: z.record(z.string(), z.unknown()).optional(),

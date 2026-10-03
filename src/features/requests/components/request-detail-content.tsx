@@ -21,6 +21,7 @@ import {
   EditDraftDialog,
 } from "./action-dialogs";
 import { useRequest, useTemplate } from "../api/use-queries";
+import { DraftRequestContent } from "./draft-request-content";
 import {
   ArrowLeft,
   ArrowRight,
@@ -83,6 +84,10 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         </Link>
       </div>
     );
+  }
+
+  if (request.status === "DRAFT") {
+    return <DraftRequestContent request={request} />;
   }
 
   const formatDate = (dateStr?: string | null) => {
@@ -309,20 +314,6 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       />
 
       {/* Special Status Banners */}
-      {request.status === "DRAFT" && (
-        <div className="rounded-xl border border-zinc-500/30 bg-zinc-500/10 p-4 text-zinc-900 dark:text-zinc-200 space-y-1">
-          <div className="flex items-center gap-2 font-semibold text-sm">
-            <FileEdit className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
-            Permohonan Masih Berupa Draft
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Permohonan ini belum resmi diajukan. Anda dapat mengedit rincian
-            atau langsung mengajukannya agar diproses oleh koordinator dan
-            divisi tujuan.
-          </p>
-        </div>
-      )}
-
       {request.status === "NEED_INFO" && request.reason && (
         <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4 text-purple-900 dark:text-purple-200 space-y-1">
           <div className="flex items-center gap-2 font-semibold text-sm">
