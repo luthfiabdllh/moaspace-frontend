@@ -43,7 +43,7 @@ export function ProfilePageContent() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 mx-auto pb-10">
       {/* Page Header */}
       <div className="border-b border-border/60 pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -59,13 +59,6 @@ export function ProfilePageContent() {
             <p className="text-sm text-muted-foreground mt-1">
               Kelola identitas akun, tinjau penugasan divisi, dan atur keamanan kata sandi Anda.
             </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-center">
-            <Badge variant="outline" className="gap-1.5 py-1 px-2.5 text-xs font-medium">
-              <UserCheck className="size-3 text-emerald-600 dark:text-emerald-400" />
-              Sistem Tertutup KKN Moa
-            </Badge>
           </div>
         </div>
       </div>
