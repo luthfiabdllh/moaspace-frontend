@@ -34,8 +34,8 @@ export const useEpics = (params?: QueryEpicsParams) => {
 export const useEpic = (id: string, enabled = true) => {
   return useQuery({
     queryKey: epicKeys.detail(id),
-    queryFn: async () => {
-      const { data } = await apiClient.get(`/epics/${id}`);
+    queryFn: async (): Promise<EpicItem & { stories?: any[] }> => {
+      const { data } = await apiClient.get<EpicItem & { stories?: any[] }>(`/epics/${id}`);
       return data;
     },
     enabled: Boolean(id) && enabled,

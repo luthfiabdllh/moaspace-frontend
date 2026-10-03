@@ -32,11 +32,12 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
       : null;
 
   return (
-    <Card
-      onClick={() => onSelect?.(epic)}
-      className="group shadow-2xs border-border/80 hover:border-primary/50 transition-all duration-200 cursor-pointer bg-card hover:bg-muted/20"
-    >
-      <CardContent className="p-5 space-y-4">
+    <Link href={`/epics/${epic.id}`} className="block focus:outline-none">
+      <Card
+        onClick={() => onSelect?.(epic)}
+        className="group rounded-2xl shadow-2xs border-border/80 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer bg-card hover:bg-muted/15 h-full"
+      >
+        <CardContent className="p-5 space-y-4">
         {/* Header Badges */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">
@@ -59,15 +60,13 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
             )}
 
             {epic.sourceRequestId && (
-              <Link
-                href={`/requests/${epic.sourceRequestId}`}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1 text-2xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors border border-amber-500/30"
+              <span
+                className="inline-flex items-center gap-1 text-2xs px-2 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30"
                 title={`Berasal dari Permohonan: ${epic.requestTitle || epic.sourceRequestId}`}
               >
                 <GitPullRequest className="size-3 text-amber-600 dark:text-amber-400" />
                 <span>Req: Kolaborasi</span>
-              </Link>
+              </span>
             )}
           </div>
 
@@ -153,5 +152,6 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
         )}
       </CardContent>
     </Card>
-  );
+  </Link>
+);
 }

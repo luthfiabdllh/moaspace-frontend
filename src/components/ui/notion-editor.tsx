@@ -899,7 +899,6 @@ export function NotionEditor({
               ? 'Tabel: Drag garis tepi kolom untuk atur lebar • Tekan Tab di sel terakhir untuk tambah baris'
               : "Ketik '/' untuk opsi blok (Tabel, Heading, Checklist, dll) • Sorot teks untuk format cepat"}
           </span>
-          <span>Notion Editor</span>
         </div>
       )}
     </div>

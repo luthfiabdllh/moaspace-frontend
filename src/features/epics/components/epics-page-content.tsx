@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Target,
   Plus,
@@ -17,8 +18,6 @@ import {
 } from 'lucide-react';
 import { useEpics } from '../api/use-queries';
 import { EpicCard } from './epic-card';
-import { CreateEpicDialog } from './create-epic-dialog';
-import { EpicDetailSheet } from './epic-detail-sheet';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { Button } from '@/components/ui/button';
@@ -28,6 +27,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { EpicItem } from '../types';
 
 export function EpicsPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlEpicId = searchParams.get('epicId');
 
@@ -35,22 +35,30 @@ export function EpicsPageContent() {
   const { data: divisions = [] } = useDivisions();
   const { data: epics = [], isLoading, error } = useEpics();
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectedEpic, setSelectedEpic] = useState<EpicItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState<'ALL' | 'DIVISION' | 'CROSS'>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('ALL');
 
-  // Auto-open epic if epicId query param exists
+  // Redirect if epicId query param exists
   useEffect(() => {
-    if (urlEpicId && epics.length > 0) {
-      const found = epics.find((e) => e.id === urlEpicId);
-      if (found) {
-        setSelectedEpic(found);
-      }
+    if (urlEpicId) {
+      router.replace(`/epics/${urlEpicId}`);
     }
-  }, [urlEpicId, epics]);
+  }, [urlEpicId, router]);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    selectedScope !== 'ALL' ||
+    selectedStatus !== 'ALL' ||
+    selectedDivisionId !== 'ALL';
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setSelectedScope('ALL');
+    setSelectedStatus('ALL');
+    setSelectedDivisionId('ALL');
+  };
 
   // Can the user create epics?
   // Superadmin, kormanit, or coordinator of any division
@@ -137,52 +145,57 @@ export function EpicsPageContent() {
         </div>
 
         {canCreateEpic && (
-          <Button
-            onClick={() => setCreateDialogOpen(true)}
-            className="gap-2 shadow-xs shrink-0"
-          >
-            <Plus className="size-4" />
-            Inisiatif Baru
-          </Button>
+          <Link href="/epics/new">
+            <Button className="gap-2 shadow-xs shrink-0">
+              <Plus className="size-4" />
+              Inisiatif Baru
+            </Button>
+          </Link>
         )}
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="shadow-2xs">
-          <CardContent className="p-4 space-y-1">
-            <p className="text-xs text-muted-foreground font-medium flex items-center justify-between">
-              Total Inisiatif
-              <Target className="size-4 text-muted-foreground/60" />
-            </p>
-            <p className="text-2xl font-bold text-foreground">{metrics.total}</p>
-            <p className="text-2xs text-muted-foreground">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="rounded-2xl shadow-2xs border-border/80 bg-card hover:border-border transition-all">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Total Inisiatif</span>
+              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <Target className="size-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-foreground">{metrics.total}</div>
+            <p className="text-2xs text-muted-foreground font-medium">
               {metrics.active} aktif • {metrics.closed} selesai
             </p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-2xs">
-          <CardContent className="p-4 space-y-1">
-            <p className="text-xs text-muted-foreground font-medium flex items-center justify-between">
-              Lintas Divisi
-              <Network className="size-4 text-indigo-500" />
-            </p>
-            <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+        <Card className="rounded-2xl shadow-2xs border-border/80 bg-card hover:border-border transition-all">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Lintas Divisi</span>
+              <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Network className="size-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-indigo-600 dark:text-indigo-400">
               {metrics.crossDiv}
-            </p>
-            <p className="text-2xs text-muted-foreground">Kolaborasi multi-divisi</p>
+            </div>
+            <p className="text-2xs text-muted-foreground font-medium">Kolaborasi multi-divisi</p>
           </CardContent>
         </Card>
 
-        <Card className="shadow-2xs">
-          <CardContent className="p-4 space-y-1">
-            <p className="text-xs text-muted-foreground font-medium flex items-center justify-between">
-              Rata-rata Progres
-              <BarChart3 className="size-4 text-primary" />
-            </p>
-            <p className="text-2xl font-bold text-foreground">{metrics.avgProgress}%</p>
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1.5">
+        <Card className="rounded-2xl shadow-2xs border-border/80 bg-card hover:border-border transition-all">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Rata-rata Progres</span>
+              <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                <BarChart3 className="size-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-foreground">{metrics.avgProgress}%</div>
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden mt-1">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-300"
                 style={{ width: `${metrics.avgProgress}%` }}
@@ -191,22 +204,24 @@ export function EpicsPageContent() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-2xs">
-          <CardContent className="p-4 space-y-1">
-            <p className="text-xs text-muted-foreground font-medium flex items-center justify-between">
-              Terselesaikan
-              <CheckCircle2 className="size-4 text-emerald-500" />
-            </p>
-            <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+        <Card className="rounded-2xl shadow-2xs border-border/80 bg-card hover:border-border transition-all">
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">Terselesaikan</span>
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckCircle2 className="size-4" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
               {metrics.closed}
-            </p>
-            <p className="text-2xs text-muted-foreground">Arsip inisiatif tuntas</p>
+            </div>
+            <p className="text-2xs text-muted-foreground font-medium">Arsip inisiatif tuntas</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-card p-3 rounded-xl border border-border/80 shadow-2xs">
+      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between bg-card p-3 rounded-2xl border border-border/80 shadow-2xs">
         {/* Search */}
         <div className="relative flex-1 min-w-60">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -214,7 +229,7 @@ export function EpicsPageContent() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari inisiatif atau #tag proker..."
-            className="pl-9 h-9 text-sm"
+            className="pl-9 h-9 text-sm rounded-xl"
           />
           {searchQuery && (
             <button
@@ -229,12 +244,12 @@ export function EpicsPageContent() {
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Scope Selector */}
-          <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs font-medium">
+          <div className="flex items-center rounded-xl border bg-muted/40 p-0.5 text-xs font-medium">
             <button
               onClick={() => setSelectedScope('ALL')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors ${
                 selectedScope === 'ALL'
-                  ? 'bg-background text-foreground shadow-2xs'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -242,9 +257,9 @@ export function EpicsPageContent() {
             </button>
             <button
               onClick={() => setSelectedScope('DIVISION')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors ${
                 selectedScope === 'DIVISION'
-                  ? 'bg-background text-foreground shadow-2xs'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -252,9 +267,9 @@ export function EpicsPageContent() {
             </button>
             <button
               onClick={() => setSelectedScope('CROSS')}
-              className={`px-2.5 py-1 rounded-md transition-colors ${
+              className={`px-2.5 py-1 rounded-lg transition-colors ${
                 selectedScope === 'CROSS'
-                  ? 'bg-background text-foreground shadow-2xs'
+                  ? 'bg-background text-foreground shadow-2xs font-semibold'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -266,7 +281,7 @@ export function EpicsPageContent() {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value as any)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-9 rounded-xl border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="ALL">Semua Status</option>
             <option value="ACTIVE">Aktif Saja</option>
@@ -277,7 +292,7 @@ export function EpicsPageContent() {
           <select
             value={selectedDivisionId}
             onChange={(e) => setSelectedDivisionId(e.target.value)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-45 truncate"
+            className="h-9 rounded-xl border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-45 truncate"
           >
             <option value="ALL">Semua Divisi</option>
             {divisions.map((div) => (
@@ -286,6 +301,18 @@ export function EpicsPageContent() {
               </option>
             ))}
           </select>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1"
+            >
+              <X className="size-3.5" />
+              Reset
+            </Button>
+          )}
         </div>
       </div>
 
@@ -329,15 +356,16 @@ export function EpicsPageContent() {
             </p>
           </div>
           {canCreateEpic && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCreateDialogOpen(true)}
-              className="gap-2 mt-2"
-            >
-              <Plus className="size-4" />
-              Mulai Inisiatif Pertama
-            </Button>
+            <Link href="/epics/new">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 mt-2"
+              >
+                <Plus className="size-4" />
+                Mulai Inisiatif Pertama
+              </Button>
+            </Link>
           )}
         </div>
       ) : (
@@ -346,24 +374,10 @@ export function EpicsPageContent() {
             <EpicCard
               key={epic.id}
               epic={epic}
-              onSelect={(selected) => setSelectedEpic(selected)}
             />
           ))}
         </div>
       )}
-
-      {/* Create Epic Dialog */}
-      <CreateEpicDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
-
-      {/* Epic Detail & Hierarchy Breakdown Sheet */}
-      <EpicDetailSheet
-        epic={selectedEpic}
-        open={Boolean(selectedEpic)}
-        onOpenChange={(open) => !open && setSelectedEpic(null)}
-      />
     </div>
   );
 }
