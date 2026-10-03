@@ -30,7 +30,6 @@ import { cn } from '@/lib/utils';
 import { Logo } from '@/components/sidebar-02/logo';
 import type { Route } from '@/components/sidebar-02/nav-main';
 import DashboardNavigation from '@/components/sidebar-02/nav-main';
-import { NotificationsPopover } from '@/components/sidebar-02/nav-notifications';
 import { TeamSwitcher, type Team } from '@/components/sidebar-02/team-switcher';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
@@ -212,15 +211,11 @@ export function DashboardSidebar() {
 
         <motion.div
           animate={{ opacity: 1 }}
-          className={cn(
-            'flex items-center gap-2',
-            isCollapsed ? 'flex-row md:flex-col-reverse' : 'flex-row'
-          )}
+          className="flex items-center"
           initial={{ opacity: 0 }}
           key={isCollapsed ? 'header-collapsed' : 'header-expanded'}
           transition={{ duration: 0.8 }}
         >
-          <NotificationsPopover />
           <SidebarTrigger />
         </motion.div>
       </SidebarHeader>

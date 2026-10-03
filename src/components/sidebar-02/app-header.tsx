@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { NotificationsPopover } from '@/components/sidebar-02/nav-notifications';
 import { useLogout } from '@/features/auth/api/use-mutations';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 
@@ -145,11 +146,12 @@ export function AppHeader({
         </span>
       </div>
 
-      {/* Right side: Theme toggle, User badge, Logout button */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      {/* Right side: Notifications, Theme toggle, User badge, Logout button */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <NotificationsPopover />
         <ThemeToggle />
 
-        <div className="hidden lg:flex flex-col text-right">
+        <div className="hidden lg:flex flex-col text-right ml-1">
           <span className="text-xs font-semibold leading-tight text-foreground truncate max-w-36">
             {displayName}
           </span>
