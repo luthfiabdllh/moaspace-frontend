@@ -59,7 +59,7 @@ export function ChangePasswordForm({ hasPassword = true }: ChangePasswordFormPro
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-4">
           {!hasPassword && (
             <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-xs text-blue-700 dark:text-blue-300">
               <AlertCircle className="size-4 shrink-0 mt-0.5" />

@@ -151,7 +151,7 @@ export function ProfileInfoForm({ user }: ProfileInfoFormProps) {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 pt-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
               <Calendar className="size-3.5" />
               <span>Bergabung sejak: {memberSince}</span>
             </div>

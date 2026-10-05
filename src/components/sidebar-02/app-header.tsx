@@ -1,8 +1,16 @@
 'use client';
 
+import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LogOut, ChevronRight } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import {
+  LogOut,
+  ChevronRight,
+  ChevronsUpDown,
+  User as UserIcon,
+  Settings,
+  Check,
+} from 'lucide-react';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,12 +21,24 @@ import {
 } from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { NotificationsPopover } from '@/components/sidebar-02/nav-notifications';
+import { Logo } from '@/components/sidebar-02/logo';
 import { useLogout } from '@/features/auth/api/use-mutations';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useDivisions } from '@/features/divisions/api/use-queries';
+import { cn } from '@/lib/utils';
 
 interface AppHeaderProps {
   userName: string;
@@ -31,9 +51,40 @@ export function AppHeader({
   roleName = 'Anggota',
   logoutLabel = 'Sign out',
 }: AppHeaderProps) {
+  const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const logoutMutation = useLogout();
   const { data: user } = useCurrentUser();
+  const { data: allDivisions = [] } = useDivisions();
+
+  const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
+  const userDivisions = user?.divisions ?? [];
+
+  const queryDivision = searchParams?.get('division');
+  const userPrimaryDivision = userDivisions[0]?.divisionSlug || (isAdmin ? allDivisions[0]?.slug : undefined);
+  const activeDivisionSlug = queryDivision || userPrimaryDivision;
+
+  const divisionsList = useMemo(() => {
+    if (isAdmin && allDivisions.length > 0) {
+      return allDivisions.map((div) => {
+        const userDiv = userDivisions.find((ud) => ud.divisionId === div.id);
+        return {
+          name: div.name,
+          slug: div.slug,
+          role: userDiv?.role === 'COORDINATOR' ? 'Koordinator' : isAdmin ? 'Admin' : 'Anggota',
+        };
+      });
+    }
+    return userDivisions.map((div) => ({
+      name: div.divisionName,
+      slug: div.divisionSlug,
+      role: div.role === 'COORDINATOR' ? 'Koordinator' : 'Anggota',
+    }));
+  }, [isAdmin, allDivisions, userDivisions]);
+
+  const activeDivision = divisionsList.find((d) => d.slug === activeDivisionSlug) || divisionsList[0];
+  const activeDivisionName = activeDivision?.name;
 
   const displayName = user?.name || userName;
   const initials = displayName
@@ -43,6 +94,12 @@ export function AppHeader({
     .join('')
     .toUpperCase()
     .slice(0, 2);
+
+  const userRoleLabel = user?.isSuperAdmin
+    ? 'Super Admin'
+    : user?.isKormanit
+      ? 'Kormanit'
+      : activeDivision?.role || roleName;
 
   // Generate dynamic breadcrumb items
   const breadcrumbItems = (() => {
@@ -146,38 +203,153 @@ export function AppHeader({
         </span>
       </div>
 
-      {/* Right side: Notifications, Theme toggle, User badge, Logout button */}
+      {/* Right side: Notifications, Theme toggle, Profile Switcher */}
       <div className="flex items-center gap-1.5 sm:gap-2">
         <NotificationsPopover />
         <ThemeToggle />
 
-        <div className="hidden lg:flex flex-col text-right ml-1">
-          <span className="text-xs font-semibold leading-tight text-foreground truncate max-w-36">
-            {displayName}
-          </span>
-          <span className="text-3xs text-muted-foreground leading-tight">
-            {roleName}
-          </span>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-9 px-2 sm:px-2.5 rounded-lg border border-border/60 hover:bg-muted/60 data-[state=open]:bg-muted/80 transition-colors cursor-pointer flex items-center gap-2 select-none"
+              aria-label={`Menu profil ${displayName}`}
+            >
+              <Avatar className="size-7.5 rounded-lg shrink-0 border border-border/40">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold rounded-lg">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
 
-        <Avatar className="size-8 ring-1 ring-border" aria-label={`Logged in as ${displayName}`}>
-          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
+              <div className="hidden sm:grid flex-1 text-left text-xs leading-tight min-w-0 max-w-36">
+                <span className="truncate font-semibold text-foreground">{displayName}</span>
+                <span className="truncate text-3xs text-muted-foreground">
+                  {activeDivisionName || userRoleLabel}
+                </span>
+              </div>
 
-        <Button
-          id="logout-button"
-          variant="ghost"
-          size="icon"
-          className="size-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
-          onClick={() => logoutMutation.mutate()}
-          disabled={logoutMutation.isPending}
-          aria-label={logoutLabel}
-          title={logoutLabel}
-        >
-          <LogOut className="size-4" aria-hidden="true" />
-        </Button>
+              <ChevronsUpDown className="size-3.5 text-muted-foreground/70 shrink-0 ml-0.5" />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="end"
+            sideOffset={8}
+            className="w-64 rounded-xl p-2 shadow-lg"
+          >
+            {/* User Info Header */}
+            <div className="flex items-center gap-2.5 p-2 rounded-lg bg-muted/40">
+              <Avatar className="size-9 rounded-lg ring-1 ring-border shrink-0">
+                <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold rounded-lg">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-xs font-semibold text-foreground truncate">
+                  {displayName}
+                </span>
+                <span className="text-3xs text-muted-foreground truncate">
+                  {user?.email || ''}
+                </span>
+                <div className="flex items-center gap-1 mt-1">
+                  <Badge
+                    variant="outline"
+                    className="text-3xs py-0 px-1.5 font-medium border-primary/20 text-primary bg-primary/5"
+                  >
+                    {user?.isSuperAdmin
+                      ? 'Super Admin'
+                      : user?.isKormanit
+                        ? 'Kormanit'
+                        : userRoleLabel}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            {/* Division Switcher list */}
+            {divisionsList.length > 0 && (
+              <>
+                <DropdownMenuSeparator className="my-1.5" />
+                <div className="flex items-center justify-between px-2 py-1">
+                  <DropdownMenuLabel className="p-0 text-3xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Ganti Divisi Kerja
+                  </DropdownMenuLabel>
+                  <span className="text-3xs text-muted-foreground font-mono">
+                    {divisionsList.length} Divisi
+                  </span>
+                </div>
+                <div className="max-h-40 overflow-y-auto space-y-0.5">
+                  {divisionsList.map((div) => {
+                    const isActive = div.slug === activeDivisionSlug;
+                    return (
+                      <DropdownMenuItem
+                        key={div.slug || div.name}
+                        onClick={() => {
+                          if (div.slug) {
+                            router.push(`/board?division=${div.slug}`);
+                          }
+                        }}
+                        className={cn(
+                          'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-xs',
+                          isActive && 'bg-primary/10 text-primary font-medium'
+                        )}
+                      >
+                        <div className="flex size-5 items-center justify-center rounded border bg-background shrink-0">
+                          <Logo className="size-3" />
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="truncate">{div.name}</span>
+                          {div.role && (
+                            <span className="text-3xs text-muted-foreground truncate">
+                              {div.role}
+                            </span>
+                          )}
+                        </div>
+                        {isActive && (
+                          <Check className="size-3.5 text-primary shrink-0 ml-auto" />
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            <DropdownMenuSeparator className="my-1.5" />
+
+            {/* Account Navigation */}
+            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+              <Link
+                href="/profile"
+                className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground"
+              >
+                <UserIcon className="size-4 text-muted-foreground" />
+                <span>Profil Saya</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
+              <Link
+                href="/settings"
+                className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground"
+              >
+                <Settings className="size-4 text-muted-foreground" />
+                <span>Pengaturan Akun</span>
+              </Link>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator className="my-1.5" />
+
+            {/* Logout */}
+            <DropdownMenuItem
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-xs text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive"
+            >
+              <LogOut className="size-4" />
+              <span>{logoutMutation.isPending ? 'Keluar...' : logoutLabel}</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
