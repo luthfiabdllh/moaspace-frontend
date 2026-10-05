@@ -51,12 +51,21 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Only attempt refresh once per request, and not for refresh requests themselves
+    // Only attempt refresh once per request, and not for refresh or auth requests themselves
     const isRefreshRequest = originalRequest?.headers?.['X-Refresh-Request'];
+    const requestUrl = originalRequest?.url || '';
+    const isAuthEndpoint =
+      requestUrl.includes('/auth/login') ||
+      requestUrl.includes('/auth/google') ||
+      requestUrl.includes('/auth/activate') ||
+      requestUrl.includes('/auth/forgot-password') ||
+      requestUrl.includes('/auth/reset-password');
+
     if (
       error.response?.status === 401 &&
       !originalRequest?._retry &&
-      !isRefreshRequest
+      !isRefreshRequest &&
+      !isAuthEndpoint
     ) {
       originalRequest._retry = true;
 

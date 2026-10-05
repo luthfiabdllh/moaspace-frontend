@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 import { loginSchema, type LoginDTO } from '../types';
@@ -14,13 +15,28 @@ import {
   DEFAULT_HERO_IMAGE,
 } from '@/components/ui/sign-in';
 
+function parseQueryError(errParam: string | null): string | null {
+  if (!errParam) return null;
+  const decoded = decodeURIComponent(errParam);
+  if (decoded === 'unregistered_email' || decoded === 'AccessDenied') {
+    return 'Email Google Anda belum terdaftar dalam sistem tertutup KKN MoaSpace. Silakan hubungi Super Admin untuk didaftarkan.';
+  }
+  if (decoded === 'missing_code') {
+    return 'Proses masuk dengan Google dibatalkan atau tidak lengkap.';
+  }
+  if (decoded === 'session_expired') {
+    return 'Sesi masuk Anda telah berakhir. Silakan masuk kembali.';
+  }
+  return decoded;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const loginMutation = useLogin();
   const queryError = searchParams.get('error');
   const [errorMessage, setErrorMessage] = useState<string | null>(
-    queryError ? decodeURIComponent(queryError) : null
+    parseQueryError(queryError)
   );
   const [isGoogleRedirecting, setIsGoogleRedirecting] = useState(false);
 
@@ -49,13 +65,30 @@ export function LoginForm() {
       } else {
         const msg = result.error?.message ?? 'Email atau kata sandi tidak valid.';
         setErrorMessage(msg);
-        toast.error(msg);
+        toast.error('Gagal Masuk', {
+          description: msg,
+        });
       }
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Terjadi kesalahan sistem. Silakan coba lagi.';
+      let message = 'Terjadi kendala saat menghubungkan ke sistem. Silakan coba lagi.';
+      if (axios.isAxiosError(err)) {
+        message =
+          err.response?.data?.error?.message ||
+          err.response?.data?.message ||
+          (err.response?.status === 401
+            ? 'Email atau kata sandi yang Anda masukkan salah.'
+            : err.response?.status === 403
+              ? 'Akun Anda dinonaktifkan atau belum diaktivasi.'
+              : err.response?.status === 429
+                ? 'Terlalu banyak percobaan masuk yang gagal. Silakan tunggu beberapa saat.'
+                : 'Gagal terhubung ke server autentikasi.');
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
       setErrorMessage(message);
-      toast.error(message);
+      toast.error('Autentikasi Gagal', {
+        description: message,
+      });
     }
   };
 
@@ -75,6 +108,18 @@ export function LoginForm() {
 
   const isPending = isSubmitting || loginMutation.isPending;
 
+  const emailRegistration = register('email', {
+    onChange: () => {
+      if (errorMessage) setErrorMessage(null);
+    },
+  });
+
+  const passwordRegistration = register('password', {
+    onChange: () => {
+      if (errorMessage) setErrorMessage(null);
+    },
+  });
+
   return (
     <SignInPage
       title={
@@ -86,12 +131,13 @@ export function LoginForm() {
       description="Sistem Pelacak Kerja & Story Point Tim KKN"
       heroImageSrc={DEFAULT_HERO_IMAGE}
       errorMessage={errorMessage}
+      onDismissError={() => setErrorMessage(null)}
       isLoading={isPending}
       isGoogleLoading={isGoogleRedirecting}
       emailError={errors.email?.message}
       passwordError={errors.password?.message}
-      emailProps={register('email')}
-      passwordProps={register('password')}
+      emailProps={emailRegistration}
+      passwordProps={passwordRegistration}
       onSignIn={handleSubmit(onSubmit)}
       onGoogleSignIn={handleGoogleLogin}
       onResetPassword={() => router.push('/forgot-password')}

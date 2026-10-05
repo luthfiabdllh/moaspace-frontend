@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertCircle, X } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 // --- HELPER COMPONENTS (ICONS) ---
@@ -43,6 +43,7 @@ export interface SignInPageProps {
   onCreateAccount?: () => void;
   children?: React.ReactNode;
   errorMessage?: string | null;
+  onDismissError?: () => void;
   isLoading?: boolean;
   isGoogleLoading?: boolean;
   emailError?: string;
@@ -140,6 +141,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onCreateAccount,
   children,
   errorMessage,
+  onDismissError,
   isLoading = false,
   isGoogleLoading = false,
   emailError,
@@ -149,7 +151,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   footerNotice,
   emailProps,
   passwordProps,
-}) => {
+}: SignInPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
@@ -172,13 +174,30 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             {errorMessage && (
               <div
                 role="alert"
-                className="animate-element animate-delay-200 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+                className="animate-element animate-delay-200 flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive dark:text-red-400 shadow-2xs transition-all"
               >
-                <div className="leading-snug">
-                  <span className="font-semibold block mb-0.5">
-                    Akses Ditolak
-                  </span>
-                  {errorMessage}
+                <div className="size-8 rounded-xl bg-destructive/15 flex items-center justify-center shrink-0 mt-0.5 text-destructive">
+                  <AlertCircle className="size-4.5" />
+                </div>
+                <div className="leading-snug flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold block text-sm text-destructive dark:text-red-400">
+                      Gagal Masuk ke Akun
+                    </span>
+                    {onDismissError && (
+                      <button
+                        type="button"
+                        onClick={onDismissError}
+                        className="text-destructive/70 hover:text-destructive p-0.5 rounded-md hover:bg-destructive/10 transition-colors cursor-pointer"
+                        aria-label="Tutup pemberitahuan gagal masuk"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs mt-1 text-destructive/90 dark:text-red-300/90 leading-relaxed">
+                    {errorMessage}
+                  </p>
                 </div>
               </div>
             )}
