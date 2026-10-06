@@ -624,5 +624,39 @@
   cursor: col-resize !important;
 }
 
+/* Notion-style Images in ProseMirror & Readonly Viewers */
+.prose-notion img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.625rem;
+  margin-top: 0.875rem;
+  margin-bottom: 0.875rem;
+  display: block;
+  object-fit: contain;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease, outline 0.2s ease;
+}
 
+.prose-notion img[data-alignment="center"],
+.prose-notion img.notion-img-center {
+  margin-left: auto;
+  margin-right: auto;
+}
 
+.prose-notion img[data-alignment="left"],
+.prose-notion img.notion-img-left {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.prose-notion img[data-alignment="right"],
+.prose-notion img.notion-img-right {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}

@@ -8,8 +8,11 @@ import Underline from '@tiptap/extension-underline';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { computePosition, flip, shift, offset } from '@floating-ui/dom';
+import { toast } from 'sonner';
+import { uploadImage } from '@/features/uploads/api/upload-image';
 import {
   Bold,
   Italic,
@@ -33,8 +36,31 @@ import {
   PanelTop,
   PanelLeft,
   Plus,
+  Image as ImageIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      alignment: {
+        default: 'center',
+        renderHTML: (attributes) => {
+          return {
+            'data-alignment': attributes.alignment || 'center',
+            class: `notion-img-${attributes.alignment || 'center'}`,
+          };
+        },
+        parseHTML: (element) => element.getAttribute('data-alignment') || 'center',
+      },
+    };
+  },
+});
 
 export interface NotionEditorProps {
   value?: string;
@@ -104,6 +130,15 @@ const COMMAND_ITEMS: SlashCommandItem[] = [
         .focus()
         .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
         .run(),
+  },
+  {
+    id: 'image',
+    title: 'Gambar / Foto',
+    description: 'Unggah gambar (JPG, PNG, WebP, GIF maks 5 MB)',
+    icon: ImageIcon,
+    shortcut: '/gambar',
+    keywords: ['image', 'gambar', 'foto', 'photo', 'picture', 'upload', 'unggah', 'img'],
+    action: () => {},
   },
   {
     id: 'task-list',
@@ -178,6 +213,12 @@ export function NotionEditor({
   // Bubble Menu state
   const [bubblePos, setBubblePos] = useState<{ x: number; y: number } | null>(null);
 
+  // Floating Image Toolbar state
+  const [imageToolbarPos, setImageToolbarPos] = useState<{ x: number; y: number } | null>(null);
+  const imageToolbarRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   // Slash Command state
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashPos, setSlashPos] = useState<{ x: number; y: number } | null>(null);
@@ -186,6 +227,29 @@ export function NotionEditor({
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  const handleImageUpload = useCallback(async (file: File) => {
+    if (!editorRef.current) return;
+    setIsUploading(true);
+    const toastId = toast.loading('Mengunggah gambar ke storage Cloudflare R2...');
+
+    try {
+      const { fileUrl } = await uploadImage(file);
+      editorRef.current
+        .chain()
+        .focus()
+        .setImage({ src: fileUrl, alt: file.name } as any)
+        .run();
+      toast.success('Gambar berhasil diunggah!', { id: toastId });
+    } catch (error: any) {
+      toast.error(error?.message || 'Gagal mengunggah gambar.', { id: toastId });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   }, []);
 
   // Filter commands by query
@@ -226,11 +290,16 @@ export function NotionEditor({
         editor.chain().focus().deleteRange({ from: startPos, to: from }).run();
       }
 
-      item.action(editor);
       setSlashOpen(false);
       setSlashQuery('');
+
+      if (item.id === 'image') {
+        fileInputRef.current?.click();
+        return;
+      }
+
+      item.action(editor);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -253,6 +322,9 @@ export function NotionEditor({
         dropcursor: false,
       }),
       Underline,
+      CustomImage.configure({
+        allowBase64: false,
+      }),
       TaskList,
       TaskItem.configure({
         nested: true,
@@ -281,6 +353,38 @@ export function NotionEditor({
           'prose-notion outline-none px-4 py-3.5',
           minHeight
         ),
+      },
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved || readOnly) return false;
+        const files = event.dataTransfer?.files;
+        if (!files || files.length === 0) return false;
+        const file = files[0];
+        if (file && file.type.startsWith('image/')) {
+          event.preventDefault();
+          const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+          if (coordinates && editorRef.current) {
+            editorRef.current.commands.setTextSelection(coordinates.pos);
+          }
+          handleImageUpload(file);
+          return true;
+        }
+        return false;
+      },
+      handlePaste: (_view, event) => {
+        if (readOnly) return false;
+        const items = event.clipboardData?.items;
+        if (!items) return false;
+        for (const item of Array.from(items)) {
+          if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) {
+              event.preventDefault();
+              handleImageUpload(file);
+              return true;
+            }
+          }
+        }
+        return false;
       },
       handleKeyDown: (_view, event) => {
         const { slashOpen: isOpen, filteredCommands: commands, selectedIndex: idx, executeCommand: exec } =
@@ -332,12 +436,56 @@ export function NotionEditor({
     }
   }, [value, editor]);
 
-  // Update Floating Bubble and Slash Menu positions
+  // Update Floating Bubble, Slash Menu, and Image Toolbar positions
   const updateMenus = useCallback(() => {
     if (!editor || readOnly) return;
 
     const { state, view } = editor;
     const { from, to, empty } = state.selection;
+
+    // ─── 0. Floating Image Toolbar Check ───
+    if (editor.isActive('image')) {
+      try {
+        const nodeDOM = view.nodeDOM(from) as HTMLElement | null;
+        const imgEl =
+          nodeDOM instanceof HTMLImageElement
+            ? nodeDOM
+            : nodeDOM?.querySelector?.('img') || nodeDOM;
+        const rect = imgEl?.getBoundingClientRect?.() || view.coordsAtPos(from);
+
+        const virtualEl = {
+          getBoundingClientRect: () => ({
+            width: (rect as DOMRect).width || 0,
+            height: (rect as DOMRect).height || 0,
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            x: rect.left,
+            y: rect.top,
+            toJSON: () => {},
+          }),
+        };
+
+        if (imageToolbarRef.current) {
+          computePosition(virtualEl as any, imageToolbarRef.current, {
+            placement: 'top',
+            middleware: [offset(8), flip(), shift({ padding: 12 })],
+          }).then(({ x, y }) => {
+            setImageToolbarPos({ x, y });
+          });
+        } else {
+          setImageToolbarPos({ x: rect.left, y: Math.max(10, rect.top - 46) });
+        }
+      } catch {
+        setImageToolbarPos(null);
+      }
+      setBubblePos(null);
+      setSlashOpen(false);
+      return;
+    } else {
+      setImageToolbarPos(null);
+    }
 
     // ─── 1. Slash Command Check ───
     if (empty) {
@@ -489,9 +637,9 @@ export function NotionEditor({
     };
   }, [editor, updateMenus]);
 
-  // Listen to outside clicks to close slash menu
+  // Listen to outside clicks to close slash menu and image toolbar
   useEffect(() => {
-    if (!slashOpen) return;
+    if (!slashOpen && !imageToolbarPos) return;
 
     const handlePointerDown = (e: MouseEvent) => {
       if (
@@ -502,17 +650,25 @@ export function NotionEditor({
       ) {
         setSlashOpen(false);
       }
+      if (
+        imageToolbarRef.current &&
+        !imageToolbarRef.current.contains(e.target as Node) &&
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setImageToolbarPos(null);
+      }
     };
 
     document.addEventListener('mousedown', handlePointerDown);
     return () => {
       document.removeEventListener('mousedown', handlePointerDown);
     };
-  }, [slashOpen]);
+  }, [slashOpen, imageToolbarPos]);
 
   // Reposition menus on window scroll
   useEffect(() => {
-    if (!slashOpen && !bubblePos) return;
+    if (!slashOpen && !bubblePos && !imageToolbarPos) return;
 
     const handleScroll = () => {
       updateMenus();
@@ -522,7 +678,7 @@ export function NotionEditor({
     return () => {
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [slashOpen, bubblePos, updateMenus]);
+  }, [slashOpen, bubblePos, imageToolbarPos, updateMenus]);
 
   if (!mounted || !editor) {
     return (
@@ -546,6 +702,27 @@ export function NotionEditor({
         className
       )}
     >
+      {/* Uploading progress bar */}
+      {isUploading && (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-primary/20 overflow-hidden rounded-t-xl z-20">
+          <div className="h-full bg-primary animate-pulse w-full" />
+        </div>
+      )}
+
+      {/* Hidden file input for image uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            handleImageUpload(file);
+          }
+        }}
+      />
+
       {/* Dynamic Notion Table Toolbar (Appears whenever cursor is inside any table) */}
       {isInsideTable && !readOnly && (
         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/40 border-b border-border/60 text-2xs text-muted-foreground flex-wrap rounded-t-xl animate-in fade-in duration-150 select-none">
@@ -807,6 +984,18 @@ export function NotionEditor({
             >
               <Quote className="size-3.5" />
             </button>
+
+            <div className="h-4 w-px bg-border mx-0.5" />
+
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="Sisipkan Gambar dari Komputer"
+            >
+              <ImageIcon className="size-3.5 text-primary" />
+            </button>
           </div>,
           document.body
         )}
@@ -891,14 +1080,129 @@ export function NotionEditor({
           document.body
         )}
 
-      {/* Editor Footer Hint */}
+      {/* Floating Image Control Toolbar via Portal */}
+      {mounted && imageToolbarPos && !readOnly && typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={imageToolbarRef}
+            style={{
+              position: 'fixed',
+              left: `${imageToolbarPos.x}px`,
+              top: `${imageToolbarPos.y}px`,
+              zIndex: 9999,
+            }}
+            className="flex items-center gap-1 rounded-lg border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 select-none"
+          >
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() =>
+                editor.chain().focus().updateAttributes('image', { alignment: 'left' }).run()
+              }
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.getAttributes('image').alignment === 'left' && 'bg-muted text-primary'
+              )}
+              title="Rata Kiri"
+            >
+              <AlignLeft className="size-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() =>
+                editor.chain().focus().updateAttributes('image', { alignment: 'center' }).run()
+              }
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                (!editor.getAttributes('image').alignment ||
+                  editor.getAttributes('image').alignment === 'center') &&
+                  'bg-muted text-primary'
+              )}
+              title="Rata Tengah (Default)"
+            >
+              <AlignCenter className="size-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() =>
+                editor.chain().focus().updateAttributes('image', { alignment: 'right' }).run()
+              }
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.getAttributes('image').alignment === 'right' && 'bg-muted text-primary'
+              )}
+              title="Rata Kanan"
+            >
+              <AlignRight className="size-3.5" />
+            </button>
+
+            <div className="h-4 w-px bg-border mx-0.5" />
+
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                const currentAlt = editor.getAttributes('image').alt || '';
+                const newAlt = window.prompt('Masukkan teks keterangan (alt) gambar:', currentAlt);
+                if (newAlt !== null) {
+                  editor.chain().focus().updateAttributes('image', { alt: newAlt }).run();
+                }
+              }}
+              className={cn(
+                'px-2 py-1 rounded-md hover:bg-muted text-3xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1',
+                editor.getAttributes('image').alt && 'text-primary font-semibold'
+              )}
+              title="Ubah teks keterangan gambar"
+            >
+              <span>Alt</span>
+            </button>
+
+            <div className="h-4 w-px bg-border mx-0.5" />
+
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().deleteSelection().run()}
+              className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+              title="Hapus Gambar"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </div>,
+          document.body
+        )}
+
+      {/* Editor Footer Hint & Quick Actions */}
       {!readOnly && (
-        <div className="flex items-center justify-between px-3.5 py-1.5 border-t border-border/40 text-3xs text-muted-foreground/70 bg-muted/10 rounded-b-xl select-none">
+        <div className="flex items-center justify-between px-3.5 py-1.5 border-t border-border/40 text-3xs text-muted-foreground/70 bg-muted/10 rounded-b-xl select-none flex-wrap gap-2">
           <span>
             {isInsideTable
               ? 'Tabel: Drag garis tepi kolom untuk atur lebar • Tekan Tab di sel terakhir untuk tambah baris'
-              : "Ketik '/' untuk opsi blok (Tabel, Heading, Checklist, dll) • Sorot teks untuk format cepat"}
+              : "Ketik '/' untuk perintah lengkap • Drag atau paste gambar langsung ke dokumen"}
           </span>
+          <div className="flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border/70 bg-background hover:bg-muted text-foreground transition-all cursor-pointer text-3xs font-medium shadow-2xs hover:border-primary/50 active:scale-95 disabled:opacity-50"
+              title="Unggah Gambar dari Komputer (JPG, PNG, WebP, GIF maks 5 MB)"
+            >
+              <ImageIcon className="size-3 text-primary" />
+              <span>+ Sisipkan Gambar</span>
+            </button>
+            {isUploading && (
+              <span className="flex items-center gap-1 text-primary animate-pulse font-medium">
+                <Loader2 className="size-3 animate-spin" />
+                Mengunggah...
+              </span>
+            )}
+          </div>
         </div>
       )}
     </div>
