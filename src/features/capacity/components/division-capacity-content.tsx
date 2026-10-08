@@ -408,7 +408,7 @@ export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = (
                             </span>
                             {item.note && (
                               <span className="text-[10px] text-muted-foreground truncate max-w-37.5">
-                                "{item.note}"
+                                &quot;{item.note}&quot;
                               </span>
                             )}
                           </div>

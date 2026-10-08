@@ -32,12 +32,16 @@ export const ReviewCapacityDialog: React.FC<ReviewCapacityDialogProps> = ({
   const [approvedSp, setApprovedSp] = React.useState<number>(10);
   const [reviewNote, setReviewNote] = React.useState<string>('');
 
-  React.useEffect(() => {
+  // Adjusted during render (not in an effect) when a different member is
+  // passed in — see react-hooks/set-state-in-effect.
+  const [prevMember, setPrevMember] = React.useState(member);
+  if (member !== prevMember) {
+    setPrevMember(member);
     if (member) {
       setApprovedSp(member.requestedSp ?? member.capacitySp);
       setReviewNote('');
     }
-  }, [member]);
+  }
 
   if (!member) return null;
 
@@ -85,7 +89,7 @@ export const ReviewCapacityDialog: React.FC<ReviewCapacityDialogProps> = ({
               <div className="pt-2 border-t text-xs">
                 <span className="text-muted-foreground block mb-0.5">Alasan Pengajuan:</span>
                 <p className="italic text-foreground bg-background/80 p-2 rounded border">
-                  "{member.note}"
+                  &quot;{member.note}&quot;
                 </p>
               </div>
             )}

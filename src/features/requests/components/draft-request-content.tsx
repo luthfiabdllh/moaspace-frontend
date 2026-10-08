@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   Card,
@@ -67,7 +67,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const [deadline, setDeadline] = useState(
     request.deadline ? request.deadline.split('T')[0] : ''
   );
-  const [brief, setBrief] = useState<Record<string, any>>(request.brief || {});
+  const [brief, setBrief] = useState<Record<string, unknown>>(request.brief || {});
 
   const { data: templates, isLoading: loadingTemplates } =
     useDivisionTemplates(toDivisionId);
@@ -75,17 +75,19 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const updateDraftMutation = useUpdateDraft(request.id);
   const submitDraftMutation = useSubmitDraft(request.id);
 
-  // Sync state if request updates from server
-  useEffect(() => {
-    if (request) {
-      setFromDivisionId(request.fromDivisionId || '');
-      setToDivisionId(request.toDivisionId || '');
-      setTemplateId(request.templateId || '');
-      setTitle(request.title || '');
-      setDeadline(request.deadline ? request.deadline.split('T')[0] : '');
-      setBrief(request.brief || {});
-    }
-  }, [request.id]);
+  // Sync state if request updates from server. Adjusted during render (not
+  // in an effect) when a different draft loads — see
+  // react-hooks/set-state-in-effect.
+  const [prevRequestId, setPrevRequestId] = useState(request.id);
+  if (request.id !== prevRequestId) {
+    setPrevRequestId(request.id);
+    setFromDivisionId(request.fromDivisionId || '');
+    setToDivisionId(request.toDivisionId || '');
+    setTemplateId(request.templateId || '');
+    setTitle(request.title || '');
+    setDeadline(request.deadline ? request.deadline.split('T')[0] : '');
+    setBrief(request.brief || {});
+  }
 
   // When toDivisionId changes, reset templateId and brief
   const handleToDivisionChange = (newToDivId: string) => {
@@ -746,7 +748,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
                       </span>
                     </div>
                     <NotionEditor
-                      value={brief.deskripsi || ''}
+                      value={typeof brief.deskripsi === 'string' ? brief.deskripsi : ''}
                       onChange={(html) =>
                         setBrief({ ...brief, deskripsi: html })
                       }

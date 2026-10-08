@@ -4,7 +4,7 @@ export const userKeys = {
   detail: (id: string) => [...userKeys.all, 'detail', id] as const,
   activityLogs: (entityType?: string, entityId?: string) =>
     ['activity-logs', entityType, entityId] as const,
-  activityLogsInfinite: (params?: Record<string, any>) =>
+  activityLogsInfinite: (params?: object) =>
     ['activity-logs', 'infinite', params] as const,
 };
 

@@ -280,7 +280,7 @@ export function EpicsPageContent() {
           {/* Status Selector */}
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as any)}
+            onChange={(e) => setSelectedStatus(e.target.value as 'ALL' | 'ACTIVE' | 'CLOSED')}
             className="h-9 rounded-xl border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="ALL">Semua Status</option>

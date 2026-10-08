@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FolderKanban,
@@ -48,13 +48,27 @@ export function GlobalBoardContent() {
   // Selected Division Slug
   const [selectedSlug, setSelectedSlug] = useState<string>('');
 
-  useEffect(() => {
+  // Adjusted during render (not in an effect) whenever the URL division param
+  // or the loaded division list changes — see react-hooks/set-state-in-effect.
+  const [prevSyncKey, setPrevSyncKey] = useState({
+    queryDivSlug,
+    divisions,
+    availableDivisions,
+    selectedSlug,
+  });
+  if (
+    queryDivSlug !== prevSyncKey.queryDivSlug ||
+    divisions !== prevSyncKey.divisions ||
+    availableDivisions !== prevSyncKey.availableDivisions ||
+    selectedSlug !== prevSyncKey.selectedSlug
+  ) {
+    setPrevSyncKey({ queryDivSlug, divisions, availableDivisions, selectedSlug });
     if (queryDivSlug && divisions.some((d) => d.slug === queryDivSlug)) {
       setSelectedSlug(queryDivSlug);
     } else if (!selectedSlug && availableDivisions.length > 0) {
       setSelectedSlug(availableDivisions[0].slug);
     }
-  }, [queryDivSlug, divisions, availableDivisions, selectedSlug]);
+  }
 
   const activeDivision = useMemo(() => {
     return divisions.find((d) => d.slug === selectedSlug);
@@ -78,11 +92,15 @@ export function GlobalBoardContent() {
 
   const [activeTab, setActiveTab] = useState<BoardTab>(initialTab);
 
-  useEffect(() => {
+  // Adjusted during render (not in an effect) when the URL tab param changes
+  // — see react-hooks/set-state-in-effect.
+  const [prevQueryTab, setPrevQueryTab] = useState(queryTab);
+  if (queryTab !== prevQueryTab) {
+    setPrevQueryTab(queryTab);
     if (queryTab && ['KANBAN', 'HIERARCHY', 'STORIES', 'CAPACITY'].includes(queryTab)) {
       setActiveTab(queryTab as BoardTab);
     }
-  }, [queryTab]);
+  }
 
   const handleSelectTab = (tab: BoardTab) => {
     setActiveTab(tab);

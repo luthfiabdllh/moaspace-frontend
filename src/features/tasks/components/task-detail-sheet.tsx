@@ -113,7 +113,11 @@ export function TaskDetailSheet({
   const [isSpReasonAlertOpen, setIsSpReasonAlertOpen] = React.useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
 
-  React.useEffect(() => {
+  // Adjusted during render (not in an effect) when a different task loads —
+  // see react-hooks/set-state-in-effect.
+  const [prevTask, setPrevTask] = React.useState(task);
+  if (task !== prevTask) {
+    setPrevTask(task);
     if (task) {
       setTargetSp(task.storyPoints ?? 1);
       setSpReasonInput('');
@@ -125,7 +129,7 @@ export function TaskDetailSheet({
       setDueDateInput(task.dueDate ? task.dueDate.split('T')[0] : '');
       setIsEditingDueDate(false);
     }
-  }, [task]);
+  }
 
   if (!open || !taskId) return null;
 
@@ -139,7 +143,7 @@ export function TaskDetailSheet({
       setIsOvercapacityOpen(false);
       setOvercapacityData(null);
       setPendingUpdate(null);
-    } catch (err: any) {
+    } catch (err) {
       if (isAxiosError(err) && err.response?.status === 409 && err.response?.data?.error === 'OVERCAPACITY_WARNING') {
         setPendingUpdate(dto);
         setOvercapacityData(err.response.data.data);
@@ -848,7 +852,7 @@ export function TaskDetailSheet({
                             {new Date(log.createdAt).toLocaleDateString('id-ID')}
                           </span>
                         </div>
-                        <p className="text-2xs italic text-foreground">"{log.reason}"</p>
+                        <p className="text-2xs italic text-foreground">&quot;{log.reason}&quot;</p>
                         <p className="text-[10px] text-muted-foreground">
                           Oleh: {log.changedByName || 'Koordinator'}
                         </p>

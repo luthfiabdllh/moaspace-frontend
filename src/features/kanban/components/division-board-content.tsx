@@ -63,7 +63,10 @@ export function DivisionBoardContent({
   const { data: board, isLoading: isBoardLoading, error } = useDivisionBoard(
     divisionId || '',
     {
-      priority: selectedPriority !== 'ALL' ? (selectedPriority as any) : undefined,
+      priority:
+        selectedPriority !== 'ALL'
+          ? (selectedPriority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT')
+          : undefined,
       epicId: selectedEpicId !== 'ALL' ? selectedEpicId : undefined,
       isBlocked: onlyBlocked ? true : undefined,
       search: searchQuery.trim() || undefined,

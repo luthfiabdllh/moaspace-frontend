@@ -140,8 +140,7 @@ export function StepperIndicator({
   );
 }
 
-export interface StepperTitleProps
-  extends React.HTMLAttributes<HTMLHeadingElement> {}
+export type StepperTitleProps = React.HTMLAttributes<HTMLHeadingElement>;
 
 export function StepperTitle({ className, ...props }: StepperTitleProps) {
   return (
@@ -155,8 +154,7 @@ export function StepperTitle({ className, ...props }: StepperTitleProps) {
   );
 }
 
-export interface StepperDescriptionProps
-  extends React.HTMLAttributes<HTMLParagraphElement> {}
+export type StepperDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>;
 
 export function StepperDescription({
   className,

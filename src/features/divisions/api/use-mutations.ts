@@ -48,7 +48,7 @@ export const useUpdateDivision = () => {
       id: string;
       dto: UpdateDivisionDTO;
     }) => {
-      const payload: Record<string, any> = {};
+      const payload: Partial<UpdateDivisionDTO> = {};
       if (dto.name !== undefined) payload.name = dto.name;
       if (dto.slug !== undefined) payload.slug = dto.slug || undefined;
       if (dto.requestApprovalEnabled !== undefined) {

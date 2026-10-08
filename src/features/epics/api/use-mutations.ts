@@ -13,7 +13,7 @@ export const useCreateEpic = () => {
 
   return useMutation({
     mutationFn: async (dto: CreateEpicDTO) => {
-      const payload: Record<string, any> = {
+      const payload: Partial<CreateEpicDTO> = {
         title: dto.title,
         description: dto.description || undefined,
         startDate: dto.startDate || undefined,

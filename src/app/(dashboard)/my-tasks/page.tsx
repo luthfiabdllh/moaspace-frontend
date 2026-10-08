@@ -7,6 +7,7 @@ import { useMeTasks } from '@/features/kanban/api/use-queries';
 import { KanbanBoard } from '@/features/kanban/components/kanban-board';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import type { TaskItem } from '@/features/tasks/types';
 
 export default function MyTasksPage() {
   const { data: user } = useCurrentUser();
@@ -25,7 +26,7 @@ export default function MyTasksPage() {
       }
     : null;
 
-  function filterTask(t: any) {
+  function filterTask(t: TaskItem) {
     if (onlyBlocked && !t.isBlocked) return false;
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();

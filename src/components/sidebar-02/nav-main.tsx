@@ -3,7 +3,7 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import type React from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Collapsible,
   CollapsibleContent,
@@ -46,11 +46,15 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
     activeParentId
   );
 
-  useEffect(() => {
+  // Adjusted during render (not in an effect) when the active route changes —
+  // see react-hooks/set-state-in-effect.
+  const [prevActiveParentId, setPrevActiveParentId] = useState(activeParentId);
+  if (activeParentId !== prevActiveParentId) {
+    setPrevActiveParentId(activeParentId);
     if (activeParentId) {
       setOpenCollapsible(activeParentId);
     }
-  }, [activeParentId]);
+  }
 
   // Group routes by group field if provided
   const groupedRoutes = routes.reduce<Record<string, Route[]>>((acc, route) => {

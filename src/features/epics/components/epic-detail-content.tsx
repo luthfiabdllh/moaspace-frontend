@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,6 +41,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { EpicItem, EpicDivision } from '../types';
+import type { StoryItem } from '@/features/stories/types';
+import type { TaskItem } from '@/features/tasks/types';
 
 interface EpicDetailContentProps {
   epicId: string;
@@ -74,12 +76,16 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editedDesc, setEditedDesc] = useState(epic?.description || '');
 
-  useEffect(() => {
+  // Adjusted during render (not in an effect) when the loaded epic changes —
+  // see react-hooks/set-state-in-effect.
+  const [prevEpicKey, setPrevEpicKey] = useState({ id: epic?.id, description: epic?.description });
+  if (epic?.id !== prevEpicKey.id || epic?.description !== prevEpicKey.description) {
+    setPrevEpicKey({ id: epic?.id, description: epic?.description });
     if (epic?.description !== undefined) {
       setEditedDesc(epic.description || '');
       setIsEditingDesc(false);
     }
-  }, [epic?.id, epic?.description]);
+  }
 
   const handleSaveDesc = async () => {
     if (!epic) return;
@@ -438,7 +444,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
               ) : (
                 <div className="space-y-3">
                   {stories.map((story) => {
-                    const storyTasks = (story as any).tasks || allTasks.filter((t) => t.storyId === story.id);
+                    const storyTasks = (story as StoryItem & { tasks?: TaskItem[] }).tasks || allTasks.filter((t) => t.storyId === story.id);
                     const isStoryExpanded = expandedStories[story.id] !== false; // Default expanded
 
                     return (
@@ -524,7 +530,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
                                 Belum ada task. Koordinator dapat memecah Story ini menjadi task kerja anggota.
                               </div>
                             ) : (
-                              storyTasks.map((task: any) => (
+                              storyTasks.map((task: TaskItem) => (
                                 <div
                                   key={task.id}
                                   onClick={() => setSelectedTaskId(task.id)}

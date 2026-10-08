@@ -16,7 +16,7 @@ export const useCreateTask = () => {
 
   return useMutation({
     mutationFn: async (dto: CreateTaskDTO) => {
-      const payload: Record<string, any> = {
+      const payload: Partial<CreateTaskDTO> = {
         storyId: dto.storyId,
         title: dto.title,
         description: dto.description || undefined,

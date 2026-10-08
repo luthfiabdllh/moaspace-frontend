@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api-client';
 import { epicKeys } from './query-keys';
 import type { EpicItem } from '../types';
+import type { StoryItem } from '@/features/stories/types';
 
 export interface QueryEpicsParams {
   scope?: 'DIVISION' | 'CROSS';
@@ -34,8 +35,8 @@ export const useEpics = (params?: QueryEpicsParams) => {
 export const useEpic = (id: string, enabled = true) => {
   return useQuery({
     queryKey: epicKeys.detail(id),
-    queryFn: async (): Promise<EpicItem & { stories?: any[] }> => {
-      const { data } = await apiClient.get<EpicItem & { stories?: any[] }>(`/epics/${id}`);
+    queryFn: async (): Promise<EpicItem & { stories?: StoryItem[] }> => {
+      const { data } = await apiClient.get<EpicItem & { stories?: StoryItem[] }>(`/epics/${id}`);
       return data;
     },
     enabled: Boolean(id) && enabled,

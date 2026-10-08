@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
@@ -72,10 +72,14 @@ export function EpicDetailSheet({
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editedDesc, setEditedDesc] = useState(epic?.description || '');
 
-  useEffect(() => {
+  // Adjusted during render (not in an effect) when the loaded epic changes —
+  // see react-hooks/set-state-in-effect.
+  const [prevEpicKey, setPrevEpicKey] = useState({ id: epic?.id, description: epic?.description });
+  if (epic?.id !== prevEpicKey.id || epic?.description !== prevEpicKey.description) {
+    setPrevEpicKey({ id: epic?.id, description: epic?.description });
     setEditedDesc(epic?.description || '');
     setIsEditingDesc(false);
-  }, [epic?.id, epic?.description]);
+  }
 
   const handleSaveDesc = async () => {
     if (!epic) return;

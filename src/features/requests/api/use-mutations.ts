@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { toast } from 'sonner';
 import { requestsKeys } from './query-keys';
 import { storyKeys } from '@/features/stories/api/query-keys';
@@ -32,8 +32,9 @@ export function useCreateRequest() {
       }
       queryClient.invalidateQueries({ queryKey: requestsKeys.all });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal menyimpan/mengajukan permohonan.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal menyimpan/mengajukan permohonan.');
     },
   });
 }
@@ -55,8 +56,9 @@ export function useApproveOrigin(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal memproses persetujuan asal.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal memproses persetujuan asal.');
     },
   });
 }
@@ -80,8 +82,9 @@ export function useTriageRequest(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal memproses triage.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal memproses triage.');
     },
   });
 }
@@ -99,8 +102,9 @@ export function useRespondInfo(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengirim informasi tambahan.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengirim informasi tambahan.');
     },
   });
 }
@@ -119,8 +123,9 @@ export function useConvertToStory(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengonversi permohonan ke Story.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengonversi permohonan ke Story.');
     },
   });
 }
@@ -140,8 +145,9 @@ export function useConvertToEpic(requestId: string) {
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengonversi permohonan ke Inisiatif/Epic.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengonversi permohonan ke Inisiatif/Epic.');
     },
   });
 }
@@ -159,8 +165,9 @@ export function useDeliverRequest(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengirim hasil kerja.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengirim hasil kerja.');
     },
   });
 }
@@ -183,8 +190,9 @@ export function useConfirmRequest(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengonfirmasi hasil.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengonfirmasi hasil.');
     },
   });
 }
@@ -202,8 +210,9 @@ export function useStartRevision(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal memulai pengerjaan ulang revisi.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal memulai pengerjaan ulang revisi.');
     },
   });
 }
@@ -221,8 +230,9 @@ export function useUpdateDraft(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal memperbarui draft permohonan.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal memperbarui draft permohonan.');
     },
   });
 }
@@ -240,8 +250,9 @@ export function useSubmitDraft(requestId: string) {
       queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
       queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.message || 'Gagal mengajukan draft permohonan.');
+    onError: (err) => {
+      const message = isAxiosError(err) ? err.response?.data?.message : undefined;
+      toast.error(message || 'Gagal mengajukan draft permohonan.');
     },
   });
 }

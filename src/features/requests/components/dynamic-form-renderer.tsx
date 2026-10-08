@@ -8,10 +8,16 @@ import { NotionEditor } from '@/components/ui/notion-editor';
 import { DatePicker } from '@/components/ui/date-picker';
 import type { TemplateFieldDefinition } from '../types';
 
+function toFieldText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  return '';
+}
+
 interface DynamicFormRendererProps {
   fields: TemplateFieldDefinition[];
-  values: Record<string, any>;
-  onChange?: (values: Record<string, any>) => void;
+  values: Record<string, unknown>;
+  onChange?: (values: Record<string, unknown>) => void;
   readOnly?: boolean;
 }
 
@@ -21,7 +27,7 @@ export function DynamicFormRenderer({
   onChange,
   readOnly = false,
 }: DynamicFormRendererProps) {
-  const handleFieldChange = (key: string, val: any) => {
+  const handleFieldChange = (key: string, val: string | number) => {
     if (!onChange || readOnly) return;
     onChange({
       ...values,
@@ -41,14 +47,13 @@ export function DynamicFormRenderer({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {fields.map((f) => {
-          const val = values[f.key];
+          const stringVal = toFieldText(values[f.key]);
           const isHtml =
-            typeof val === 'string' &&
-            (val.includes('<p>') ||
-              val.includes('<h') ||
-              val.includes('<ul') ||
-              val.includes('<li>') ||
-              val.includes('<blockquote'));
+            stringVal.includes('<p>') ||
+            stringVal.includes('<h') ||
+            stringVal.includes('<ul') ||
+            stringVal.includes('<li>') ||
+            stringVal.includes('<blockquote');
 
           return (
             <div key={f.key} className={f.type === 'textarea' ? 'md:col-span-2 space-y-1' : 'space-y-1'}>
@@ -56,13 +61,11 @@ export function DynamicFormRenderer({
               {isHtml ? (
                 <div
                   className="prose-notion text-xs leading-relaxed text-foreground bg-muted/20 border border-border/60 rounded-lg p-3"
-                  dangerouslySetInnerHTML={{ __html: val }}
+                  dangerouslySetInnerHTML={{ __html: stringVal }}
                 />
               ) : (
                 <p className="text-xs font-semibold text-foreground whitespace-pre-wrap">
-                  {val !== undefined && val !== null && val !== ''
-                    ? String(val)
-                    : '—'}
+                  {stringVal !== '' ? stringVal : '—'}
                 </p>
               )}
             </div>
@@ -75,7 +78,7 @@ export function DynamicFormRenderer({
   return (
     <div className="space-y-4">
       {fields.map((field) => {
-        const value = values[field.key] ?? '';
+        const value = toFieldText(values[field.key]);
 
         return (
           <div key={field.key} className="space-y-1.5">

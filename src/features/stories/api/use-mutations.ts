@@ -14,7 +14,7 @@ export const useCreateStory = () => {
 
   return useMutation({
     mutationFn: async (dto: CreateStoryDTO) => {
-      const payload: Record<string, any> = {
+      const payload: Partial<CreateStoryDTO> = {
         divisionId: dto.divisionId,
         title: dto.title,
         epicId: dto.epicId || undefined,

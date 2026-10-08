@@ -64,8 +64,8 @@ export interface ActivityLogItem {
   actorId?: string | null;
   actorName?: string | null;
   actorEmail?: string | null;
-  before?: Record<string, any> | null;
-  after?: Record<string, any> | null;
+  before?: Record<string, unknown> | null;
+  after?: Record<string, unknown> | null;
   createdAt: string;
 }
 

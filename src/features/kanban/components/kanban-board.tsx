@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { isAxiosError } from 'axios';
 import {
   Kanban,
@@ -64,8 +64,13 @@ export function KanbanBoard({
 
   const moveMutation = useMoveTask(divisionId);
 
-  // Sync board with query data while preserving active column ordering
-  useEffect(() => {
+  // Sync board with query data while preserving active column ordering.
+  // Adjusted during render (not in an effect) per React's guidance for
+  // "deriving state from props that changed" — avoids an extra render pass
+  // and satisfies react-hooks/set-state-in-effect.
+  const [prevInitialColumns, setPrevInitialColumns] = useState(initialColumns);
+  if (initialColumns !== prevInitialColumns) {
+    setPrevInitialColumns(initialColumns);
     if (initialColumns) {
       setBoard((prev) => {
         const keys =
@@ -81,14 +86,14 @@ export function KanbanBoard({
           DONE: initialColumns.DONE || [],
         };
 
-        const result: any = {};
+        const result = {} as BoardColumns;
         keys.forEach((k) => {
           result[k] = updated[k as TaskStatus] || [];
         });
         return result;
       });
     }
-  }, [initialColumns]);
+  }
 
   const handleValueCommit = async (
     newColumns: Record<string, TaskItem[]>,
@@ -124,7 +129,7 @@ export function KanbanBoard({
           position,
         },
       });
-    } catch (err: any) {
+    } catch (err) {
       if (
         isAxiosError(err) &&
         err.response?.status === 409 &&

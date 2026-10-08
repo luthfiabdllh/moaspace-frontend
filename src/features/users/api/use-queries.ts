@@ -35,10 +35,11 @@ export const useActivityLogs = (entityType?: string, entityId?: string) => {
   return useQuery({
     queryKey: userKeys.activityLogs(entityType, entityId),
     queryFn: async (): Promise<ActivityLogItem[]> => {
-      const { data } = await apiClient.get<any>('/activity-logs', {
-        params: { entityType, entityId, limit: 100 },
-      });
-      return data?.items ?? (Array.isArray(data) ? data : []);
+      const { data } = await apiClient.get<{ items?: ActivityLogItem[] } | ActivityLogItem[]>(
+        '/activity-logs',
+        { params: { entityType, entityId, limit: 100 } }
+      );
+      return Array.isArray(data) ? data : data?.items ?? [];
     },
     enabled: !entityId || Boolean(entityId),
   });

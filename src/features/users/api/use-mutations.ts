@@ -1,11 +1,13 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api-client';
 import { userKeys } from './query-keys';
 import { toast } from 'sonner';
 import type {
   CreateUserDTO,
+  UserListItem,
   AddUserDivisionDTO,
   UpdateUserDivisionRoleDTO,
   MoveUserDivisionDTO,
@@ -15,7 +17,7 @@ import type {
 interface CreateUserResponse {
   success: boolean;
   message: string;
-  user: any;
+  user: UserListItem;
   activationToken: string;
   activationUrl: string;
 }
@@ -32,9 +34,11 @@ export const useCreateUser = () => {
       queryClient.invalidateQueries({ queryKey: userKeys.all });
       toast.success(data.message || 'Anggota berhasil didaftarkan!');
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || err.message || 'Gagal mendaftarkan anggota.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal mendaftarkan anggota.');
     },
   });
 };
@@ -58,9 +62,11 @@ export const useUpdateUserStatus = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success('Status anggota berhasil diperbarui.');
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || err.message || 'Gagal mengubah status.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal mengubah status.');
     },
   });
 };
@@ -79,9 +85,11 @@ export const useResendActivation = () => {
     onSuccess: (data) => {
       toast.success(data.message || 'Tautan aktivasi baru berhasil diterbitkan.');
     },
-    onError: (err: any) => {
-      const msg = err.response?.data?.error?.message || err.message || 'Gagal membuat tautan aktivasi.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal membuat tautan aktivasi.');
     },
   });
 };
@@ -108,12 +116,11 @@ export const useAddUserDivision = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success(data.message || 'Divisi berhasil ditambahkan.');
     },
-    onError: (err: any) => {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Gagal menambahkan divisi.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal menambahkan divisi.');
     },
   });
 };
@@ -142,12 +149,11 @@ export const useUpdateUserDivisionRole = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success(data.message || 'Role divisi berhasil diubah.');
     },
-    onError: (err: any) => {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Gagal mengubah role divisi.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal mengubah role divisi.');
     },
   });
 };
@@ -174,12 +180,11 @@ export const useRemoveUserDivision = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success(data.message || 'Keanggotaan divisi berhasil dihapus.');
     },
-    onError: (err: any) => {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Gagal menghapus keanggotaan divisi.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal menghapus keanggotaan divisi.');
     },
   });
 };
@@ -206,12 +211,11 @@ export const useMoveUserDivision = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success(data.message || 'Anggota berhasil dipindahkan ke divisi baru.');
     },
-    onError: (err: any) => {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Gagal memindahkan divisi.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal memindahkan divisi.');
     },
   });
 };
@@ -238,12 +242,11 @@ export const useUpdateUserGlobalRole = () => {
       queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
       toast.success(data.message || 'Peran Koordinator Mahasiswa Unit diperbarui.');
     },
-    onError: (err: any) => {
-      const msg =
-        err.response?.data?.error?.message ||
-        err.message ||
-        'Gagal mengubah peran Koordinator Mahasiswa Unit.';
-      toast.error(msg);
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal mengubah peran Koordinator Mahasiswa Unit.');
     },
   });
 };

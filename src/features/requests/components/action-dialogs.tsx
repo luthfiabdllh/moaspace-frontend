@@ -239,7 +239,7 @@ export function RespondInfoDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [brief, setBrief] = useState<Record<string, any>>(request.brief || {});
+  const [brief, setBrief] = useState<Record<string, unknown>>(request.brief || {});
   const [note, setNote] = useState('');
   const mutation = useRespondInfo(request.id);
 
@@ -269,7 +269,7 @@ export function RespondInfoDialog({
             <div className="space-y-1.5">
               <Label htmlFor="generalBrief">Perbarui Brief Permohonan</Label>
               <NotionEditor
-                value={brief.deskripsi || ''}
+                value={typeof brief.deskripsi === 'string' ? brief.deskripsi : ''}
                 onChange={(html) => setBrief({ ...brief, deskripsi: html })}
                 placeholder="Perbarui rincian kebutuhan... (Ketik '/' untuk opsi format blok)"
                 minHeight="min-h-[160px]"
@@ -1035,7 +1035,7 @@ export function EditDraftDialog({
   const [deadline, setDeadline] = useState(
     request.deadline ? request.deadline.split('T')[0] : ''
   );
-  const [brief, setBrief] = useState<Record<string, any>>(request.brief || {});
+  const [brief, setBrief] = useState<Record<string, unknown>>(request.brief || {});
   const mutation = useUpdateDraft(request.id);
 
   const handleSubmit = async () => {
@@ -1099,7 +1099,7 @@ export function EditDraftDialog({
             <div className="space-y-1.5 pt-2 border-t">
               <Label htmlFor="editDraftDeskripsi">Deskripsi Kebutuhan Brief</Label>
               <NotionEditor
-                value={brief.deskripsi || ''}
+                value={typeof brief.deskripsi === 'string' ? brief.deskripsi : ''}
                 onChange={(html) => setBrief({ ...brief, deskripsi: html })}
                 placeholder="Perbarui rincian kebutuhan... (Ketik '/' untuk opsi format blok)"
                 minHeight="min-h-[180px]"

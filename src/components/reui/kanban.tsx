@@ -67,7 +67,7 @@ interface KanbanContextProps<T> {
   modifiers?: Modifiers
 }
 
-const KanbanContext = createContext<KanbanContextProps<any>>({
+const KanbanContext = createContext<KanbanContextProps<unknown>>({
   columns: {},
   setColumns: () => {},
   getItemId: () => "",
@@ -631,7 +631,7 @@ function Kanban<T>({
   const Comp = asChild ? Slot.Root : "div"
 
   return (
-    <KanbanContext.Provider value={contextValue}>
+    <KanbanContext.Provider value={contextValue as unknown as KanbanContextProps<unknown>}>
       <DndContext
         sensors={sensors}
         modifiers={modifiers}

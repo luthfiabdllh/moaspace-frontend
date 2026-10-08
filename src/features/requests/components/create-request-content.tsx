@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -56,18 +56,22 @@ export function CreateRequestContent() {
   const [templateId, setTemplateId] = useState("");
   const [title, setTitle] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [brief, setBrief] = useState<Record<string, any>>({});
+  const [brief, setBrief] = useState<Record<string, unknown>>({});
 
   const { data: templates, isLoading: loadingTemplates } =
     useDivisionTemplates(toDivisionId);
   const createMutation = useCreateRequest();
 
-  // Set default origin division to user's first division
-  useEffect(() => {
+  // Set default origin division to user's first division. Adjusted during
+  // render (not in an effect) when the user data arrives — see
+  // react-hooks/set-state-in-effect.
+  const [prevUser, setPrevUser] = useState(user);
+  if (user !== prevUser) {
+    setPrevUser(user);
     if (user?.divisions && user.divisions.length > 0 && !fromDivisionId) {
       setFromDivisionId(user.divisions[0].divisionId);
     }
-  }, [user, fromDivisionId]);
+  }
 
   // When toDivisionId changes, reset templateId and brief
   const handleToDivisionChange = (newToDivId: string) => {
@@ -704,7 +708,7 @@ export function CreateRequestContent() {
                       </span>
                     </div>
                     <NotionEditor
-                      value={brief.deskripsi || ""}
+                      value={typeof brief.deskripsi === "string" ? brief.deskripsi : ""}
                       onChange={(html) =>
                         setBrief({ ...brief, deskripsi: html })
                       }

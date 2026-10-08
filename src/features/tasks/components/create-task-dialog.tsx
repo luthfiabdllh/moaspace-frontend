@@ -91,7 +91,7 @@ export function CreateTaskDialog({
       setOvercapacityData(null);
       setPendingPayload(null);
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err) {
       if (isAxiosError(err) && err.response?.status === 409 && err.response?.data?.error === 'OVERCAPACITY_WARNING') {
         setPendingPayload(payload);
         setOvercapacityData(err.response.data.data);

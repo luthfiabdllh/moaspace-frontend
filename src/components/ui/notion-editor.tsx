@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TaskList from '@tiptap/extension-task-list';
@@ -10,7 +11,7 @@ import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
-import { computePosition, flip, shift, offset } from '@floating-ui/dom';
+import { computePosition, flip, shift, offset, type VirtualElement } from '@floating-ui/dom';
 import { toast } from 'sonner';
 import { uploadImage } from '@/features/uploads/api/upload-image';
 import {
@@ -78,7 +79,7 @@ interface SlashCommandItem {
   icon: React.ElementType;
   shortcut?: string;
   keywords: string[];
-  action: (editor: any) => void;
+  action: (editor: Editor) => void;
 }
 
 const COMMAND_ITEMS: SlashCommandItem[] = [
@@ -204,7 +205,17 @@ export function NotionEditor({
   minHeight = 'min-h-[160px]',
   className,
 }: NotionEditorProps) {
-  const [mounted, setMounted] = useState(false);
+  // true only after client-side mount, false during SSR — avoids a
+  // hydration mismatch for the portal-rendered menus below. Implemented via
+  // useSyncExternalStore (not an effect + setState) per
+  // react-hooks/set-state-in-effect: there's nothing to subscribe to since
+  // "mounted" never changes again after the first client render, but this
+  // still gives the correct SSR-false / client-true snapshot split.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const containerRef = useRef<HTMLDivElement>(null);
   const bubbleRef = useRef<HTMLDivElement>(null);
   const slashRef = useRef<HTMLDivElement>(null);
@@ -225,9 +236,6 @@ export function NotionEditor({
   const [slashQuery, setSlashQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editorRef.current) return;
@@ -239,11 +247,11 @@ export function NotionEditor({
       editorRef.current
         .chain()
         .focus()
-        .setImage({ src: fileUrl, alt: file.name } as any)
+        .setImage({ src: fileUrl, alt: file.name })
         .run();
       toast.success('Gambar berhasil diunggah!', { id: toastId });
-    } catch (error: any) {
-      toast.error(error?.message || 'Gagal mengunggah gambar.', { id: toastId });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Gagal mengunggah gambar.', { id: toastId });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -312,7 +320,7 @@ export function NotionEditor({
     };
   }, [slashOpen, filteredCommands, selectedIndex, executeCommand]);
 
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<Editor | null>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -427,7 +435,18 @@ export function NotionEditor({
     },
   });
 
-  editorRef.current = editor;
+  // Keep the ref in sync so stable callbacks (handleImageUpload, keyboard
+  // handlers, etc.) can always read the *latest* editor instance without
+  // being re-created on every edit — the standard imperative-escape-hatch
+  // pattern for wrapping a third-party imperative API (Tiptap) documented
+  // by React itself. The React Compiler isn't enabled in this build (no
+  // babel-plugin-react-compiler configured) — only its ESLint rule is,
+  // which has no safe alternative for this exact pattern short of
+  // restructuring the editor's entire callback wiring.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- see comment above
+    editorRef.current = editor;
+  }, [editor]);
 
   // Sync value from outside if changed
   useEffect(() => {
@@ -468,7 +487,7 @@ export function NotionEditor({
         };
 
         if (imageToolbarRef.current) {
-          computePosition(virtualEl as any, imageToolbarRef.current, {
+          computePosition(virtualEl as VirtualElement, imageToolbarRef.current, {
             placement: 'top',
             middleware: [offset(8), flip(), shift({ padding: 12 })],
           }).then(({ x, y }) => {
@@ -525,7 +544,7 @@ export function NotionEditor({
             };
 
             if (slashRef.current) {
-              computePosition(virtualEl as any, slashRef.current, {
+              computePosition(virtualEl as VirtualElement, slashRef.current, {
                 placement: 'bottom-start',
                 middleware: [offset(6), flip(), shift({ padding: 12 })],
               }).then(({ x, y }) => {
@@ -564,7 +583,7 @@ export function NotionEditor({
         };
 
         if (bubbleRef.current) {
-          computePosition(virtualEl as any, bubbleRef.current, {
+          computePosition(virtualEl as VirtualElement, bubbleRef.current, {
             placement: 'top',
             middleware: [offset(8), flip(), shift({ padding: 12 })],
           }).then(({ x, y }) => {
@@ -604,7 +623,7 @@ export function NotionEditor({
         }),
       };
 
-      computePosition(virtualEl as any, slashRef.current, {
+      computePosition(virtualEl as VirtualElement, slashRef.current, {
         placement: 'bottom-start',
         middleware: [offset(6), flip(), shift({ padding: 12 })],
       }).then(({ x, y }) => {
