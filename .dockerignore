@@ -1,0 +1,16 @@
+node_modules
+.next
+.turbo
+out
+coverage
+playwright-report
+test-results
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+.claude
+.vscode
