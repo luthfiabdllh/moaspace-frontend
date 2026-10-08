@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ManageUserDialogProps {
   user: UserListItem | null;
@@ -59,6 +60,13 @@ export function ManageUserDialog({
   // Move division inline state
   const [movingDivisionId, setMovingDivisionId] = useState<string | null>(null);
   const [targetDivisionId, setTargetDivisionId] = useState('');
+
+  // Confirm dialog state (ganti window.confirm)
+  const [pendingRemoveDivision, setPendingRemoveDivision] = useState<{
+    divisionId: string;
+    divisionName: string;
+  } | null>(null);
+  const [isKormanitConfirmOpen, setIsKormanitConfirmOpen] = useState(false);
 
   // Mutations
   const addDivisionMutation = useAddUserDivision();
@@ -110,19 +118,17 @@ export function ManageUserDialog({
   };
 
   // Handle removing from a division
-  const handleRemoveDivision = async (divisionId: string, divisionName: string) => {
-    if (
-      !window.confirm(
-        `Keluarkan ${user.name} dari divisi ${divisionName}?`,
-      )
-    ) {
-      return;
-    }
+  const handleRemoveDivision = (divisionId: string, divisionName: string) => {
+    setPendingRemoveDivision({ divisionId, divisionName });
+  };
 
+  const confirmRemoveDivision = async () => {
+    if (!pendingRemoveDivision) return;
     await removeDivisionMutation.mutateAsync({
       userId: user.id,
-      divisionId,
+      divisionId: pendingRemoveDivision.divisionId,
     });
+    setPendingRemoveDivision(null);
   };
 
   // Handle moving from one division to another
@@ -145,18 +151,17 @@ export function ManageUserDialog({
   };
 
   // Handle toggling Koordinator Mahasiswa Unit
-  const handleToggleKormanit = async () => {
+  const handleToggleKormanit = () => {
+    setIsKormanitConfirmOpen(true);
+  };
+
+  const confirmToggleKormanit = async () => {
     const newKormanitState = !user.isKormanit;
-    const confirmMsg = newKormanitState
-      ? `Berikan hak akses Koordinator Mahasiswa Unit kepada ${user.name}? Pengguna ini akan memiliki akses penuh setara Super Admin.`
-      : `Cabut akses Koordinator Mahasiswa Unit dari ${user.name}?`;
-
-    if (!window.confirm(confirmMsg)) return;
-
     await updateGlobalRoleMutation.mutateAsync({
       userId: user.id,
       payload: { isKormanit: newKormanitState },
     });
+    setIsKormanitConfirmOpen(false);
   };
 
   // Helper to render action label in activity log
@@ -184,6 +189,7 @@ export function ManageUserDialog({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -559,5 +565,29 @@ export function ManageUserDialog({
         )}
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={Boolean(pendingRemoveDivision)}
+      onOpenChange={(isOpen) => !isOpen && setPendingRemoveDivision(null)}
+      title="Keluarkan dari Divisi?"
+      description={`${user.name} akan dikeluarkan dari divisi ${pendingRemoveDivision?.divisionName || ''}.`}
+      variant="destructive"
+      confirmLabel="Keluarkan"
+      onConfirm={confirmRemoveDivision}
+    />
+
+    <ConfirmDialog
+      open={isKormanitConfirmOpen}
+      onOpenChange={setIsKormanitConfirmOpen}
+      title={user.isKormanit ? 'Cabut Akses Kormanit?' : 'Berikan Akses Kormanit?'}
+      description={
+        user.isKormanit
+          ? `Cabut akses Koordinator Mahasiswa Unit dari ${user.name}?`
+          : `Berikan hak akses Koordinator Mahasiswa Unit kepada ${user.name}? Pengguna ini akan memiliki akses penuh setara Super Admin.`
+      }
+      variant={user.isKormanit ? 'destructive' : 'default'}
+      onConfirm={confirmToggleKormanit}
+    />
+    </>
   );
 }

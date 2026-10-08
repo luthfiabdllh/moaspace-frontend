@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 import { cn } from '@/lib/utils';
 
 interface CreateTaskDialogProps {
@@ -238,10 +239,10 @@ export function CreateTaskDialog({
                   <Calendar className="size-3.5 text-muted-foreground" />
                   Tenggat Waktu
                 </Label>
-                <Input
+                <DatePicker
                   id="task-duedate"
-                  type="date"
-                  {...register('dueDate')}
+                  value={watch('dueDate')}
+                  onChange={(v) => setValue('dueDate', v || '')}
                   className="text-xs"
                 />
               </div>

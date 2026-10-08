@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface EditStoryDialogProps {
   story: StoryItem;
@@ -32,6 +33,8 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<UpdateStoryDTO>({
     resolver: zodResolver(updateStorySchema),
@@ -148,7 +151,12 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
                 <Calendar className="size-3.5 text-muted-foreground" />
                 Target Tanggal
               </Label>
-              <Input id="editTargetDate" type="date" {...register('targetDate')} className="text-xs" />
+              <DatePicker
+                id="editTargetDate"
+                value={watch('targetDate')}
+                onChange={(v) => setValue('targetDate', v || '')}
+                className="text-xs"
+              />
             </div>
 
             <div className="space-y-1.5">

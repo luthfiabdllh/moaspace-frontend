@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface CreateStoryDialogProps {
   open: boolean;
@@ -206,10 +207,10 @@ export function CreateStoryDialog({
                 <Calendar className="size-3.5 text-muted-foreground" />
                 Target Tanggal
               </Label>
-              <Input
+              <DatePicker
                 id="targetDate"
-                type="date"
-                {...register('targetDate')}
+                value={watch('targetDate')}
+                onChange={(v) => setValue('targetDate', v || '')}
                 className="text-xs"
               />
             </div>

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { NotionEditor } from '@/components/ui/notion-editor';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { TemplateFieldDefinition } from '../types';
 
 interface DynamicFormRendererProps {
@@ -118,11 +119,10 @@ export function DynamicFormRenderer({
                 }
               />
             ) : field.type === 'date' ? (
-              <Input
+              <DatePicker
                 id={`field-${field.key}`}
-                type="date"
                 value={value}
-                onChange={(e) => handleFieldChange(field.key, e.target.value)}
+                onChange={(v) => handleFieldChange(field.key, v || '')}
               />
             ) : (
               <Input

@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NotionEditor } from '@/components/ui/notion-editor';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface CreateEpicDialogProps {
   open: boolean;
@@ -211,20 +212,20 @@ export function CreateEpicDialog({
               <Label htmlFor="start-date" className="text-xs">
                 Tanggal Mulai
               </Label>
-              <Input
+              <DatePicker
                 id="start-date"
-                type="date"
-                {...register('startDate')}
+                value={watch('startDate')}
+                onChange={(v) => setValue('startDate', v || '')}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="end-date" className="text-xs">
                 Tanggal Selesai
               </Label>
-              <Input
+              <DatePicker
                 id="end-date"
-                type="date"
-                {...register('endDate')}
+                value={watch('endDate')}
+                onChange={(v) => setValue('endDate', v || '')}
               />
             </div>
           </div>

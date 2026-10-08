@@ -26,6 +26,7 @@ import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface StoryCardProps {
   story: StoryItem;
@@ -37,6 +38,7 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [editStoryOpen, setEditStoryOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { data: tasks = [], isLoading: isTasksLoading } = useTasks({ storyId: story.id });
   const updateMutation = useUpdateStory();
@@ -50,11 +52,13 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
     });
   };
 
-  const handleDeleteStory = async (e: React.MouseEvent) => {
+  const handleDeleteStory = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(`Hapus story "${story.title}" beserta seluruh task di dalamnya?`)) {
-      await deleteMutation.mutateAsync(story.id);
-    }
+    setDeleteConfirmOpen(true);
+  };
+
+  const confirmDeleteStory = async () => {
+    await deleteMutation.mutateAsync(story.id);
   };
 
   return (
@@ -313,6 +317,16 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
           onOpenChange={setEditStoryOpen}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Hapus Story Ini?"
+        description={`Story "${story.title}" beserta seluruh task di dalamnya akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.`}
+        variant="destructive"
+        onConfirm={confirmDeleteStory}
+      />
     </Card>
   );
 }

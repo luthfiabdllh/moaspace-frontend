@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { NotionEditor } from "@/components/ui/notion-editor";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Stepper,
   StepperItem,
@@ -664,11 +665,10 @@ export function CreateRequestContent() {
                   <Label htmlFor="reqDeadline" className="text-xs font-medium">
                     Target Deadline (Opsional)
                   </Label>
-                  <Input
+                  <DatePicker
                     id="reqDeadline"
-                    type="date"
                     value={deadline}
-                    onChange={(e) => setDeadline(e.target.value)}
+                    onChange={(v) => setDeadline(v || '')}
                   />
                 </div>
               </div>

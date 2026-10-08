@@ -33,6 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface UsersTableProps {
   users: UserListItem[];
@@ -54,6 +55,7 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
   const [selectedUserIdForManage, setSelectedUserIdForManage] = useState<string | null>(null);
   const currentUserForManage =
     users.find((u) => u.id === selectedUserIdForManage) || null;
+  const [pendingToggleStatusUser, setPendingToggleStatusUser] = useState<UserListItem | null>(null);
 
   const updateStatusMutation = useUpdateUserStatus();
   const resendActivationMutation = useResendActivation();
@@ -74,19 +76,18 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
     return matchesSearch && matchesDivision && matchesStatus;
   });
 
-  const handleToggleStatus = async (user: UserListItem) => {
-    const newStatus = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    const confirmMsg =
-      newStatus === 'INACTIVE'
-        ? `Apakah Anda yakin ingin menonaktifkan akun ${user.name}? Pengguna ini akan dikeluarkan dari semua sesi aktif.`
-        : `Aktifkan kembali akun ${user.name}?`;
+  const handleToggleStatus = (user: UserListItem) => {
+    setPendingToggleStatusUser(user);
+  };
 
-    if (!window.confirm(confirmMsg)) return;
-
+  const confirmToggleStatus = async () => {
+    if (!pendingToggleStatusUser) return;
+    const newStatus = pendingToggleStatusUser.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     await updateStatusMutation.mutateAsync({
-      userId: user.id,
+      userId: pendingToggleStatusUser.id,
       status: newStatus,
     });
+    setPendingToggleStatusUser(null);
   };
 
   const handleResendActivation = async (user: UserListItem) => {
@@ -410,6 +411,24 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
         divisions={divisions}
         isOpen={Boolean(currentUserForManage)}
         onClose={() => setSelectedUserIdForManage(null)}
+      />
+
+      {/* Toggle Status Confirmation */}
+      <ConfirmDialog
+        open={Boolean(pendingToggleStatusUser)}
+        onOpenChange={(isOpen) => !isOpen && setPendingToggleStatusUser(null)}
+        title={
+          pendingToggleStatusUser?.status === 'ACTIVE'
+            ? 'Nonaktifkan Akun Ini?'
+            : 'Aktifkan Kembali Akun Ini?'
+        }
+        description={
+          pendingToggleStatusUser?.status === 'ACTIVE'
+            ? `Apakah Anda yakin ingin menonaktifkan akun ${pendingToggleStatusUser?.name}? Pengguna ini akan dikeluarkan dari semua sesi aktif.`
+            : `Aktifkan kembali akun ${pendingToggleStatusUser?.name}?`
+        }
+        variant={pendingToggleStatusUser?.status === 'ACTIVE' ? 'destructive' : 'default'}
+        onConfirm={confirmToggleStatus}
       />
     </div>
   );

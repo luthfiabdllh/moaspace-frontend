@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
 
 interface EditEpicDialogProps {
   epic: EpicItem;
@@ -185,14 +186,22 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
                 <Calendar className="size-3.5 text-muted-foreground" />
                 Tanggal Mulai
               </Label>
-              <Input id="edit-start-date" type="date" {...register('startDate')} />
+              <DatePicker
+                id="edit-start-date"
+                value={watch('startDate')}
+                onChange={(v) => setValue('startDate', v || '')}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-end-date" className="flex items-center gap-1.5 text-xs">
                 <Calendar className="size-3.5 text-muted-foreground" />
                 Tanggal Selesai
               </Label>
-              <Input id="edit-end-date" type="date" {...register('endDate')} />
+              <DatePicker
+                id="edit-end-date"
+                value={watch('endDate')}
+                onChange={(v) => setValue('endDate', v || '')}
+              />
             </div>
           </div>
 

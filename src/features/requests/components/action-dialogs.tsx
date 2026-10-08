@@ -27,6 +27,7 @@ import {
 } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
 import { NotionEditor } from '@/components/ui/notion-editor';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { RequestDetail, RequestTemplate } from '../types';
 import { useEpics } from '@/features/epics/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
@@ -387,11 +388,10 @@ export function ConvertToStoryDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="targetDate">Target Tanggal Selesai</Label>
-            <Input
+            <DatePicker
               id="targetDate"
-              type="date"
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              onChange={(v) => setTargetDate(v || '')}
             />
           </div>
 
@@ -626,11 +626,10 @@ export function ConvertToEpicDialog({
             {/* Target Date */}
             <div className="space-y-1.5">
               <Label htmlFor="epicTargetDate">Target Selesai</Label>
-              <Input
+              <DatePicker
                 id="epicTargetDate"
-                type="date"
                 value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
+                onChange={(v) => setTargetDate(v || '')}
               />
             </div>
 
@@ -1078,11 +1077,10 @@ export function EditDraftDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="editDraftDeadline">Target Deadline (Opsional)</Label>
-            <Input
+            <DatePicker
               id="editDraftDeadline"
-              type="date"
               value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
+              onChange={(v) => setDeadline(v || '')}
             />
           </div>
 

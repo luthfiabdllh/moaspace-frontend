@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface ManageDivisionMembersDialogProps {
   division: DivisionItem | null;
@@ -50,6 +51,7 @@ export function ManageDivisionMembersDialog({
 
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState<'MEMBER' | 'COORDINATOR'>('MEMBER');
+  const [pendingRemoveMember, setPendingRemoveMember] = useState<{ id: string; name: string } | null>(null);
 
   if (!division) return null;
 
@@ -88,16 +90,21 @@ export function ManageDivisionMembersDialog({
     });
   };
 
-  const handleRemoveMember = async (userId: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus anggota ini dari divisi?')) {
-      await removeMemberMutation.mutateAsync({
-        divisionId: division.id,
-        userId,
-      });
-    }
+  const handleRemoveMember = (userId: string, userName: string) => {
+    setPendingRemoveMember({ id: userId, name: userName });
+  };
+
+  const confirmRemoveMember = async () => {
+    if (!pendingRemoveMember) return;
+    await removeMemberMutation.mutateAsync({
+      divisionId: division.id,
+      userId: pendingRemoveMember.id,
+    });
+    setPendingRemoveMember(null);
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[85vh] flex flex-col p-6">
         <DialogHeader className="pb-3 border-b border-border/60">
@@ -245,7 +252,7 @@ export function ManageDivisionMembersDialog({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemoveMember(member.id)}
+                        onClick={() => handleRemoveMember(member.id, member.name)}
                         disabled={removeMemberMutation.isPending}
                         className="size-8 text-destructive hover:bg-destructive/10"
                         title="Hapus dari divisi"
@@ -261,5 +268,15 @@ export function ManageDivisionMembersDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <ConfirmDialog
+      open={Boolean(pendingRemoveMember)}
+      onOpenChange={(isOpen) => !isOpen && setPendingRemoveMember(null)}
+      title="Hapus Anggota dari Divisi?"
+      description={`${pendingRemoveMember?.name || 'Anggota ini'} akan dikeluarkan dari divisi ${division.name}.`}
+      variant="destructive"
+      onConfirm={confirmRemoveMember}
+    />
+    </>
   );
 }

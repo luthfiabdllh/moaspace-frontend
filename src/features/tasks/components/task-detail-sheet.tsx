@@ -29,6 +29,8 @@ import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivision } from '@/features/divisions/api/use-queries';
 import { useDivisionCapacities } from '@/features/capacity/api/use-queries';
 import { OvercapacityDialog } from '@/features/capacity/components/overcapacity-dialog';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DatePicker } from '@/components/ui/date-picker';
 import type { OvercapacityWarningData } from '@/features/capacity/types';
 import {
   Sheet,
@@ -107,6 +109,10 @@ export function TaskDetailSheet({
   const [pendingUpdate, setPendingUpdate] = React.useState<UpdateTaskDTO | null>(null);
   const [isOvercapacityOpen, setIsOvercapacityOpen] = React.useState(false);
 
+  // Confirm/alert dialog state (ganti window.confirm / window.alert)
+  const [isSpReasonAlertOpen, setIsSpReasonAlertOpen] = React.useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+
   React.useEffect(() => {
     if (task) {
       setTargetSp(task.storyPoints ?? 1);
@@ -155,7 +161,7 @@ export function TaskDetailSheet({
     if (!task) return;
     const isLocked = Boolean(task.spLockedAt || ['IN_PROGRESS', 'REVIEW', 'DONE'].includes(task.status));
     if (isLocked && !spReasonInput.trim()) {
-      alert('Alasan perubahan Story Point wajib diisi.');
+      setIsSpReasonAlertOpen(true);
       return;
     }
     await executeUpdate({
@@ -220,12 +226,15 @@ export function TaskDetailSheet({
     setBlockerReasonInput('');
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!task) return;
-    if (confirm('Yakin ingin menghapus task ini?')) {
-      await deleteMutation.mutateAsync(task.id);
-      onOpenChange(false);
-    }
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!task) return;
+    await deleteMutation.mutateAsync(task.id);
+    onOpenChange(false);
   };
 
   const isSpLocked = Boolean(task?.spLockedAt || (task && ['IN_PROGRESS', 'REVIEW', 'DONE'].includes(task.status)));
@@ -779,11 +788,9 @@ export function TaskDetailSheet({
                   </div>
                   {isEditingDueDate ? (
                     <div className="space-y-1.5 pt-0.5">
-                      <Input
-                        autoFocus
-                        type="date"
+                      <DatePicker
                         value={dueDateInput}
-                        onChange={(e) => setDueDateInput(e.target.value)}
+                        onChange={(v) => setDueDateInput(v || '')}
                         className="h-8 text-xs"
                       />
                       <div className="flex items-center justify-end gap-1.5">
@@ -922,6 +929,24 @@ export function TaskDetailSheet({
           setOvercapacityData(null);
         }}
         isLoading={updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={isSpReasonAlertOpen}
+        onOpenChange={setIsSpReasonAlertOpen}
+        title="Alasan Perubahan SP Wajib Diisi"
+        description="Story Point yang sudah terkunci hanya dapat diubah dengan menyertakan alasan yang jelas."
+        hideCancel
+        onConfirm={() => setIsSpReasonAlertOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        title="Hapus Task Ini?"
+        description="Tindakan ini tidak dapat dibatalkan. Task akan dihapus secara permanen."
+        variant="destructive"
+        onConfirm={confirmDelete}
       />
     </>
   );

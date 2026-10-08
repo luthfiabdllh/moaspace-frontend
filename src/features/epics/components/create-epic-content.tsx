@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotionEditor } from '@/components/ui/notion-editor';
+import { DatePicker } from '@/components/ui/date-picker';
 import { cn } from '@/lib/utils';
 
 interface CreateEpicContentProps {
@@ -291,11 +292,11 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
                   <Calendar className="size-3.5 text-muted-foreground" />
                   Tanggal Mulai
                 </Label>
-                <Input
+                <DatePicker
                   id="start-date"
-                  type="date"
                   className="text-xs h-9"
-                  {...register('startDate')}
+                  value={watch('startDate')}
+                  onChange={(v) => setValue('startDate', v || '')}
                 />
               </div>
 
@@ -304,11 +305,11 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
                   <Calendar className="size-3.5 text-muted-foreground" />
                   Target Selesai
                 </Label>
-                <Input
+                <DatePicker
                   id="end-date"
-                  type="date"
                   className="text-xs h-9"
-                  {...register('endDate')}
+                  value={watch('endDate')}
+                  onChange={(v) => setValue('endDate', v || '')}
                 />
               </div>
 
