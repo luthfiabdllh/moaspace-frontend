@@ -77,6 +77,7 @@ export interface RequestPermissions {
   canConvertToEpic: boolean;
   canDeliver: boolean;
   canConfirmOrRevise: boolean;
+  canStartRevision: boolean;
 }
 
 export const requestListItemSchema = z.object({
@@ -129,6 +130,7 @@ export const requestDetailSchema = requestListItemSchema.extend({
     canConvertToEpic: z.boolean().default(false),
     canDeliver: z.boolean(),
     canConfirmOrRevise: z.boolean(),
+    canStartRevision: z.boolean().default(false),
   }),
 });
 export type RequestDetail = z.infer<typeof requestDetailSchema>;

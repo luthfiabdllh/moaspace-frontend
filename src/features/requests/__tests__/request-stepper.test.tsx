@@ -28,6 +28,7 @@ const baseMockRequest: RequestDetail = {
     canConvertToEpic: false,
     canDeliver: false,
     canConfirmOrRevise: false,
+    canStartRevision: false,
   },
   events: [
     {
@@ -89,14 +90,14 @@ describe('RequestStepper', () => {
     expect(onOpenOriginApproval).toHaveBeenCalled();
   });
 
-  it('displays revision cycle badge and loop indicator when in REVISION status', () => {
-    const onOpenDeliver = vi.fn();
+  it('displays revision cycle badge and "Mulai Revisi" CTA when in REVISION status', () => {
+    const onOpenStartRevision = vi.fn();
     const req: RequestDetail = {
       ...baseMockRequest,
       status: 'REVISION',
       permissions: {
         ...baseMockRequest.permissions,
-        canDeliver: true,
+        canStartRevision: true,
       },
       events: [
         ...baseMockRequest.events,
@@ -116,12 +117,57 @@ describe('RequestStepper', () => {
       <RequestStepper
         request={req}
         scrollToSection={vi.fn()}
-        onOpenDeliver={onOpenDeliver}
+        onOpenStartRevision={onOpenStartRevision}
       />
     );
 
     expect(screen.getByText(/siklus revisi: 1x/i)).toBeDefined();
-    expect(screen.getByText(/revisi ke-1 sedang diproses/i)).toBeDefined();
+    expect(screen.getByText(/revisi ke-1 diminta pemohon/i)).toBeDefined();
+
+    const startRevisionBtn = screen.getByRole('button', { name: /mulai revisi/i });
+    fireEvent.click(startRevisionBtn);
+    expect(onOpenStartRevision).toHaveBeenCalled();
+  });
+
+  it('displays "Kirim Ulang Hasil" CTA when back in IN_PROGRESS after a revision cycle', () => {
+    const onOpenDeliver = vi.fn();
+    const req: RequestDetail = {
+      ...baseMockRequest,
+      status: 'IN_PROGRESS',
+      permissions: {
+        ...baseMockRequest.permissions,
+        canDeliver: true,
+      },
+      events: [
+        ...baseMockRequest.events,
+        {
+          id: 'ev-rev-1',
+          fromStatus: 'DELIVERED',
+          toStatus: 'REVISION',
+          actorId: 'usr-1',
+          actorName: 'Budi Santoso',
+          note: 'Warna background tolong disesuaikan',
+          createdAt: '2026-10-02T00:00:00Z',
+        },
+        {
+          id: 'ev-rev-2',
+          fromStatus: 'REVISION',
+          toStatus: 'IN_PROGRESS',
+          actorId: 'usr-2',
+          actorName: 'Koordinator',
+          note: 'Mulai pengerjaan ulang',
+          createdAt: '2026-10-02T01:00:00Z',
+        },
+      ],
+    };
+
+    render(
+      <RequestStepper
+        request={req}
+        scrollToSection={vi.fn()}
+        onOpenDeliver={onOpenDeliver}
+      />
+    );
 
     const deliverBtn = screen.getByRole('button', { name: /kirim ulang hasil/i });
     fireEvent.click(deliverBtn);

@@ -41,6 +41,7 @@ interface RequestStepperProps {
   onOpenConvertToEpic?: () => void;
   onOpenDeliver?: () => void;
   onOpenConfirm?: () => void;
+  onOpenStartRevision?: () => void;
 }
 
 export function RequestStepper({
@@ -55,6 +56,7 @@ export function RequestStepper({
   onOpenConvertToEpic,
   onOpenDeliver,
   onOpenConfirm,
+  onOpenStartRevision,
 }: RequestStepperProps) {
   const status = request.status;
   const events = request.events || [];
@@ -394,10 +396,29 @@ export function RequestStepper({
       );
     }
 
-    if (
-      (status === 'IN_PROGRESS' || status === 'REVISION') &&
-      request.permissions.canDeliver
-    ) {
+    if (status === 'REVISION' && request.permissions.canStartRevision) {
+      return (
+        <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-xs">
+          <div className="flex items-center gap-2 text-rose-800 dark:text-rose-200">
+            <RotateCcw className="size-4 shrink-0 text-rose-600 dark:text-rose-400" />
+            <span>
+              Revisi ke-{revisionCount} diminta pemohon. Mulai pengerjaan ulang untuk
+              membuka kembali status pengerjaan.
+            </span>
+          </div>
+          <Button
+            size="sm"
+            onClick={onOpenStartRevision}
+            className="bg-rose-600 hover:bg-rose-700 text-white shrink-0 text-xs gap-1.5"
+          >
+            <RotateCcw className="size-3.5" />
+            Mulai Revisi
+          </Button>
+        </div>
+      );
+    }
+
+    if (status === 'IN_PROGRESS' && request.permissions.canDeliver) {
       const allTasksDone =
         linkedStory &&
         linkedStory.tasksCount > 0 &&
@@ -408,11 +429,9 @@ export function RequestStepper({
           <div className="flex items-center gap-2 text-indigo-800 dark:text-indigo-200">
             <PackageCheck className="size-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
             <span>
-              {status === 'REVISION'
-                ? `Revisi ke-${revisionCount} sedang diproses. Kirim ulang hasil pengerjaan jika sudah diperbaiki.`
-                : allTasksDone
-                  ? 'Semua task telah selesai! Anda dapat mengirimkan hasil kerja sekarang.'
-                  : `Pengerjaan berlangsung (${linkedStory?.doneTasksCount || 0}/${linkedStory?.tasksCount || 0} task selesai).`}
+              {allTasksDone
+                ? 'Semua task telah selesai! Anda dapat mengirimkan hasil kerja sekarang.'
+                : `Pengerjaan berlangsung (${linkedStory?.doneTasksCount || 0}/${linkedStory?.tasksCount || 0} task selesai).`}
             </span>
           </div>
           <Button
@@ -421,7 +440,7 @@ export function RequestStepper({
             className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 text-xs gap-1.5"
           >
             <PackageCheck className="size-3.5" />
-            {status === 'REVISION' ? 'Kirim Ulang Hasil' : 'Kirim Hasil Kerja'}
+            {revisionCount > 0 ? 'Kirim Ulang Hasil' : 'Kirim Hasil Kerja'}
           </Button>
         </div>
       );

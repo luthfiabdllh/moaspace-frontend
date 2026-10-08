@@ -189,6 +189,25 @@ export function useConfirmRequest(requestId: string) {
   });
 }
 
+export function useStartRevision(requestId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await axios.patch(`/api/requests/${requestId}/start-revision`);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success('Pengerjaan ulang revisi dimulai!');
+      queryClient.invalidateQueries({ queryKey: requestsKeys.detail(requestId) });
+      queryClient.invalidateQueries({ queryKey: requestsKeys.lists() });
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || 'Gagal memulai pengerjaan ulang revisi.');
+    },
+  });
+}
+
 export function useUpdateDraft(requestId: string) {
   const queryClient = useQueryClient();
 

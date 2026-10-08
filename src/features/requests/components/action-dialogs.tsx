@@ -23,14 +23,23 @@ import {
   useConfirmRequest,
   useUpdateDraft,
   useSubmitDraft,
+  useStartRevision,
 } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import type { RequestDetail, RequestTemplate } from '../types';
 import { useEpics } from '@/features/epics/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
-import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck, Target, Network, Layers } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck, Target, Network, Layers, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+
+// Memeriksa apakah HTML rich-text (TipTap) punya isi bermakna: ada teks atau
+// gambar, bukan sekadar tag kosong seperti "<p></p>".
+function hasMeaningfulContent(html: string): boolean {
+  if (!html) return false;
+  if (/<img[\s>]/i.test(html)) return true;
+  return html.replace(/<[^>]*>/g, '').trim().length > 0;
+}
 
 // ─── 1. ORIGIN APPROVAL DIALOG ───────────────────────────────────────────────
 export function OriginApprovalDialog({
@@ -827,14 +836,14 @@ export function ConfirmDialog({
   const mutation = useConfirmRequest(request.id);
 
   const handleSubmit = async () => {
-    if (action === 'REVISION' && !reason.trim()) {
+    if (action === 'REVISION' && !hasMeaningfulContent(reason)) {
       toast.error('Catatan atau alasan revisi wajib dicantumkan');
       return;
     }
 
     await mutation.mutateAsync({
       action,
-      reason: reason.trim() || undefined,
+      reason: hasMeaningfulContent(reason) ? reason : undefined,
     });
     onOpenChange(false);
   };
@@ -874,12 +883,11 @@ export function ConfirmDialog({
           {action === 'REVISION' && (
             <div className="space-y-1.5">
               <Label htmlFor="revisionReason">Catatan Revisi <span className="text-destructive">*</span></Label>
-              <Textarea
-                id="revisionReason"
-                rows={3}
-                placeholder="Jelaskan bagian apa yang perlu diperbaiki atau disesuaikan..."
+              <NotionEditor
                 value={reason}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
+                onChange={setReason}
+                placeholder="Jelaskan bagian apa yang perlu diperbaiki atau disesuaikan... (Ketik '/' untuk opsi format blok, bisa sisipkan gambar)"
+                minHeight="min-h-[140px]"
               />
             </div>
           )}
@@ -944,6 +952,67 @@ export function SubmitDraftDialog({
           <Button onClick={handleSubmit} disabled={mutation.isPending} className="gap-2">
             <Send className="h-4 w-4" />
             {mutation.isPending ? 'Mengajukan...' : 'Ya, Ajukan Permohonan'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── 8b. START REVISION DIALOG ───────────────────────────────────────────────
+export function StartRevisionDialog({
+  request,
+  open,
+  onOpenChange,
+}: {
+  request: RequestDetail;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const mutation = useStartRevision(request.id);
+
+  const handleSubmit = async () => {
+    await mutation.mutateAsync();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-120">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <RotateCcw className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+            Mulai Pengerjaan Ulang Revisi
+          </DialogTitle>
+          <DialogDescription>
+            Permohonan &quot;{request.title}&quot; akan dikembalikan ke status sedang
+            dikerjakan (IN_PROGRESS) berdasarkan catatan revisi dari pemohon.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="py-2 text-sm text-muted-foreground space-y-2">
+          <p>
+            Task pada Story terkait <strong>tidak dibuka ulang secara otomatis</strong> —
+            silakan atur sendiri task mana yang perlu dikerjakan ulang lewat board Kanban
+            sebelum atau sesudah ini.
+          </p>
+          <p className="text-xs bg-muted/50 p-2.5 rounded-lg border">
+            Setelah siap, Anda dapat mengirimkan kembali hasil pengerjaan melalui tombol
+            &quot;Kirim Hasil Kerja&quot;.
+          </p>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Batal
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={mutation.isPending}
+            className="gap-2 bg-rose-600 hover:bg-rose-700 text-white"
+          >
+            <RotateCcw className="h-4 w-4" />
+            {mutation.isPending ? 'Memproses...' : 'Ya, Mulai Revisi'}
           </Button>
         </DialogFooter>
       </DialogContent>

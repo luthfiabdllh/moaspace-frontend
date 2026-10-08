@@ -19,6 +19,7 @@ import {
   ConfirmDialog,
   SubmitDraftDialog,
   EditDraftDialog,
+  StartRevisionDialog,
 } from "./action-dialogs";
 import { useRequest, useTemplate } from "../api/use-queries";
 import { DraftRequestContent } from "./draft-request-content";
@@ -58,6 +59,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
   const [openConvertToEpic, setOpenConvertToEpic] = useState(false);
   const [openDeliver, setOpenDeliver] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
+  const [openStartRevision, setOpenStartRevision] = useState(false);
 
   if (isLoading) {
     return (
@@ -294,6 +296,17 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
                 Konfirmasi / Ajukan Revisi
               </Button>
             )}
+
+            {request.permissions.canStartRevision && (
+              <Button
+                size="sm"
+                onClick={() => setOpenStartRevision(true)}
+                className="gap-1.5 bg-rose-600 hover:bg-rose-700 text-white"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Mulai Revisi
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -311,6 +324,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         onOpenConvertToEpic={() => setOpenConvertToEpic(true)}
         onOpenDeliver={() => setOpenDeliver(true)}
         onOpenConfirm={() => setOpenConfirm(true)}
+        onOpenStartRevision={() => setOpenStartRevision(true)}
       />
 
       {/* Special Status Banners */}
@@ -335,12 +349,19 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
       )}
 
       {request.status === "REVISION" && request.reason && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-900 dark:text-rose-200 space-y-1">
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-rose-900 dark:text-rose-200 space-y-1.5">
           <div className="flex items-center gap-2 font-semibold text-sm">
             <RotateCcw className="h-4 w-4 text-rose-600 dark:text-rose-400" />
             Permintaan Revisi Diajukan
           </div>
-          <p className="text-xs">{request.reason}</p>
+          {/<[a-z][\s\S]*>/i.test(request.reason) ? (
+            <div
+              className="prose-notion text-xs leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: request.reason }}
+            />
+          ) : (
+            <p className="text-xs">{request.reason}</p>
+          )}
         </div>
       )}
 
@@ -635,6 +656,11 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         request={request}
         open={openConfirm}
         onOpenChange={setOpenConfirm}
+      />
+      <StartRevisionDialog
+        request={request}
+        open={openStartRevision}
+        onOpenChange={setOpenStartRevision}
       />
     </div>
   );
