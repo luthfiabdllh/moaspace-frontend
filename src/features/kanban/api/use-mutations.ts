@@ -9,6 +9,7 @@ import { taskKeys } from '@/features/tasks/api/query-keys';
 import { storyKeys } from '@/features/stories/api/query-keys';
 import { epicKeys } from '@/features/epics/api/query-keys';
 import type { TaskStatus, TaskItem } from '@/features/tasks/types';
+import { friendlyTaskErrorMessage } from '@/features/tasks/lib/task-error-messages';
 import type { BoardColumns, MoveTaskDTO, BlockTaskDTO } from '../types';
 
 export const useMoveTask = (divisionId?: string) => {
@@ -81,7 +82,7 @@ export const useMoveTask = (divisionId?: string) => {
 
       let msg = 'Gagal memindahkan kartu task.';
       if (isAxiosError(error) && error.response?.data?.message) {
-        msg = error.response.data.message;
+        msg = friendlyTaskErrorMessage(error.response.data.message);
       }
       toast.error(msg, { duration: 4000 });
     },

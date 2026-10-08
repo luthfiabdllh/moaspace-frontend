@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api-client';
 import { epicKeys } from './query-keys';
+import { kanbanKeys } from '@/features/kanban/api/query-keys';
 import type { CreateEpicDTO, UpdateEpicDTO } from '../types';
 
 export const useCreateEpic = () => {
@@ -33,6 +34,7 @@ export const useCreateEpic = () => {
     onSuccess: (data) => {
       toast.success(`Epic '${data.title}' berhasil dibuat!`);
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal membuat epic.';
@@ -61,6 +63,7 @@ export const useUpdateEpic = () => {
     onSuccess: (data) => {
       toast.success(`Epic '${data.title}' berhasil diperbarui.`);
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal memperbarui epic.';
@@ -83,6 +86,7 @@ export const useDeleteEpic = () => {
     onSuccess: () => {
       toast.success('Epic berhasil dihapus.');
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal menghapus epic.';

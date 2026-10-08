@@ -6,6 +6,7 @@ import { isAxiosError } from 'axios';
 import { apiClient } from '@/lib/api-client';
 import { storyKeys } from './query-keys';
 import { epicKeys } from '@/features/epics/api/query-keys';
+import { kanbanKeys } from '@/features/kanban/api/query-keys';
 import type { CreateStoryDTO, UpdateStoryDTO } from '../types';
 
 export const useCreateStory = () => {
@@ -30,6 +31,7 @@ export const useCreateStory = () => {
       toast.success(`Story '${data.title}' berhasil dibuat!`);
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal membuat story.';
@@ -59,6 +61,7 @@ export const useUpdateStory = () => {
       toast.success('Story berhasil diperbarui!');
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal memperbarui story.';
@@ -82,6 +85,7 @@ export const useDeleteStory = () => {
       toast.success('Story berhasil dihapus.');
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
       queryClient.invalidateQueries({ queryKey: epicKeys.all });
+      queryClient.invalidateQueries({ queryKey: kanbanKeys.all });
     },
     onError: (error) => {
       let msg = 'Gagal menghapus story.';

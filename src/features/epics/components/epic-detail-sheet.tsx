@@ -32,6 +32,7 @@ import { useStories } from '@/features/stories/api/use-queries';
 import { useTasks } from '@/features/tasks/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useUpdateEpic } from '../api/use-mutations';
+import { EditEpicDialog } from './edit-epic-dialog';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { CreateStoryDialog } from '@/features/stories/components/create-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
@@ -61,6 +62,7 @@ export function EpicDetailSheet({
   );
 
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
+  const [editEpicOpen, setEditEpicOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<{ id: string; title: string; divisionId: string } | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -143,9 +145,23 @@ export function EpicDetailSheet({
               </Badge>
             </div>
 
-            <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
-              {epic.title}
-            </SheetTitle>
+            <div className="flex items-center justify-between gap-2">
+              <SheetTitle className="text-xl font-bold tracking-tight text-foreground">
+                {epic.title}
+              </SheetTitle>
+              {isCoordinator && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditEpicOpen(true)}
+                  className="h-7 px-2.5 text-2xs gap-1 shrink-0"
+                >
+                  <FileEdit className="size-3" />
+                  Edit
+                </Button>
+              )}
+            </div>
 
             {/* Description Section with Notion Editor */}
             <div className="space-y-2 pt-1">
@@ -502,6 +518,14 @@ export function EpicDetailSheet({
       </Sheet>
 
       {/* Dialogs */}
+      {isCoordinator && (
+        <EditEpicDialog
+          epic={epic}
+          open={editEpicOpen}
+          onOpenChange={setEditEpicOpen}
+        />
+      )}
+
       <CreateStoryDialog
         open={createStoryOpen}
         onOpenChange={setCreateStoryOpen}

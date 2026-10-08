@@ -94,6 +94,14 @@ export function TaskDetailSheet({
   const [isEditingDescription, setIsEditingDescription] = React.useState(false);
   const [descriptionInput, setDescriptionInput] = React.useState('');
 
+  // Title Editing State
+  const [isEditingTitle, setIsEditingTitle] = React.useState(false);
+  const [titleInput, setTitleInput] = React.useState('');
+
+  // Due Date (Deadline) Editing State
+  const [isEditingDueDate, setIsEditingDueDate] = React.useState(false);
+  const [dueDateInput, setDueDateInput] = React.useState('');
+
   // Overcapacity modal state
   const [overcapacityData, setOvercapacityData] = React.useState<OvercapacityWarningData | null>(null);
   const [pendingUpdate, setPendingUpdate] = React.useState<UpdateTaskDTO | null>(null);
@@ -106,6 +114,10 @@ export function TaskDetailSheet({
       setIsEditingSp(false);
       setDescriptionInput(task.description || '');
       setIsEditingDescription(false);
+      setTitleInput(task.title || '');
+      setIsEditingTitle(false);
+      setDueDateInput(task.dueDate ? task.dueDate.split('T')[0] : '');
+      setIsEditingDueDate(false);
     }
   }, [task]);
 
@@ -166,6 +178,28 @@ export function TaskDetailSheet({
     setIsEditingDescription(false);
   };
 
+  const handleSaveTitle = async () => {
+    if (!task || !titleInput.trim()) return;
+    await executeUpdate({ title: titleInput.trim() });
+    setIsEditingTitle(false);
+  };
+
+  const handleCancelTitle = () => {
+    setTitleInput(task?.title || '');
+    setIsEditingTitle(false);
+  };
+
+  const handleSaveDueDate = async () => {
+    if (!task) return;
+    await executeUpdate({ dueDate: dueDateInput || null });
+    setIsEditingDueDate(false);
+  };
+
+  const handleCancelDueDate = () => {
+    setDueDateInput(task?.dueDate ? task.dueDate.split('T')[0] : '');
+    setIsEditingDueDate(false);
+  };
+
   const handleToggleBlocker = async () => {
     if (!task) return;
     if (task.isBlocked) {
@@ -199,7 +233,10 @@ export function TaskDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="overflow-y-auto sm:max-w-lg p-6 space-y-6">
+        <SheetContent
+          side="right"
+          className="overflow-y-auto data-[side=right]:sm:max-w-2xl data-[side=right]:md:max-w-3xl data-[side=right]:lg:max-w-4xl data-[side=right]:xl:max-w-5xl data-[side=right]:2xl:max-w-6xl p-6 space-y-6"
+        >
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 space-y-3">
               <Loader2 className="size-8 animate-spin text-primary" />
@@ -263,9 +300,67 @@ export function TaskDetailSheet({
                   )}
                 </div>
 
-                <SheetTitle className="text-xl font-bold leading-snug">
-                  {task.title}
-                </SheetTitle>
+                {isEditingTitle ? (
+                  <div className="space-y-2 animate-in fade-in duration-150">
+                    <SheetTitle className="sr-only">{titleInput || task.title}</SheetTitle>
+                    <Input
+                      autoFocus
+                      value={titleInput}
+                      onChange={(e) => setTitleInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSaveTitle();
+                        } else if (e.key === 'Escape') {
+                          e.preventDefault();
+                          handleCancelTitle();
+                        }
+                      }}
+                      placeholder="Judul task..."
+                      className="text-base font-bold h-10"
+                    />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelTitle}
+                        disabled={updateMutation.isPending}
+                        className="h-7 text-xs px-2.5"
+                      >
+                        <X className="size-3.5 mr-1" />
+                        Batal
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveTitle}
+                        disabled={updateMutation.isPending || !titleInput.trim()}
+                        className="h-7 text-xs px-3 gap-1.5"
+                      >
+                        <Check className="size-3.5" />
+                        Simpan
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="group flex items-start gap-2">
+                    <SheetTitle className="text-xl font-bold leading-snug flex-1">
+                      {task.title}
+                    </SheetTitle>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTitleInput(task.title);
+                        setIsEditingTitle(true);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity shrink-0 mt-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                      title="Edit judul task"
+                    >
+                      <Edit2 className="size-3.5" />
+                    </button>
+                  </div>
+                )}
 
                 <SheetDescription className="text-xs text-muted-foreground">
                   Bagian dari story:{' '}
@@ -663,15 +758,63 @@ export function TaskDetailSheet({
                 </div>
 
                 <div className="p-3 rounded-lg border bg-card space-y-1">
-                  <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
-                    <Calendar className="size-3 text-primary" />
-                    Tenggat Waktu
-                  </span>
-                  <p className="font-semibold text-foreground">
-                    {task.dueDate
-                      ? new Date(task.dueDate).toLocaleDateString('id-ID', { dateStyle: 'medium' })
-                      : 'Tidak ada tenggat'}
-                  </p>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-2xs text-muted-foreground font-medium flex items-center gap-1">
+                      <Calendar className="size-3 text-primary" />
+                      Tenggat Waktu
+                    </span>
+                    {!isEditingDueDate && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDueDateInput(task.dueDate ? task.dueDate.split('T')[0] : '');
+                          setIsEditingDueDate(true);
+                        }}
+                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        title="Edit tenggat waktu"
+                      >
+                        <Edit2 className="size-3" />
+                      </button>
+                    )}
+                  </div>
+                  {isEditingDueDate ? (
+                    <div className="space-y-1.5 pt-0.5">
+                      <Input
+                        autoFocus
+                        type="date"
+                        value={dueDateInput}
+                        onChange={(e) => setDueDateInput(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancelDueDate}
+                          disabled={updateMutation.isPending}
+                          className="h-6 text-2xs px-2"
+                        >
+                          Batal
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleSaveDueDate}
+                          disabled={updateMutation.isPending}
+                          className="h-6 text-2xs px-2"
+                        >
+                          Simpan
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="font-semibold text-foreground">
+                      {task.dueDate
+                        ? new Date(task.dueDate).toLocaleDateString('id-ID', { dateStyle: 'medium' })
+                        : 'Tidak ada tenggat'}
+                    </p>
+                  )}
                   {task.completedAt && (
                     <p className="text-2xs text-emerald-600 dark:text-emerald-400">
                       Selesai: {new Date(task.completedAt).toLocaleDateString('id-ID')}

@@ -31,6 +31,7 @@ import { useStories } from '@/features/stories/api/use-queries';
 import { useTasks } from '@/features/tasks/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useUpdateEpic } from '../api/use-mutations';
+import { EditEpicDialog } from './edit-epic-dialog';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { CreateStoryDialog } from '@/features/stories/components/create-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
@@ -59,6 +60,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
   );
 
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
+  const [editEpicOpen, setEditEpicOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<{
     id: string;
@@ -173,6 +175,16 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
 
         {isCoordinator && (
           <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditEpicOpen(true)}
+              className="text-xs h-8.5 rounded-xl gap-1.5"
+            >
+              <FileEdit className="size-3.5" />
+              Edit Inisiatif
+            </Button>
             <Button
               type="button"
               variant="outline"
@@ -691,6 +703,14 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
       </div>
 
       {/* Dialogs for sub-actions */}
+      {isCoordinator && (
+        <EditEpicDialog
+          epic={epic}
+          open={editEpicOpen}
+          onOpenChange={setEditEpicOpen}
+        />
+      )}
+
       <CreateStoryDialog
         open={createStoryOpen}
         onOpenChange={setCreateStoryOpen}

@@ -15,10 +15,12 @@ import {
   AlertTriangle,
   User,
   Flag,
+  FileEdit,
 } from 'lucide-react';
 import type { StoryItem } from '../types';
 import { useTasks } from '@/features/tasks/api/use-queries';
 import { useUpdateStory, useDeleteStory } from '../api/use-mutations';
+import { EditStoryDialog } from './edit-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +36,7 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
   const [isExpanded, setIsExpanded] = useState(true);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [editStoryOpen, setEditStoryOpen] = useState(false);
 
   const { data: tasks = [], isLoading: isTasksLoading } = useTasks({ storyId: story.id });
   const updateMutation = useUpdateStory();
@@ -93,16 +96,30 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
               )}
 
               {isCoordinatorOrAdmin && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDeleteStory}
-                  disabled={deleteMutation.isPending}
-                  className="size-7 text-muted-foreground hover:text-destructive"
-                  title="Hapus Story"
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditStoryOpen(true);
+                    }}
+                    className="size-7 text-muted-foreground hover:text-foreground"
+                    title="Edit Story"
+                  >
+                    <FileEdit className="size-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleDeleteStory}
+                    disabled={deleteMutation.isPending}
+                    className="size-7 text-muted-foreground hover:text-destructive"
+                    title="Hapus Story"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -271,6 +288,15 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
         onOpenChange={(open) => !open && setSelectedTaskId(null)}
         isCoordinatorOrAdmin={isCoordinatorOrAdmin}
       />
+
+      {/* Edit Story Dialog */}
+      {isCoordinatorOrAdmin && (
+        <EditStoryDialog
+          story={story}
+          open={editStoryOpen}
+          onOpenChange={setEditStoryOpen}
+        />
+      )}
     </Card>
   );
 }
