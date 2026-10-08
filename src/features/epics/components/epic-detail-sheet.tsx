@@ -475,6 +475,23 @@ export function EpicDetailSheet({
                                 </div>
 
                                 <div className="flex items-center gap-2 shrink-0 text-2xs">
+                                  {task.dueDate && (
+                                    <span
+                                      className={cn(
+                                        'flex items-center gap-1 font-medium',
+                                        task.status !== 'DONE' && new Date(task.dueDate) < new Date()
+                                          ? 'text-destructive'
+                                          : 'text-muted-foreground'
+                                      )}
+                                    >
+                                      <Calendar className="size-3" />
+                                      {new Date(task.dueDate).toLocaleDateString('id-ID', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                      })}
+                                    </span>
+                                  )}
+
                                   {task.assigneeName ? (
                                     <span className="text-muted-foreground flex items-center gap-1 font-medium truncate max-w-28">
                                       <User className="size-3 text-muted-foreground" />
