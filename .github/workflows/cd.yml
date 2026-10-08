@@ -54,6 +54,14 @@ jobs:
         id: meta
         run: echo "sha_tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
+      # GHCR/Docker requires lowercase repository names, but the org name
+      # (KKN-Moa-Bercerita) has uppercase letters — github.repository
+      # preserves the exact case, so it must be lowercased before use in an
+      # image tag or the push step fails with "must be lowercase".
+      - name: Set lowercase image repository name
+        id: repo
+        run: echo "name=$(echo "$GITHUB_REPOSITORY" | tr "[:upper:]" "[:lower:]")" >> "$GITHUB_OUTPUT"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -78,8 +86,8 @@ jobs:
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ steps.meta.outputs.sha_tag }}
+            ghcr.io/${{ steps.repo.outputs.name }}:latest
+            ghcr.io/${{ steps.repo.outputs.name }}:${{ steps.meta.outputs.sha_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
