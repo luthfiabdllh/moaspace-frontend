@@ -6,7 +6,7 @@ import { ProfileDivisionsCard } from './profile-divisions-card';
 import { ChangePasswordForm } from './change-password-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Shield, CheckCircle2, AlertTriangle, Sparkles, UserCheck, User } from 'lucide-react';
+import { Loader2, Shield, CheckCircle2, AlertTriangle, Sparkles, User } from 'lucide-react';
 
 export function ProfilePageContent() {
   const { data: user, isLoading, isError, refetch } = useCurrentUser();

@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import type { TaskItem, TaskStatus, TaskPriority } from '@/features/tasks/types';
+import type { TaskItem } from '@/features/tasks/types';
 
 export const kanbanColumnEnum = z.enum([
   'BACKLOG',

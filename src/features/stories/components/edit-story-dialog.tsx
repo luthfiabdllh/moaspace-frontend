@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileEdit, Loader2, Calendar, Tag, Target, CheckSquare } from 'lucide-react';
 import { updateStorySchema, type UpdateStoryDTO, type StoryItem } from '../types';
@@ -33,7 +33,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<UpdateStoryDTO>({
@@ -46,6 +46,8 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
       prokerTag: story.prokerTag || '',
     },
   });
+
+  const targetDate = useWatch({ control, name: 'targetDate' });
 
   // Re-sync the form whenever a different story is opened for editing.
   useEffect(() => {
@@ -153,7 +155,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
               </Label>
               <DatePicker
                 id="editTargetDate"
-                value={watch('targetDate')}
+                value={targetDate}
                 onChange={(v) => setValue('targetDate', v || '')}
                 className="text-xs"
               />

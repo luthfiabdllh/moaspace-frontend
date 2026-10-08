@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Target,
   Bookmark,
@@ -15,7 +14,6 @@ import {
   User,
   AlertTriangle,
   Columns,
-  Sparkles,
   GitPullRequest,
   ExternalLink,
   FileText,
@@ -40,7 +38,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { EpicItem, EpicDivision } from '../types';
+import type { EpicDivision } from '../types';
 import type { StoryItem } from '@/features/stories/types';
 import type { TaskItem } from '@/features/tasks/types';
 
@@ -49,7 +47,6 @@ interface EpicDetailContentProps {
 }
 
 export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
-  const router = useRouter();
   const { data: user } = useCurrentUser();
   const { data: epic, isLoading, error } = useEpic(epicId);
 

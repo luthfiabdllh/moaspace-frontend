@@ -31,7 +31,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import type { RequestDetail, RequestTemplate } from '../types';
 import { useEpics } from '@/features/epics/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
-import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, FileEdit, FileCheck, Target, Network, Layers, RotateCcw } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, XCircle, HelpCircle, Sparkles, Send, Target, Network, Layers, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Memeriksa apakah HTML rich-text (TipTap) punya isi bermakna: ada teks atau

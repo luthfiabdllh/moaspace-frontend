@@ -43,7 +43,7 @@ export function DashboardSidebar() {
   const { data: allDivisions = [] } = useDivisions();
 
   const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
-  const userDivisions = user?.divisions ?? [];
+  const userDivisions = useMemo(() => user?.divisions ?? [], [user]);
 
   // Detect division slug from query param (?division=...) or fallback to user primary division
   const searchParams = useSearchParams();
@@ -188,7 +188,7 @@ export function DashboardSidebar() {
     );
 
     return routes;
-  }, [pathname, activeDivisionSlug, teams, allDivisions, isAdmin]);
+  }, [pathname, activeDivisionSlug, isAdmin]);
 
   return (
     <Sidebar collapsible="icon" variant="inset">

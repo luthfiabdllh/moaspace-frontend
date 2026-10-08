@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Layers, Loader2, Save } from 'lucide-react';
 import {
   createDivisionSchema,
-  updateDivisionSchema,
   type CreateDivisionDTO,
   type DivisionItem,
 } from '../types';
@@ -43,7 +42,7 @@ export function DivisionDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CreateDivisionDTO>({
     resolver: zodResolver(createDivisionSchema),
@@ -54,7 +53,7 @@ export function DivisionDialog({
     },
   });
 
-  const requestApproval = watch('requestApprovalEnabled');
+  const requestApproval = useWatch({ control, name: 'requestApprovalEnabled' });
 
   useEffect(() => {
     if (divisionToEdit) {

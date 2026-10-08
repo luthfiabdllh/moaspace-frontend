@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Target,
@@ -15,7 +14,6 @@ import {
   Layers,
   Network,
   Sparkles,
-  Info,
 } from 'lucide-react';
 import { createEpicSchema, type CreateEpicDTO } from '../types';
 import { useCreateEpic } from '../api/use-mutations';
@@ -50,7 +48,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CreateEpicDTO>({
     resolver: zodResolver(createEpicSchema),
@@ -66,8 +64,11 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
     },
   });
 
-  const scope = watch('scope');
-  const participatingIds = watch('participatingDivisionIds') || [];
+  const scope = useWatch({ control, name: 'scope' });
+  const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
+  const startDate = useWatch({ control, name: 'startDate' });
+  const endDate = useWatch({ control, name: 'endDate' });
+  const description = useWatch({ control, name: 'description' });
 
   const toggleParticipatingDivision = (divId: string) => {
     if (participatingIds.includes(divId)) {
@@ -295,7 +296,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
                 <DatePicker
                   id="start-date"
                   className="text-xs h-9"
-                  value={watch('startDate')}
+                  value={startDate}
                   onChange={(v) => setValue('startDate', v || '')}
                 />
               </div>
@@ -308,7 +309,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
                 <DatePicker
                   id="end-date"
                   className="text-xs h-9"
-                  value={watch('endDate')}
+                  value={endDate}
                   onChange={(v) => setValue('endDate', v || '')}
                 />
               </div>
@@ -349,7 +350,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
           </CardHeader>
           <CardContent className="pt-4">
             <NotionEditor
-              value={watch('description') || ''}
+              value={description || ''}
               onChange={(html) => setValue('description', html, { shouldDirty: true })}
               placeholder="Tuliskan tujuan akhir, latar belakang inisiatif, atau matriks keberhasilan... (Ketik '/' untuk opsi blok seperti heading, checklist, tabel, dan callout)"
               minHeight="min-h-[220px]"

@@ -7,8 +7,6 @@ import {
   Search,
   CheckCircle2,
   Users,
-  Shield,
-  Sparkles,
 } from 'lucide-react';
 import type { DivisionItem } from '../types';
 import { useDivisions } from '../api/use-queries';

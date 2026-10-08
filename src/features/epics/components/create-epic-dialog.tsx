@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Target, Loader2, Plus, Calendar, Tag, Layers, Network } from 'lucide-react';
+import { Target, Loader2, Plus, Layers, Network } from 'lucide-react';
 import { createEpicSchema, type CreateEpicDTO } from '../types';
 import { useCreateEpic } from '../api/use-mutations';
 import { useDivisions } from '@/features/divisions/api/use-queries';
@@ -49,7 +48,7 @@ export function CreateEpicDialog({
     handleSubmit,
     reset,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<CreateEpicDTO>({
     resolver: zodResolver(createEpicSchema),
@@ -65,8 +64,11 @@ export function CreateEpicDialog({
     },
   });
 
-  const scope = watch('scope');
-  const participatingIds = watch('participatingDivisionIds') || [];
+  const scope = useWatch({ control, name: 'scope' });
+  const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
+  const startDate = useWatch({ control, name: 'startDate' });
+  const endDate = useWatch({ control, name: 'endDate' });
+  const description = useWatch({ control, name: 'description' });
 
   const toggleParticipatingDivision = (divId: string) => {
     if (participatingIds.includes(divId)) {
@@ -214,7 +216,7 @@ export function CreateEpicDialog({
               </Label>
               <DatePicker
                 id="start-date"
-                value={watch('startDate')}
+                value={startDate}
                 onChange={(v) => setValue('startDate', v || '')}
               />
             </div>
@@ -224,7 +226,7 @@ export function CreateEpicDialog({
               </Label>
               <DatePicker
                 id="end-date"
-                value={watch('endDate')}
+                value={endDate}
                 onChange={(v) => setValue('endDate', v || '')}
               />
             </div>
@@ -248,7 +250,7 @@ export function CreateEpicDialog({
               </span>
             </div>
             <NotionEditor
-              value={watch('description') || ''}
+              value={description || ''}
               onChange={(html) => setValue('description', html, { shouldDirty: true })}
               placeholder="Jelaskan tujuan akhir atau sasaran dari inisiatif ini... (Ketik '/' untuk format blok Notion)"
               minHeight="min-h-[140px]"

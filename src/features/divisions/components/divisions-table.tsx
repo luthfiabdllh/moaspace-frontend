@@ -14,8 +14,6 @@ import type { DivisionItem } from '../types';
 import { useToggleApprovalRequest } from '../api/use-mutations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
 interface DivisionsTableProps {
   divisions: DivisionItem[];
   isLoading: boolean;

@@ -2,14 +2,11 @@
 
 import Link from 'next/link';
 import {
-  Target,
   Calendar,
   Layers,
   Network,
   CheckCircle2,
   Clock,
-  ArrowRight,
-  Sparkles,
   GitPullRequest,
 } from 'lucide-react';
 import type { EpicItem } from '../types';

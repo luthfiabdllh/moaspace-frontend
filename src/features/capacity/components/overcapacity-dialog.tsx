@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, ArrowRight, UserCheck, UserX } from 'lucide-react';
+import { AlertTriangle, UserCheck, UserX } from 'lucide-react';
 import type { OvercapacityWarningData } from '../types';
 
 export interface OvercapacityDialogProps {

@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckSquare, Loader2, Calendar, User, AlertCircle, Flag, Zap } from 'lucide-react';
+import { CheckSquare, Loader2, Calendar, User, Flag, Zap } from 'lucide-react';
 import { isAxiosError } from 'axios';
 import { createTaskSchema, STORY_POINTS_SCALE, type CreateTaskDTO } from '../types';
 import { useCreateTask } from '../api/use-mutations';
@@ -54,7 +54,7 @@ export function CreateTaskDialog({
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<CreateTaskDTO>({
@@ -73,8 +73,9 @@ export function CreateTaskDialog({
     },
   });
 
-  const isBlocked = watch('isBlocked');
-  const selectedSp = watch('storyPoints');
+  const isBlocked = useWatch({ control, name: 'isBlocked' });
+  const selectedSp = useWatch({ control, name: 'storyPoints' });
+  const dueDate = useWatch({ control, name: 'dueDate' });
 
   const executeCreate = async (payload: CreateTaskDTO) => {
     try {
@@ -241,7 +242,7 @@ export function CreateTaskDialog({
                 </Label>
                 <DatePicker
                   id="task-duedate"
-                  value={watch('dueDate')}
+                  value={dueDate}
                   onChange={(v) => setValue('dueDate', v || '')}
                   className="text-xs"
                 />

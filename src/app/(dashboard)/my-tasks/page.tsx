@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckSquare, Search, Filter, ShieldAlert, Sparkles, Layers } from 'lucide-react';
-import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { CheckSquare, Search, ShieldAlert } from 'lucide-react';
 import { useMeTasks } from '@/features/kanban/api/use-queries';
 import { KanbanBoard } from '@/features/kanban/components/kanban-board';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import type { TaskItem } from '@/features/tasks/types';
 
 export default function MyTasksPage() {
-  const { data: user } = useCurrentUser();
   const { data: board, isLoading, error } = useMeTasks();
 
   const [searchQuery, setSearchQuery] = useState('');

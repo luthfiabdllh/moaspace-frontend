@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { UserPlus, Loader2, Copy, Check, Link as LinkIcon } from 'lucide-react';
+import { UserPlus, Loader2, Copy, Check } from 'lucide-react';
 
 import { createUserSchema, type CreateUserDTO, type DivisionItem } from '../types';
 import { useCreateUser } from '../api/use-mutations';

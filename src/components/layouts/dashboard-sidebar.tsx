@@ -19,7 +19,6 @@ import { useUIStore } from '@/store/ui.store';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 
 export function DashboardSidebar() {
   const pathname = usePathname();

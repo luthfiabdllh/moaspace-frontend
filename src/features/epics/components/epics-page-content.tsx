@@ -7,12 +7,8 @@ import {
   Target,
   Plus,
   Search,
-  Filter,
-  Layers,
   Network,
   CheckCircle2,
-  Clock,
-  Sparkles,
   BarChart3,
   X,
 } from 'lucide-react';
@@ -24,7 +20,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import type { EpicItem } from '../types';
 
 export function EpicsPageContent() {
   const router = useRouter();

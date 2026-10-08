@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileEdit, Loader2, Calendar, Tag, Layers, Network } from 'lucide-react';
 import { updateEpicSchema, type UpdateEpicDTO, type EpicItem } from '../types';
@@ -43,7 +43,7 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<UpdateEpicDTO>({
@@ -60,7 +60,9 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
   }, [open, epic.id]);
 
   const isCross = epic.scope === 'CROSS';
-  const participatingIds = watch('participatingDivisionIds') || [];
+  const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
+  const startDate = useWatch({ control, name: 'startDate' });
+  const endDate = useWatch({ control, name: 'endDate' });
 
   const toggleParticipatingDivision = (divId: string) => {
     if (participatingIds.includes(divId)) {
@@ -188,7 +190,7 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
               </Label>
               <DatePicker
                 id="edit-start-date"
-                value={watch('startDate')}
+                value={startDate}
                 onChange={(v) => setValue('startDate', v || '')}
               />
             </div>
@@ -199,7 +201,7 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
               </Label>
               <DatePicker
                 id="edit-end-date"
-                value={watch('endDate')}
+                value={endDate}
                 onChange={(v) => setValue('endDate', v || '')}
               />
             </div>

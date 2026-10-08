@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Bookmark,
   Calendar,
   CheckCircle2,
   Clock,
@@ -14,12 +13,11 @@ import {
   CheckSquare,
   AlertTriangle,
   User,
-  Flag,
   FileEdit,
 } from 'lucide-react';
 import type { StoryItem } from '../types';
 import { useTasks } from '@/features/tasks/api/use-queries';
-import { useUpdateStory, useDeleteStory } from '../api/use-mutations';
+import { useDeleteStory } from '../api/use-mutations';
 import { EditStoryDialog } from './edit-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
@@ -41,16 +39,7 @@ export function StoryCard({ story, isCoordinatorOrAdmin = false }: StoryCardProp
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { data: tasks = [], isLoading: isTasksLoading } = useTasks({ storyId: story.id });
-  const updateMutation = useUpdateStory();
   const deleteMutation = useDeleteStory();
-
-  const handleToggleClosed = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    await updateMutation.mutateAsync({
-      id: story.id,
-      dto: { isClosed: !story.isClosed },
-    });
-  };
 
   const handleDeleteStory = (e: React.MouseEvent) => {
     e.stopPropagation();

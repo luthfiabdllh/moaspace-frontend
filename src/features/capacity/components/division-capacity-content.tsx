@@ -9,8 +9,6 @@ import {
   ChevronRight,
   Clock,
   Gauge,
-  HelpCircle,
-  PlusCircle,
   ShieldAlert,
   Users,
 } from 'lucide-react';
@@ -74,7 +72,6 @@ export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = (
   const {
     data: capacities = [],
     isLoading: isCapacitiesLoading,
-    refetch,
   } = useDivisionCapacities(division?.id, selectedWeekStart);
 
   const { data: myCapacity } = useMyCapacity();
@@ -341,7 +338,6 @@ export const DivisionCapacityContent: React.FC<DivisionCapacityContentProps> = (
             <div className="divide-y">
               {capacities.map((item) => {
                 const colors = getUtilizationColor(item.utilizationPercentage);
-                const isOver = item.utilizationPercentage > 100;
                 const isMe = user?.id === item.userId;
 
                 return (

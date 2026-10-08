@@ -2,9 +2,6 @@
 
 import { useState, useMemo } from 'react';
 import {
-  Target,
-  Bookmark,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
   Plus,
@@ -13,7 +10,6 @@ import {
   Calendar,
   Layers,
   Sparkles,
-  ExternalLink,
   GitPullRequest,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -27,7 +23,7 @@ import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog
 import { TaskDetailSheet } from '@/features/tasks/components/task-detail-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import type { TaskItem } from '@/features/tasks/types';
 
 interface HierarchyBreakdownViewProps {
@@ -37,7 +33,6 @@ interface HierarchyBreakdownViewProps {
 
 export function HierarchyBreakdownView({
   divisionId,
-  divisionSlug,
 }: HierarchyBreakdownViewProps) {
   const { data: user } = useCurrentUser();
 

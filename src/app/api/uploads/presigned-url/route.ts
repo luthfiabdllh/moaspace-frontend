@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: { code: 500, message: 'Gagal menghubungi server untuk upload' } },
       { status: 500 }

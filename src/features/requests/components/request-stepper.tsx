@@ -21,7 +21,6 @@ import {
   CheckCircle,
   HelpCircle,
   Clock,
-  ArrowRight,
   FileEdit,
   Send,
   Target,

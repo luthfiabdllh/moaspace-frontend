@@ -31,7 +31,7 @@ export function GlobalBoardContent() {
   const { data: user } = useCurrentUser();
   const { data: divisions = [], isLoading: isDivisionsLoading } = useDivisions();
 
-  const userDivisions = user?.divisions ?? [];
+  const userDivisions = useMemo(() => user?.divisions ?? [], [user]);
   const isGlobalAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
 
   // Available divisions for user: all divisions if admin, otherwise user's divisions (or all if none assigned yet)

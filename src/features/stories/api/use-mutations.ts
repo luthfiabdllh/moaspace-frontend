@@ -57,7 +57,7 @@ export const useUpdateStory = () => {
       const { data } = await apiClient.patch(`/stories/${id}`, dto);
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       toast.success('Story berhasil diperbarui!');
       queryClient.invalidateQueries({ queryKey: storyKeys.all });
       queryClient.invalidateQueries({ queryKey: epicKeys.all });

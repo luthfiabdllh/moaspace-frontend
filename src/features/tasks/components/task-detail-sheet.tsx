@@ -1,14 +1,11 @@
 import * as React from 'react';
 import {
-  CheckSquare,
-  Clock,
   Calendar,
   User,
   AlertTriangle,
   Flag,
   History,
   Trash2,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   ShieldAlert,
@@ -25,7 +22,6 @@ import Link from 'next/link';
 import { isAxiosError } from 'axios';
 import { useTask } from '../api/use-queries';
 import { useUpdateTask, useDeleteTask } from '../api/use-mutations';
-import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivision } from '@/features/divisions/api/use-queries';
 import { useDivisionCapacities } from '@/features/capacity/api/use-queries';
 import { OvercapacityDialog } from '@/features/capacity/components/overcapacity-dialog';
@@ -75,7 +71,6 @@ export function TaskDetailSheet({
   onOpenChange,
   isCoordinatorOrAdmin = false,
 }: TaskDetailSheetProps) {
-  const { data: user } = useCurrentUser();
   const { data: task, isLoading, error } = useTask(taskId || '', Boolean(taskId && open));
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();

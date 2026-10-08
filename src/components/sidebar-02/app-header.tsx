@@ -59,7 +59,7 @@ export function AppHeader({
   const { data: allDivisions = [] } = useDivisions();
 
   const isAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
-  const userDivisions = user?.divisions ?? [];
+  const userDivisions = useMemo(() => user?.divisions ?? [], [user]);
 
   const queryDivision = searchParams?.get('division');
   const userPrimaryDivision = userDivisions[0]?.divisionSlug || (isAdmin ? allDivisions[0]?.slug : undefined);

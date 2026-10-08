@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bookmark, Loader2, Calendar, Tag, Target, CheckSquare, Layers } from 'lucide-react';
 import { createStorySchema, type CreateStoryDTO } from '../types';
@@ -59,7 +58,7 @@ export function CreateStoryDialog({
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     setValue,
     formState: { errors },
   } = useForm<CreateStoryDTO>({
@@ -74,7 +73,8 @@ export function CreateStoryDialog({
     },
   });
 
-  const selectedDivisionId = watch('divisionId') || initialDivisionId;
+  const selectedDivisionId = useWatch({ control, name: 'divisionId' }) || initialDivisionId;
+  const targetDate = useWatch({ control, name: 'targetDate' });
 
   // Fetch epics available for this division (or cross)
   const { data: epics = [] } = useEpics({
@@ -209,7 +209,7 @@ export function CreateStoryDialog({
               </Label>
               <DatePicker
                 id="targetDate"
-                value={watch('targetDate')}
+                value={targetDate}
                 onChange={(v) => setValue('targetDate', v || '')}
                 className="text-xs"
               />

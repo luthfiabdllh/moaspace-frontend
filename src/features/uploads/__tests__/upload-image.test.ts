@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { uploadImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_SIZE_BYTES } from '../api/upload-image';
+import { uploadImage, MAX_IMAGE_SIZE_BYTES } from '../api/upload-image';
 import { apiClient } from '@/lib/api-client';
 
 vi.mock('@/lib/api-client', () => ({
