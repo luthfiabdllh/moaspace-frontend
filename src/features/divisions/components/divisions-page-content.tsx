@@ -64,7 +64,7 @@ export function DivisionsPageContent() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+    <div className="space-y-6 mx-auto pb-10">
       {/* Page Header */}
       <div className="border-b border-border/60 pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
