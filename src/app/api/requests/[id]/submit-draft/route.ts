@@ -3,12 +3,10 @@ import { cookies } from 'next/headers';
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 
-interface RouteParams {
-  params: Promise<{ id: string }>;
-}
-
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
-  const { id } = await params;
+export async function PATCH(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const cookieStore = await cookies();
   const token = cookieStore.get('access_token')?.value;
 
@@ -19,22 +17,22 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     );
   }
 
+  const { id } = await params;
+
   try {
-    const body = await req.json();
-    const res = await fetch(`${BACKEND_API_URL}/tasks/${id}/move`, {
+    const res = await fetch(`${BACKEND_API_URL}/requests/${id}/submit-draft`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
     });
 
     const data = await res.json();
     return NextResponse.json(data, { status: res.status });
   } catch {
     return NextResponse.json(
-      { success: false, error: { code: 500, message: 'Periksa SP dari task yang dipindahkan!' } },
+      { success: false, error: { code: 500, message: 'Gagal menghubungi server' } },
       { status: 500 }
     );
   }
