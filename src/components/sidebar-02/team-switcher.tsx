@@ -81,7 +81,7 @@ export function TeamSwitcher({
                 key={team.slug || team.name}
                 onClick={() => {
                   if (team.slug) {
-                    router.push(`/board?division=${team.slug}`);
+                    router.push(`/board?division=${team.slug}&tab=kanban`);
                   }
                 }}
               >

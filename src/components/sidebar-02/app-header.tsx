@@ -285,7 +285,7 @@ export function AppHeader({
                         key={div.slug || div.name}
                         onClick={() => {
                           if (div.slug) {
-                            router.push(`/board?division=${div.slug}`);
+                            router.push(`/board?division=${div.slug}&tab=kanban`);
                           }
                         }}
                         className={cn(

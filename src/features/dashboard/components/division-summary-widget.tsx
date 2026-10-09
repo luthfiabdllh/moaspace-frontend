@@ -35,7 +35,7 @@ export function DivisionSummaryWidget({ divisionIds }: { divisionIds: string[] }
           </h3>
         </div>
         <Link
-          href="/board"
+          href="/board?tab=kanban"
           className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           Lihat papan <ArrowRight className="size-3" />

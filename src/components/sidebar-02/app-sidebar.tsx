@@ -87,7 +87,7 @@ export function DashboardSidebar() {
         id: 'board',
         title: 'Papan Kerja Divisi',
         icon: <FolderKanban className="size-4" />,
-        link: activeDivisionSlug ? `/board?division=${activeDivisionSlug}` : '/board',
+        link: activeDivisionSlug ? `/board?division=${activeDivisionSlug}&tab=kanban` : '/board?tab=kanban',
         isActive: pathname === '/board',
         group: 'MAIN',
       },
