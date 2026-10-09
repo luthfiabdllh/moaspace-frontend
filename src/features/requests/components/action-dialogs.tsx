@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import {
   useApproveOrigin,
@@ -358,20 +359,20 @@ export function ConvertToStoryDialog({
               <Target className="size-3.5 text-muted-foreground" />
               Induk Epic / Program Kerja Divisi (Opsional)
             </Label>
-            <select
-              id="epicSelect"
-              value={epicId}
-              onChange={(e) => setEpicId(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</option>
-              {epics.map((epic) => (
-                <option key={epic.id} value={epic.id}>
-                  {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
-                  {epic.title}
-                </option>
-              ))}
-            </select>
+            <Select value={epicId} onValueChange={setEpicId}>
+              <SelectTrigger id="epicSelect" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</SelectItem>
+                {epics.map((epic) => (
+                  <SelectItem key={epic.id} value={epic.id}>
+                    {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
+                    {epic.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-2xs text-muted-foreground">
               Pilih Epic agar Story deliverable ini masuk dalam struktur inisiatif / proker {request.toDivisionName}.
             </p>

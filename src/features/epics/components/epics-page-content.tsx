@@ -17,6 +17,7 @@ import { EpicCard } from './epic-card';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -273,29 +274,34 @@ export function EpicsPageContent() {
           </div>
 
           {/* Status Selector */}
-          <select
+          <Select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as 'ALL' | 'ACTIVE' | 'CLOSED')}
-            className="h-9 rounded-xl border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            onValueChange={(v) => setSelectedStatus(v as 'ALL' | 'ACTIVE' | 'CLOSED')}
           >
-            <option value="ALL">Semua Status</option>
-            <option value="ACTIVE">Aktif Saja</option>
-            <option value="CLOSED">Selesai/Tutup</option>
-          </select>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Status</SelectItem>
+              <SelectItem value="ACTIVE">Aktif Saja</SelectItem>
+              <SelectItem value="CLOSED">Selesai/Tutup</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Division Selector */}
-          <select
-            value={selectedDivisionId}
-            onChange={(e) => setSelectedDivisionId(e.target.value)}
-            className="h-9 rounded-xl border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-45 truncate"
-          >
-            <option value="ALL">Semua Divisi</option>
-            {divisions.map((div) => (
-              <option key={div.id} value={div.id}>
-                {div.name}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedDivisionId} onValueChange={setSelectedDivisionId}>
+            <SelectTrigger className="h-9 text-xs max-w-45">
+              <SelectValue className="truncate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Divisi</SelectItem>
+              {divisions.map((div) => (
+                <SelectItem key={div.id} value={div.id}>
+                  {div.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {hasActiveFilters && (
             <Button

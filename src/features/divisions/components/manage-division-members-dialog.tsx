@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -125,31 +126,33 @@ export function ManageDivisionMembersDialog({
           className="flex flex-col sm:flex-row items-center gap-3 p-3.5 my-3 rounded-xl bg-muted/40 border border-border/80"
         >
           <div className="w-full sm:flex-1">
-            <select
-              value={selectedUserId}
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">-- Pilih Anggota Baru --</option>
-              {availableUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name} ({user.email})
-                </option>
-              ))}
-            </select>
+            <Select value={selectedUserId || undefined} onValueChange={setSelectedUserId}>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue placeholder="-- Pilih Anggota Baru --" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableUsers.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="w-full sm:w-44">
-            <select
+            <Select
               value={selectedRole}
-              onChange={(e) =>
-                setSelectedRole(e.target.value as 'MEMBER' | 'COORDINATOR')
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onValueChange={(v) => setSelectedRole(v as 'MEMBER' | 'COORDINATOR')}
             >
-              <option value="MEMBER">Anggota Divisi</option>
-              <option value="COORDINATOR">Koordinator Divisi</option>
-            </select>
+              <SelectTrigger className="w-full text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MEMBER">Anggota Divisi</SelectItem>
+                <SelectItem value="COORDINATOR">Koordinator Divisi</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button

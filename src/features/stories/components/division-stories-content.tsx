@@ -22,6 +22,7 @@ import { useEpics } from '@/features/epics/api/use-queries';
 import { StoryCard } from './story-card';
 import { CreateStoryDialog } from './create-story-dialog';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -265,30 +266,35 @@ export function DivisionStoriesContent({
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Status Selector */}
-          <select
+          <Select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value as 'ALL' | 'ACTIVE' | 'CLOSED')}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            onValueChange={(v) => setSelectedStatus(v as 'ALL' | 'ACTIVE' | 'CLOSED')}
           >
-            <option value="ALL">Semua Status</option>
-            <option value="ACTIVE">Aktif Saja</option>
-            <option value="CLOSED">Selesai/Tutup</option>
-          </select>
+            <SelectTrigger className="h-9 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Status</SelectItem>
+              <SelectItem value="ACTIVE">Aktif Saja</SelectItem>
+              <SelectItem value="CLOSED">Selesai/Tutup</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Epic Filter Selector */}
-          <select
-            value={selectedEpicId}
-            onChange={(e) => setSelectedEpicId(e.target.value)}
-            className="h-9 rounded-lg border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary max-w-45 truncate"
-          >
-            <option value="ALL">Semua Inisiatif / Epic</option>
-            <option value="NONE">Hanya Pekerjaan Rutin</option>
-            {epics.map((epic) => (
-              <option key={epic.id} value={epic.id}>
-                {epic.title}
-              </option>
-            ))}
-          </select>
+          <Select value={selectedEpicId} onValueChange={setSelectedEpicId}>
+            <SelectTrigger className="h-9 text-xs max-w-45">
+              <SelectValue className="truncate" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Inisiatif / Epic</SelectItem>
+              <SelectItem value="NONE">Hanya Pekerjaan Rutin</SelectItem>
+              {epics.map((epic) => (
+                <SelectItem key={epic.id} value={epic.id}>
+                  {epic.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {hideHeader && isCoordinator && (
             <Button

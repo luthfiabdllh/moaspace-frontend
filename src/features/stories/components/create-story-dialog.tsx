@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CreateStoryDialogProps {
   open: boolean;
@@ -75,6 +76,7 @@ export function CreateStoryDialog({
 
   const selectedDivisionId = useWatch({ control, name: 'divisionId' }) || initialDivisionId;
   const targetDate = useWatch({ control, name: 'targetDate' });
+  const epicId = useWatch({ control, name: 'epicId' }) || 'NONE';
 
   // Fetch epics available for this division (or cross)
   const { data: epics = [] } = useEpics({
@@ -128,17 +130,18 @@ export function CreateStoryDialog({
                 className="bg-muted text-muted-foreground text-xs"
               />
             ) : (
-              <select
-                id="divisionId"
-                {...register('divisionId')}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                {allowedDivisions.map((div) => (
-                  <option key={div.id} value={div.id}>
-                    {div.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedDivisionId} onValueChange={(v) => setValue('divisionId', v)}>
+                <SelectTrigger id="divisionId" className="w-full h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {allowedDivisions.map((div) => (
+                    <SelectItem key={div.id} value={div.id}>
+                      {div.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             {errors.divisionId && (
               <p className="text-2xs text-destructive">{errors.divisionId.message}</p>
@@ -151,19 +154,20 @@ export function CreateStoryDialog({
               <Target className="size-3.5 text-muted-foreground" />
               Inisiatif / Induk Epic (Opsional)
             </Label>
-            <select
-              id="epicId"
-              {...register('epicId')}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</option>
-              {epics.map((epic) => (
-                <option key={epic.id} value={epic.id}>
-                  {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
-                  {epic.title}
-                </option>
-              ))}
-            </select>
+            <Select value={epicId} onValueChange={(v) => setValue('epicId', v)}>
+              <SelectTrigger id="epicId" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</SelectItem>
+                {epics.map((epic) => (
+                  <SelectItem key={epic.id} value={epic.id}>
+                    {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
+                    {epic.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <p className="text-2xs text-muted-foreground">
               Kosongkan jika story ini bukan bagian dari inisiatif besar.
             </p>

@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DatePicker } from '@/components/ui/date-picker';
 
 interface EditEpicDialogProps {
@@ -61,6 +62,7 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
 
   const isCross = epic.scope === 'CROSS';
   const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
+  const ownerDivisionId = useWatch({ control, name: 'ownerDivisionId' });
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
 
@@ -141,17 +143,21 @@ export function EditEpicDialog({ epic, open, onOpenChange }: EditEpicDialogProps
           {!isCross && (
             <div className="space-y-2">
               <Label htmlFor="edit-owner-division">Divisi Penanggung Jawab</Label>
-              <select
-                id="edit-owner-division"
-                {...register('ownerDivisionId')}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              <Select
+                value={ownerDivisionId || undefined}
+                onValueChange={(v) => setValue('ownerDivisionId', v)}
               >
-                {divisions.map((div) => (
-                  <option key={div.id} value={div.id}>
-                    {div.name} (/{div.slug})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="edit-owner-division" className="w-full text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((div) => (
+                    <SelectItem key={div.id} value={div.id}>
+                      {div.name} (/{div.slug})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 

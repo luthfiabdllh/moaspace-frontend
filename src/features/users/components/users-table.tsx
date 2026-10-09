@@ -19,6 +19,7 @@ import { useUpdateUserStatus, useResendActivation } from '../api/use-mutations';
 import { ManageUserDialog } from './manage-user-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -126,31 +127,31 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
 
         <div className="flex items-center gap-2">
           {/* Division Filter */}
-          <select
-            value={divisionFilter}
-            onChange={(e) => setDivisionFilter(e.target.value)}
-            aria-label="Filter berdasarkan divisi"
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <option value="ALL">Semua Divisi</option>
-            {divisions.map((div) => (
-              <option key={div.id} value={div.id}>
-                {div.name}
-              </option>
-            ))}
-          </select>
+          <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+            <SelectTrigger aria-label="Filter berdasarkan divisi" className="h-10 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Divisi</SelectItem>
+              {divisions.map((div) => (
+                <SelectItem key={div.id} value={div.id}>
+                  {div.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            aria-label="Filter berdasarkan status"
-            className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            <option value="ALL">Semua Status</option>
-            <option value="ACTIVE">Aktif</option>
-            <option value="INACTIVE">Nonaktif</option>
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger aria-label="Filter berdasarkan status" className="h-10 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Status</SelectItem>
+              <SelectItem value="ACTIVE">Aktif</SelectItem>
+              <SelectItem value="INACTIVE">Nonaktif</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

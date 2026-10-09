@@ -40,6 +40,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { STORY_POINTS_SCALE, type TaskStatus, type TaskPriority, type UpdateTaskDTO } from '../types';
 
@@ -736,23 +737,27 @@ export function TaskDetailSheet({
                     Assignee
                   </span>
                   {isCoordinatorOrAdmin ? (
-                    <select
+                    <Select
                       value={task.assigneeId || 'NONE'}
-                      onChange={(e) => handleAssigneeChange(e.target.value)}
+                      onValueChange={handleAssigneeChange}
                       disabled={updateMutation.isPending}
-                      className="w-full h-8 rounded border border-input bg-background px-2 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary truncate"
                     >
-                      <option value="NONE">-- Belum Ditugaskan --</option>
-                      {members.map((m) => {
-                        const cap = memberCapacities.find((c) => c.userId === m.id);
-                        const utilText = cap ? ` [${cap.utilizationPercentage}%]` : '';
-                        return (
-                          <option key={m.id} value={m.id}>
-                            {m.name} ({m.role}){utilText}
-                          </option>
-                        );
-                      })}
-                    </select>
+                      <SelectTrigger className="w-full h-8 text-xs font-medium">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="NONE">-- Belum Ditugaskan --</SelectItem>
+                        {members.map((m) => {
+                          const cap = memberCapacities.find((c) => c.userId === m.id);
+                          const utilText = cap ? ` [${cap.utilizationPercentage}%]` : '';
+                          return (
+                            <SelectItem key={m.id} value={m.id}>
+                              {m.name} ({m.role}){utilText}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                   ) : (
                     <div>
                       <p className="font-semibold text-foreground truncate">

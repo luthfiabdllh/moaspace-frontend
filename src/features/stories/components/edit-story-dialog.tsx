@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface EditStoryDialogProps {
   story: StoryItem;
@@ -48,6 +49,7 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
   });
 
   const targetDate = useWatch({ control, name: 'targetDate' });
+  const epicId = useWatch({ control, name: 'epicId' });
 
   // Re-sync the form whenever a different story is opened for editing.
   useEffect(() => {
@@ -105,19 +107,20 @@ export function EditStoryDialog({ story, open, onOpenChange }: EditStoryDialogPr
               <Target className="size-3.5 text-muted-foreground" />
               Inisiatif / Induk Epic (Opsional)
             </Label>
-            <select
-              id="editEpicId"
-              {...register('epicId')}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</option>
-              {epics.map((epic) => (
-                <option key={epic.id} value={epic.id}>
-                  {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
-                  {epic.title}
-                </option>
-              ))}
-            </select>
+            <Select value={epicId ?? 'NONE'} onValueChange={(v) => setValue('epicId', v)}>
+              <SelectTrigger id="editEpicId" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">-- Tanpa Epic (Pekerjaan Rutin Divisi) --</SelectItem>
+                {epics.map((epic) => (
+                  <SelectItem key={epic.id} value={epic.id}>
+                    {epic.scope === 'CROSS' ? '[Lintas Divisi] ' : ''}
+                    {epic.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Judul Story */}

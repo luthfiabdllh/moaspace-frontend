@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { NotionEditor } from "@/components/ui/notion-editor";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -371,44 +372,48 @@ export function CreateRequestContent() {
                     Divisi Asal (Pemohon){" "}
                     <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="fromDivision"
-                    value={fromDivisionId}
-                    onChange={(e) => {
-                      setFromDivisionId(e.target.value);
-                      if (toDivisionId === e.target.value) {
+                  <Select
+                    value={fromDivisionId || undefined}
+                    onValueChange={(value) => {
+                      setFromDivisionId(value);
+                      if (toDivisionId === value) {
                         setToDivisionId("");
                       }
                     }}
-                    className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
                   >
-                    <option value="">Pilih Divisi Asal...</option>
-                    {availableOriginDivisions.map((div) => (
-                      <option key={div.id} value={div.id}>
-                        {div.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="fromDivision" className="h-9 w-full text-sm">
+                      <SelectValue placeholder="Pilih Divisi Asal..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableOriginDivisions.map((div) => (
+                        <SelectItem key={div.id} value={div.id}>
+                          {div.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="toDivision" className="text-xs font-medium">
                     Divisi Tujuan <span className="text-destructive">*</span>
                   </Label>
-                  <select
-                    id="toDivision"
-                    value={toDivisionId}
-                    onChange={(e) => handleToDivisionChange(e.target.value)}
+                  <Select
+                    value={toDivisionId || undefined}
+                    onValueChange={handleToDivisionChange}
                     disabled={!fromDivisionId}
-                    className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900 disabled:opacity-50"
                   >
-                    <option value="">Pilih Divisi Tujuan...</option>
-                    {availableTargetDivisions.map((div) => (
-                      <option key={div.id} value={div.id}>
-                        {div.name}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="toDivision" className="h-9 w-full text-sm">
+                      <SelectValue placeholder="Pilih Divisi Tujuan..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTargetDivisions.map((div) => (
+                        <SelectItem key={div.id} value={div.id}>
+                          {div.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

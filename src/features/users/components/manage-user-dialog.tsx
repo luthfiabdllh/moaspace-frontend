@@ -24,6 +24,7 @@ import { useActivityLogs } from '../api/use-queries';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -318,20 +319,21 @@ export function ManageUserDialog({
 
                           <div className="flex items-center gap-2">
                             {/* Role Selector */}
-                            <select
+                            <Select
                               value={div.role}
-                              onChange={(e) =>
-                                handleUpdateRole(
-                                  div.divisionId,
-                                  e.target.value as 'MEMBER' | 'COORDINATOR',
-                                )
+                              onValueChange={(v) =>
+                                handleUpdateRole(div.divisionId, v as 'MEMBER' | 'COORDINATOR')
                               }
                               disabled={updateRoleMutation.isPending}
-                              className="h-8 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring font-medium"
                             >
-                              <option value="MEMBER">Anggota Divisi</option>
-                              <option value="COORDINATOR">Koordinator Divisi</option>
-                            </select>
+                              <SelectTrigger className="h-8 text-xs font-medium">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="MEMBER">Anggota Divisi</SelectItem>
+                                <SelectItem value="COORDINATOR">Koordinator Divisi</SelectItem>
+                              </SelectContent>
+                            </Select>
 
                             {/* Move button */}
                             <Button
@@ -383,20 +385,23 @@ export function ManageUserDialog({
                             <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
                               Pindahkan ke:
                             </span>
-                            <select
-                              value={targetDivisionId}
-                              onChange={(e) => setTargetDivisionId(e.target.value)}
-                              className="h-8 flex-1 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs"
+                            <Select
+                              value={targetDivisionId || undefined}
+                              onValueChange={setTargetDivisionId}
                             >
-                              <option value="">-- Pilih Divisi Tujuan --</option>
-                              {divisions
-                                .filter((d) => d.id !== div.divisionId)
-                                .map((d) => (
-                                  <option key={d.id} value={d.id}>
-                                    {d.name}
-                                  </option>
-                                ))}
-                            </select>
+                              <SelectTrigger className="h-8 flex-1 text-xs">
+                                <SelectValue placeholder="-- Pilih Divisi Tujuan --" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {divisions
+                                  .filter((d) => d.id !== div.divisionId)
+                                  .map((d) => (
+                                    <SelectItem key={d.id} value={d.id}>
+                                      {d.name}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
                             <div className="flex items-center gap-1.5 shrink-0">
                               <Button
                                 size="sm"
@@ -444,36 +449,36 @@ export function ManageUserDialog({
                     <Label htmlFor="add-div-select" className="text-xs text-muted-foreground">
                       Pilih Divisi
                     </Label>
-                    <select
-                      id="add-div-select"
-                      value={newDivisionId}
-                      onChange={(e) => setNewDivisionId(e.target.value)}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    >
-                      <option value="">-- Pilih Divisi Baru --</option>
-                      {unassignedDivisions.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.name}
-                        </option>
-                      ))}
-                    </select>
+                    <Select value={newDivisionId || undefined} onValueChange={setNewDivisionId}>
+                      <SelectTrigger id="add-div-select" className="w-full h-9 text-xs">
+                        <SelectValue placeholder="-- Pilih Divisi Baru --" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {unassignedDivisions.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>
+                            {d.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="sm:col-span-4 space-y-1">
                     <Label htmlFor="add-role-select" className="text-xs text-muted-foreground">
                       Role di Divisi
                     </Label>
-                    <select
-                      id="add-role-select"
+                    <Select
                       value={newDivisionRole}
-                      onChange={(e) =>
-                        setNewDivisionRole(e.target.value as 'MEMBER' | 'COORDINATOR')
-                      }
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      onValueChange={(v) => setNewDivisionRole(v as 'MEMBER' | 'COORDINATOR')}
                     >
-                      <option value="MEMBER">Anggota Divisi</option>
-                      <option value="COORDINATOR">Koordinator Divisi</option>
-                    </select>
+                      <SelectTrigger id="add-role-select" className="w-full h-9 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MEMBER">Anggota Divisi</SelectItem>
+                        <SelectItem value="COORDINATOR">Koordinator Divisi</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="sm:col-span-2">

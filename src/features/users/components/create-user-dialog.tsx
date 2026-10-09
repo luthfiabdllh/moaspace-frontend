@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { UserPlus, Loader2, Copy, Check } from 'lucide-react';
@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface CreateUserDialogProps {
@@ -40,6 +41,8 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CreateUserDTO>({
     resolver: zodResolver(createUserSchema),
@@ -50,6 +53,9 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
       role: 'MEMBER',
     },
   });
+
+  const divisionId = useWatch({ control, name: 'divisionId' });
+  const role = useWatch({ control, name: 'role' });
 
   const onSubmit = async (data: CreateUserDTO) => {
     try {
@@ -178,20 +184,21 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
             {/* Divisi */}
             <div className="space-y-1.5">
               <Label htmlFor="create-division">Penempatan Divisi</Label>
-              <select
-                id="create-division"
-                className={cn(
-                  'w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                  errors.divisionId && 'border-destructive'
-                )}
-                {...register('divisionId')}
-              >
-                {divisions.map((div) => (
-                  <option key={div.id} value={div.id}>
-                    {div.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={divisionId} onValueChange={(v) => setValue('divisionId', v)}>
+                <SelectTrigger
+                  id="create-division"
+                  className={cn('w-full h-10 text-sm', errors.divisionId && 'border-destructive')}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {divisions.map((div) => (
+                    <SelectItem key={div.id} value={div.id}>
+                      {div.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {errors.divisionId && (
                 <p className="text-xs text-destructive">{errors.divisionId.message}</p>
               )}
@@ -200,15 +207,21 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
             {/* Role */}
             <div className="space-y-1.5">
               <Label htmlFor="create-role">Role Anggota</Label>
-              <select
-                id="create-role"
-                className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                {...register('role')}
+              <Select
+                value={role}
+                onValueChange={(v) => setValue('role', v as CreateUserDTO['role'])}
               >
-                <option value="MEMBER">Anggota Divisi</option>
-                <option value="COORDINATOR">Koordinator Divisi</option>
-                <option value="KOORDINATOR_MAHASISWA_UNIT">Koordinator Mahasiswa Unit (Akses Penuh)</option>
-              </select>
+                <SelectTrigger id="create-role" className="w-full h-10 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MEMBER">Anggota Divisi</SelectItem>
+                  <SelectItem value="COORDINATOR">Koordinator Divisi</SelectItem>
+                  <SelectItem value="KOORDINATOR_MAHASISWA_UNIT">
+                    Koordinator Mahasiswa Unit (Akses Penuh)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end gap-2 pt-3">

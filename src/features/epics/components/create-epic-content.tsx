@@ -22,6 +22,7 @@ import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { NotionEditor } from '@/components/ui/notion-editor';
@@ -65,6 +66,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
   });
 
   const scope = useWatch({ control, name: 'scope' });
+  const ownerDivisionId = useWatch({ control, name: 'ownerDivisionId' });
   const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
@@ -226,18 +228,21 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
                   <Layers className="size-3.5 text-primary" />
                   Divisi Penanggung Jawab <span className="text-destructive">*</span>
                 </Label>
-                <select
-                  id="owner-division"
-                  {...register('ownerDivisionId')}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                <Select
+                  value={ownerDivisionId || undefined}
+                  onValueChange={(v) => setValue('ownerDivisionId', v)}
                 >
-                  <option value="">-- Pilih Divisi Penanggung Jawab --</option>
-                  {divisions.map((div) => (
-                    <option key={div.id} value={div.id}>
-                      {div.name} (/{div.slug})
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="owner-division" className="w-full text-sm">
+                    <SelectValue placeholder="-- Pilih Divisi Penanggung Jawab --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {divisions.map((div) => (
+                      <SelectItem key={div.id} value={div.id}>
+                        {div.name} (/{div.slug})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <p className="text-2xs text-muted-foreground">
                   Inisiatif ini akan dikelompokkan dan ditampilkan di bawah divisi penanggung jawab tersebut.
                 </p>

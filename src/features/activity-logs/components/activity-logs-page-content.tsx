@@ -23,6 +23,7 @@ import type { ActivityLogItem } from '@/features/users/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Dialog,
@@ -279,52 +280,53 @@ export function ActivityLogsPageContent() {
           {/* Action Filter */}
           <div className="md:col-span-3 flex items-center gap-2">
             <Filter size={14} className="text-muted-foreground shrink-0" />
-            <select
-              value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
-              aria-label="Filter jenis aksi"
-              className="w-full h-9 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <option value="ALL">Semua Jenis Aksi</option>
-              <option value="ROLE_CHANGED">Ubah Role Divisi</option>
-              <option value="DIVISION_MOVED">Pindah Divisi</option>
-              <option value="DIVISION_ADDED">Tambah Divisi</option>
-              <option value="DIVISION_REMOVED">Hapus Divisi</option>
-              <option value="USER_CREATED">Pendaftaran Anggota</option>
-              <option value="GLOBAL_ROLE_CHANGED">Peran Unit (Kormanit)</option>
-              <option value="STATUS_UPDATED">Ubah Status Akun</option>
-            </select>
+            <Select value={actionFilter} onValueChange={setActionFilter}>
+              <SelectTrigger aria-label="Filter jenis aksi" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">Semua Jenis Aksi</SelectItem>
+                <SelectItem value="ROLE_CHANGED">Ubah Role Divisi</SelectItem>
+                <SelectItem value="DIVISION_MOVED">Pindah Divisi</SelectItem>
+                <SelectItem value="DIVISION_ADDED">Tambah Divisi</SelectItem>
+                <SelectItem value="DIVISION_REMOVED">Hapus Divisi</SelectItem>
+                <SelectItem value="USER_CREATED">Pendaftaran Anggota</SelectItem>
+                <SelectItem value="GLOBAL_ROLE_CHANGED">Peran Unit (Kormanit)</SelectItem>
+                <SelectItem value="STATUS_UPDATED">Ubah Status Akun</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Sort By Column */}
           <div className="md:col-span-2 flex items-center gap-1.5">
             <ArrowUpDown size={14} className="text-muted-foreground shrink-0" />
-            <select
+            <Select
               value={sortBy}
-              onChange={(e) =>
-                setSortBy(e.target.value as 'createdAt' | 'action' | 'actorName')
-              }
-              aria-label="Urutkan berdasarkan kolom"
-              className="w-full h-9 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              onValueChange={(v) => setSortBy(v as 'createdAt' | 'action' | 'actorName')}
             >
-              <option value="createdAt">Waktu</option>
-              <option value="action">Jenis Aksi</option>
-              <option value="actorName">Nama Aktor</option>
-            </select>
+              <SelectTrigger aria-label="Urutkan berdasarkan kolom" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="createdAt">Waktu</SelectItem>
+                <SelectItem value="action">Jenis Aksi</SelectItem>
+                <SelectItem value="actorName">Nama Aktor</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Sort Order Direction */}
           <div className="md:col-span-2 flex items-center gap-1.5">
             <ArrowDownAZ size={14} className="text-muted-foreground shrink-0" />
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-              aria-label="Arah pengurutan"
-              className="w-full h-9 rounded-md border border-input bg-background px-2.5 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <option value="desc">Terbaru (Desc)</option>
-              <option value="asc">Terlama (Asc)</option>
-            </select>
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as 'asc' | 'desc')}>
+              <SelectTrigger aria-label="Arah pengurutan" className="w-full h-9 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Terbaru (Desc)</SelectItem>
+                <SelectItem value="asc">Terlama (Asc)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

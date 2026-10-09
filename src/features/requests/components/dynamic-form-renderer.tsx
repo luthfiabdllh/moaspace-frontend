@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { TemplateFieldDefinition } from '../types';
 
 function toFieldText(value: unknown): string {
@@ -94,19 +95,21 @@ export function DynamicFormRenderer({
                 minHeight="min-h-[140px]"
               />
             ) : field.type === 'select' ? (
-              <select
-                id={`field-${field.key}`}
-                value={value}
-                onChange={(e) => handleFieldChange(field.key, e.target.value)}
-                className="h-9 w-full rounded-lg border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring dark:bg-zinc-900"
+              <Select
+                value={value || undefined}
+                onValueChange={(v) => handleFieldChange(field.key, v)}
               >
-                <option value="">Pilih {field.label}...</option>
-                {field.options?.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id={`field-${field.key}`} className="h-9 w-full text-sm">
+                  <SelectValue placeholder={`Pilih ${field.label}...`} />
+                </SelectTrigger>
+                <SelectContent>
+                  {field.options?.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : field.type === 'number' ? (
               <Input
                 id={`field-${field.key}`}

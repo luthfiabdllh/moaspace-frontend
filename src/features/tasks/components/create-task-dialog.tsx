@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 
 interface CreateTaskDialogProps {
@@ -76,6 +77,8 @@ export function CreateTaskDialog({
   const isBlocked = useWatch({ control, name: 'isBlocked' });
   const selectedSp = useWatch({ control, name: 'storyPoints' });
   const dueDate = useWatch({ control, name: 'dueDate' });
+  const assigneeId = useWatch({ control, name: 'assigneeId' });
+  const priority = useWatch({ control, name: 'priority' });
 
   const executeCreate = async (payload: CreateTaskDTO) => {
     try {
@@ -198,22 +201,26 @@ export function CreateTaskDialog({
                 <User className="size-3.5 text-muted-foreground" />
                 Penanggung Jawab (Assignee)
               </Label>
-              <select
-                id="task-assignee"
-                {...register('assigneeId')}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+              <Select
+                value={assigneeId || 'NONE'}
+                onValueChange={(v) => setValue('assigneeId', v === 'NONE' ? '' : v)}
               >
-                <option value="NONE">-- Belum Ditugaskan --</option>
-                {members.map((m) => {
-                  const cap = memberCapacities.find((c) => c.userId === m.id);
-                  const utilLabel = cap ? ` [${cap.utilizationPercentage}% beban: ${cap.activeSp}/${cap.capacitySp} SP]` : '';
-                  return (
-                    <option key={m.id} value={m.id}>
-                      {m.name} ({m.role}){utilLabel}
-                    </option>
-                  );
-                })}
-              </select>
+                <SelectTrigger id="task-assignee" className="w-full h-9 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">-- Belum Ditugaskan --</SelectItem>
+                  {members.map((m) => {
+                    const cap = memberCapacities.find((c) => c.userId === m.id);
+                    const utilLabel = cap ? ` [${cap.utilizationPercentage}% beban: ${cap.activeSp}/${cap.capacitySp} SP]` : '';
+                    return (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name} ({m.role}){utilLabel}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Grid: Prioritas & Tenggat Waktu */}
@@ -223,16 +230,20 @@ export function CreateTaskDialog({
                   <Flag className="size-3.5 text-muted-foreground" />
                   Prioritas
                 </Label>
-                <select
-                  id="task-priority"
-                  {...register('priority')}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                <Select
+                  value={priority}
+                  onValueChange={(v) => setValue('priority', v as CreateTaskDTO['priority'])}
                 >
-                  <option value="LOW">Rendah (LOW)</option>
-                  <option value="MEDIUM">Sedang (MEDIUM)</option>
-                  <option value="HIGH">Tinggi (HIGH)</option>
-                  <option value="URGENT">Mendesak (URGENT)</option>
-                </select>
+                  <SelectTrigger id="task-priority" className="w-full h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">Rendah (LOW)</SelectItem>
+                    <SelectItem value="MEDIUM">Sedang (MEDIUM)</SelectItem>
+                    <SelectItem value="HIGH">Tinggi (HIGH)</SelectItem>
+                    <SelectItem value="URGENT">Mendesak (URGENT)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5">
