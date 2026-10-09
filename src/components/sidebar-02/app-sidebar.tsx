@@ -33,6 +33,7 @@ import DashboardNavigation from '@/components/sidebar-02/nav-main';
 import { TeamSwitcher, type Team } from '@/components/sidebar-02/team-switcher';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import Image from 'next/image';
 
 export function DashboardSidebar() {
   const pathname = usePathname();
@@ -201,7 +202,7 @@ export function DashboardSidebar() {
         )}
       >
         <Link className="flex items-center gap-2" href="/dashboard">
-          <Logo className="h-8 w-8" />
+          <Image src="/logo.svg" alt="Logo" width={40} height={40} />
           {!isCollapsed && (
             <span className="font-semibold text-black dark:text-white">
               MoaSpace
