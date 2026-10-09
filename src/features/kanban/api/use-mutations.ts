@@ -80,7 +80,7 @@ export const useMoveTask = (divisionId?: string) => {
         return; // Handled by Overcapacity Dialog in kanban-board
       }
 
-      let msg = 'Gagal memindahkan kartu task.';
+      let msg = 'Gagal memindahkan kartu task. Periksa SP dari task yang dipindahkan!';
       if (isAxiosError(error) && error.response?.data?.message) {
         msg = friendlyTaskErrorMessage(error.response.data.message);
       }

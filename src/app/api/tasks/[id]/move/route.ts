@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json(data, { status: res.status });
   } catch {
     return NextResponse.json(
-      { success: false, error: { code: 500, message: 'Periksa SP dari task yang dipindahkan!' } },
+      { success: false, error: { code: 500, message: 'Gagal menghubungi server' } },
       { status: 500 }
     );
   }
