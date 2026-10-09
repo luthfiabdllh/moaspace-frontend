@@ -15,7 +15,6 @@ import {
   Layers,
   History,
   User,
-  Settings,
   PlusCircle,
 } from 'lucide-react';
 import {
@@ -176,14 +175,6 @@ export function DashboardSidebar() {
         icon: <User className="size-4" />,
         link: '/profile',
         isActive: pathname === '/profile',
-        group: 'Akun',
-      },
-      {
-        id: 'settings',
-        title: 'Pengaturan',
-        icon: <Settings className="size-4" />,
-        link: '/settings',
-        isActive: pathname === '/settings',
         group: 'Akun',
       }
     );

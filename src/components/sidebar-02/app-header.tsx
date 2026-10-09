@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ChevronsUpDown,
   User as UserIcon,
-  Settings,
   Check,
 } from 'lucide-react';
 import {
@@ -327,16 +326,6 @@ export function AppHeader({
                 <span>Profil Saya</span>
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="rounded-lg cursor-pointer">
-              <Link
-                href="/settings"
-                className="flex items-center gap-2 px-2 py-1.5 text-xs text-foreground"
-              >
-                <Settings className="size-4 text-muted-foreground" />
-                <span>Pengaturan Akun</span>
-              </Link>
-            </DropdownMenuItem>
-
             <DropdownMenuSeparator className="my-1.5" />
 
             {/* Logout */}
