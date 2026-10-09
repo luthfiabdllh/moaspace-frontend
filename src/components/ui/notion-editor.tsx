@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, NodeViewWrapper, ReactNodeViewRenderer, type NodeViewProps } from '@tiptap/react';
 import type { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
@@ -45,6 +45,173 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// --- NOTION-STYLE RESIZABLE IMAGE COMPONENT ---
+
+const ResizableImageComponent: React.FC<NodeViewProps> = ({
+  node,
+  updateAttributes,
+  selected,
+  editor,
+  getPos,
+}) => {
+  const { src, alt, alignment = 'center', width = '100%' } = node.attrs;
+  const isEditable = editor.isEditable;
+  const [isResizing, setIsResizing] = useState(false);
+  const [liveWidth, setLiveWidth] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const startDragData = useRef<{
+    startX: number;
+    startWidthPx: number;
+    containerWidthPx: number;
+    direction: 'left' | 'right';
+  } | null>(null);
+
+  const displayWidth = liveWidth ?? width ?? '100%';
+
+  const handlePointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    direction: 'left' | 'right'
+  ) => {
+    if (!isEditable) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const targetEl = e.currentTarget;
+    targetEl.setPointerCapture(e.pointerId);
+
+    const parentContainer =
+      containerRef.current?.closest('.ProseMirror') || containerRef.current?.parentElement;
+    const containerWidthPx =
+      parentContainer?.clientWidth || containerRef.current?.clientWidth || 600;
+    const imgEl = containerRef.current?.querySelector('img');
+    const startWidthPx = imgEl?.getBoundingClientRect().width || containerWidthPx;
+
+    startDragData.current = {
+      startX: e.clientX,
+      startWidthPx,
+      containerWidthPx,
+      direction,
+    };
+    setIsResizing(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizing || !startDragData.current) return;
+    e.preventDefault();
+
+    const { startX, startWidthPx, containerWidthPx, direction } = startDragData.current;
+    const deltaX = e.clientX - startX;
+    const effectiveDelta = direction === 'right' ? deltaX : -deltaX;
+
+    const newWidthPx = Math.max(80, Math.min(containerWidthPx, startWidthPx + effectiveDelta));
+    const newPercentage = Math.round((newWidthPx / containerWidthPx) * 100);
+    const clampedPercentage = Math.max(15, Math.min(100, newPercentage));
+
+    setLiveWidth(`${clampedPercentage}%`);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isResizing) return;
+    e.preventDefault();
+    const targetEl = e.currentTarget;
+    try {
+      targetEl.releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignore
+    }
+
+    if (liveWidth) {
+      updateAttributes({ width: liveWidth });
+    }
+    setIsResizing(false);
+    startDragData.current = null;
+    setLiveWidth(null);
+  };
+
+  const handleSelectNode = () => {
+    if (typeof getPos === 'function') {
+      const pos = getPos();
+      if (typeof pos === 'number') {
+        editor.commands.setNodeSelection(pos);
+      }
+    }
+  };
+
+  const alignClass =
+    alignment === 'left'
+      ? 'justify-start'
+      : alignment === 'right'
+      ? 'justify-end'
+      : 'justify-center';
+
+  return (
+    <NodeViewWrapper
+      ref={containerRef}
+      className={cn('notion-image-node my-3 flex w-full select-none', alignClass)}
+      data-alignment={alignment}
+      data-width={displayWidth}
+    >
+      <div
+        onClick={handleSelectNode}
+        className={cn(
+          'relative group inline-block max-w-full transition-all duration-75',
+          selected &&
+            isEditable &&
+            'ring-2 ring-primary ring-offset-2 ring-offset-background rounded-xl shadow-lg',
+          isResizing && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+        )}
+        style={{ width: displayWidth, maxWidth: '100%' }}
+      >
+        <img
+          src={src}
+          alt={alt || ''}
+          draggable={false}
+          className={cn(
+            'block w-full h-auto rounded-xl object-contain pointer-events-auto cursor-pointer shadow-xs border border-border/40',
+            isResizing && 'pointer-events-none'
+          )}
+        />
+
+        {/* Live Percentage Badge while resizing */}
+        {isResizing && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 px-2.5 py-0.5 rounded-full bg-primary text-primary-foreground text-3xs font-semibold shadow-md pointer-events-none animate-in fade-in duration-150">
+            {displayWidth}
+          </div>
+        )}
+
+        {/* Notion-style Left & Right Resize Handles */}
+        {selected && isEditable && (
+          <>
+            {/* Left Handle */}
+            <div
+              onPointerDown={(e) => handlePointerDown(e, 'left')}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              className="absolute -left-2.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center cursor-ew-resize group/handle p-1"
+              title="Tarik untuk mengubah ukuran gambar"
+            >
+              <div className="w-1.5 h-8 rounded-full bg-primary/80 group-hover/handle:bg-primary group-hover/handle:w-2 shadow-md transition-all border border-background" />
+            </div>
+
+            {/* Right Handle */}
+            <div
+              onPointerDown={(e) => handlePointerDown(e, 'right')}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              className="absolute -right-2.5 top-1/2 -translate-y-1/2 z-20 flex items-center justify-center cursor-ew-resize group/handle p-1"
+              title="Tarik untuk mengubah ukuran gambar"
+            >
+              <div className="w-1.5 h-8 rounded-full bg-primary/80 group-hover/handle:bg-primary group-hover/handle:w-2 shadow-md transition-all border border-background" />
+            </div>
+          </>
+        )}
+      </div>
+    </NodeViewWrapper>
+  );
+};
+
 const CustomImage = Image.extend({
   addAttributes() {
     return {
@@ -59,7 +226,23 @@ const CustomImage = Image.extend({
         },
         parseHTML: (element) => element.getAttribute('data-alignment') || 'center',
       },
+      width: {
+        default: '100%',
+        renderHTML: (attributes) => {
+          const w = attributes.width || '100%';
+          return {
+            'data-width': w,
+            style: `width: ${w}; max-width: 100%;`,
+          };
+        },
+        parseHTML: (element) =>
+          element.getAttribute('data-width') || element.style.width || '100%',
+      },
     };
+  },
+
+  addNodeView() {
+    return ReactNodeViewRenderer(ResizableImageComponent);
   },
 });
 
@@ -1158,6 +1341,31 @@ export function NotionEditor({
             >
               <AlignRight className="size-3.5" />
             </button>
+
+            <div className="h-4 w-px bg-border mx-0.5" />
+
+            {/* Quick Size Presets */}
+            {(['25%', '50%', '75%', '100%'] as const).map((size) => {
+              const currentWidth = editor.getAttributes('image').width || '100%';
+              const isActive = currentWidth === size;
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() =>
+                    editor.chain().focus().updateAttributes('image', { width: size }).run()
+                  }
+                  className={cn(
+                    'px-1.5 py-0.5 rounded-md hover:bg-muted text-3xs font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    isActive && 'bg-primary/15 text-primary font-bold'
+                  )}
+                  title={`Ubah ukuran ke ${size}`}
+                >
+                  {size}
+                </button>
+              );
+            })}
 
             <div className="h-4 w-px bg-border mx-0.5" />
 

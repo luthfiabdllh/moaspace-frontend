@@ -660,3 +660,8 @@
   outline-offset: 3px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
+
+.notion-image-node img {
+  margin-top: 0;
+  margin-bottom: 0;
+}
