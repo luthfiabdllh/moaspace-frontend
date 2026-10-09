@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +15,6 @@ import {
   TriageDialog,
   RespondInfoDialog,
   ConvertToStoryDialog,
-  ConvertToEpicDialog,
   DeliverDialog,
   ConfirmDialog,
   SubmitDraftDialog,
@@ -46,6 +46,7 @@ interface RequestDetailContentProps {
 }
 
 export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
+  const router = useRouter();
   const { data: request, isLoading } = useRequest(requestId);
   const { data: template } = useTemplate(request?.templateId || undefined);
 
@@ -56,7 +57,6 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
   const [openTriage, setOpenTriage] = useState(false);
   const [openRespondInfo, setOpenRespondInfo] = useState(false);
   const [openConvertToStory, setOpenConvertToStory] = useState(false);
-  const [openConvertToEpic, setOpenConvertToEpic] = useState(false);
   const [openDeliver, setOpenDeliver] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
   const [openStartRevision, setOpenStartRevision] = useState(false);
@@ -254,14 +254,15 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
             )}
 
             {request.permissions.canConvertToEpic && (
-              <Button
-                size="sm"
-                onClick={() => setOpenConvertToEpic(true)}
-                className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
-                <Target className="h-4 w-4" />
-                Jadikan Inisiatif / Epic
-              </Button>
+              <Link href={`/requests/${requestId}/convert-to-epic`}>
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <Target className="h-4 w-4" />
+                  Jadikan Inisiatif / Epic
+                </Button>
+              </Link>
             )}
 
             {request.permissions.canConvertToStory && (
@@ -321,7 +322,7 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         onOpenTriage={() => setOpenTriage(true)}
         onOpenRespondInfo={() => setOpenRespondInfo(true)}
         onOpenConvertToStory={() => setOpenConvertToStory(true)}
-        onOpenConvertToEpic={() => setOpenConvertToEpic(true)}
+        onOpenConvertToEpic={() => router.push(`/requests/${requestId}/convert-to-epic`)}
         onOpenDeliver={() => setOpenDeliver(true)}
         onOpenConfirm={() => setOpenConfirm(true)}
         onOpenStartRevision={() => setOpenStartRevision(true)}
@@ -641,11 +642,6 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
         request={request}
         open={openConvertToStory}
         onOpenChange={setOpenConvertToStory}
-      />
-      <ConvertToEpicDialog
-        request={request}
-        open={openConvertToEpic}
-        onOpenChange={setOpenConvertToEpic}
       />
       <DeliverDialog
         request={request}
