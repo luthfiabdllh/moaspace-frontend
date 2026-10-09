@@ -28,6 +28,7 @@ export default defineConfig({
         'src/features/**/components/**',
         'src/features/**/use-mutations.ts',
         'src/features/**/use-queries.ts',
+        'src/features/**/use-calendar.ts',
         'src/lib/verify-session.ts',
         'src/lib/api-client.ts',
         'src/lib/get-query-client.ts',

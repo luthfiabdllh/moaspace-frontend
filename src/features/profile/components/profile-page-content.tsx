@@ -1,12 +1,38 @@
 'use client';
 
+import * as React from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { ProfileInfoForm } from './profile-info-form';
 import { ProfileDivisionsCard } from './profile-divisions-card';
 import { ChangePasswordForm } from './change-password-form';
+import { GoogleCalendarCard } from './google-calendar-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Shield, CheckCircle2, AlertTriangle, Sparkles, User } from 'lucide-react';
+
+function CalendarUrlNotificationHandler() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    const connected = searchParams.get('calendar_connected');
+    const error = searchParams.get('calendar_error');
+
+    if (connected === 'success') {
+      toast.success(
+        'Google Calendar berhasil terhubung! Kalender "MoaSpace - Tim KKN" telah aktif disinkronkan.'
+      );
+      router.replace('/profile');
+    } else if (error) {
+      toast.error(decodeURIComponent(error));
+      router.replace('/profile');
+    }
+  }, [searchParams, router]);
+
+  return null;
+}
 
 export function ProfilePageContent() {
   const { data: user, isLoading, isError, refetch } = useCurrentUser();
@@ -44,6 +70,10 @@ export function ProfilePageContent() {
 
   return (
     <div className="space-y-6 mx-auto pb-10">
+      <React.Suspense fallback={null}>
+        <CalendarUrlNotificationHandler />
+      </React.Suspense>
+
       {/* Page Header */}
       <div className="border-b border-border/60 pb-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -85,7 +115,7 @@ export function ProfilePageContent() {
         </div>
       </div>
 
-      {/* Grid Layout: Left (Info & Divisions) | Right (Security & Overview) */}
+      {/* Grid Layout: Left (Info & Divisions) | Right (Calendar & Security) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
@@ -95,6 +125,7 @@ export function ProfilePageContent() {
 
         {/* Right Column (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
+          <GoogleCalendarCard />
           <ChangePasswordForm hasPassword={user.hasPassword ?? true} />
 
           {/* Account Security Overview Card */}
