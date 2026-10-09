@@ -47,7 +47,10 @@ export async function GET(request: NextRequest) {
 
   // 3. If Google redirected with authorization code
   if (code) {
-    const redirectUri = `${origin}/api/auth/google/callback`;
+    // Must match exactly whatever redirect_uri /api/auth/google used to
+    // start the flow (same GOOGLE_CALLBACK_URL override, same dynamic
+    // origin fallback) — Google rejects the token exchange otherwise.
+    const redirectUri = process.env.GOOGLE_CALLBACK_URL || `${origin}/api/auth/google/callback`;
 
     try {
       const backendRes = await fetch(`${BACKEND_API_URL}/auth/google/callback`, {
