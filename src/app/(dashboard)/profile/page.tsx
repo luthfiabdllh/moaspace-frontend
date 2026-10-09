@@ -11,7 +11,7 @@ export default async function ProfilePage() {
   const session = await verifySession();
 
   if (!session) {
-    redirect('/login');
+    redirect('/api/auth/session-expired');
   }
 
   return (

@@ -11,7 +11,7 @@ export default async function AdminActivityLogsPage() {
   const session = await verifySession();
 
   if (!session) {
-    redirect('/login');
+    redirect('/api/auth/session-expired');
   }
 
   // Authoritative check: only Super Admin or Koordinator Mahasiswa Unit can access

@@ -20,7 +20,11 @@ export default async function DashboardLayout({
   const session = await verifySession();
 
   if (!session) {
-    redirect('/login');
+    // Redirect via a route handler that clears the (possibly present but
+    // invalid) access_token cookie first — redirecting straight to /login
+    // here would leave a stale cookie behind, which proxy.ts's cheap
+    // existence-only check would then bounce back to /dashboard forever.
+    redirect('/api/auth/session-expired');
   }
 
   const roleName = session.isSuperAdmin
