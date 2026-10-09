@@ -49,6 +49,7 @@ export function LoginForm() {
     defaultValues: {
       email: '',
       password: '',
+      rememberMe: false,
     },
   });
 
@@ -120,6 +121,8 @@ export function LoginForm() {
     },
   });
 
+  const rememberMeRegistration = register('rememberMe');
+
   return (
     <SignInPage
       title={
@@ -138,6 +141,7 @@ export function LoginForm() {
       passwordError={errors.password?.message}
       emailProps={emailRegistration}
       passwordProps={passwordRegistration}
+      rememberMeProps={rememberMeRegistration}
       onSignIn={handleSubmit(onSubmit)}
       onGoogleSignIn={handleGoogleLogin}
       onResetPassword={() => router.push('/forgot-password')}

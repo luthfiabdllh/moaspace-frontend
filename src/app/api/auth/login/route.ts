@@ -4,7 +4,8 @@ import { loginSchema } from '@/features/auth/types';
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 const ACCESS_TOKEN_TTL = Number(process.env.ACCESS_TOKEN_TTL ?? 900);
-const REFRESH_TOKEN_TTL = Number(process.env.REFRESH_TOKEN_TTL ?? 604800);
+const REFRESH_TOKEN_TTL = Number(process.env.REFRESH_TOKEN_TTL ?? 86400); // 1 hari (default)
+const REFRESH_TOKEN_REMEMBER_TTL = Number(process.env.REFRESH_TOKEN_REMEMBER_TTL ?? 2592000); // 30 hari (remember me)
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -78,12 +79,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (data.refreshToken) {
+      const isRememberMe = Boolean(parsed.data.rememberMe);
+      const refreshTokenTtl = isRememberMe ? REFRESH_TOKEN_REMEMBER_TTL : REFRESH_TOKEN_TTL;
+
       cookieStore.set('refresh_token', data.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/api/auth/refresh',
-        maxAge: REFRESH_TOKEN_TTL,
+        path: '/',
+        maxAge: refreshTokenTtl,
       });
     }
 

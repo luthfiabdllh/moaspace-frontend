@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 
 const BACKEND_API_URL = process.env.BACKEND_API_URL ?? 'http://localhost:3000';
 const ACCESS_TOKEN_TTL = Number(process.env.ACCESS_TOKEN_TTL ?? 900);
-const REFRESH_TOKEN_TTL = Number(process.env.REFRESH_TOKEN_TTL ?? 604800);
+const REFRESH_TOKEN_TTL = Number(process.env.REFRESH_TOKEN_REMEMBER_TTL ?? 2592000); // 30 hari untuk SSO
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/api/auth/refresh',
+        path: '/',
         maxAge: REFRESH_TOKEN_TTL,
       });
     }
@@ -91,12 +91,13 @@ export async function GET(request: NextRequest) {
       });
 
       if (data.refreshToken) {
+        const ttl = Number(data.refreshTokenTtl ?? REFRESH_TOKEN_TTL);
         cookieStore.set('refresh_token', data.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
-          path: '/api/auth/refresh',
-          maxAge: REFRESH_TOKEN_TTL,
+          path: '/',
+          maxAge: ttl,
         });
       }
 

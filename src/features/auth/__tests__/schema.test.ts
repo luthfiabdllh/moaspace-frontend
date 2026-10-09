@@ -22,6 +22,28 @@ describe('loginSchema (Zod v4)', () => {
       });
       expect(result.success).toBe(true);
     });
+
+    it('accepts rememberMe boolean flag when true or false', () => {
+      const resultWithTrue = loginSchema.safeParse({
+        email: 'test@test.com',
+        password: '12345678',
+        rememberMe: true,
+      });
+      expect(resultWithTrue.success).toBe(true);
+      if (resultWithTrue.success) {
+        expect(resultWithTrue.data.rememberMe).toBe(true);
+      }
+
+      const resultWithFalse = loginSchema.safeParse({
+        email: 'test@test.com',
+        password: '12345678',
+        rememberMe: false,
+      });
+      expect(resultWithFalse.success).toBe(true);
+      if (resultWithFalse.success) {
+        expect(resultWithFalse.data.rememberMe).toBe(false);
+      }
+    });
   });
 
   describe('invalid inputs', () => {

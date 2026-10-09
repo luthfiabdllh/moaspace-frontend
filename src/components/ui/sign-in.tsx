@@ -53,6 +53,7 @@ export interface SignInPageProps {
   footerNotice?: React.ReactNode;
   emailProps?: React.InputHTMLAttributes<HTMLInputElement>;
   passwordProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  rememberMeProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }
 
 // --- CONSTANTS ---
@@ -151,6 +152,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   footerNotice,
   emailProps,
   passwordProps,
+  rememberMeProps,
 }: SignInPageProps) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -291,6 +293,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         type="checkbox"
                         name="rememberMe"
                         className="custom-checkbox"
+                        {...rememberMeProps}
                       />
                       <span className="text-foreground/90 text-sm">
                         Keep me signed in

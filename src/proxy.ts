@@ -43,13 +43,14 @@ export function proxy(req: NextRequest) {
 
 
   const token = req.cookies.get('access_token')?.value;
+  const refreshToken = req.cookies.get('refresh_token')?.value;
 
-  if (isProtectedRoute && !token) {
+  if (isProtectedRoute && !token && !refreshToken) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
   // If already logged in, redirect /login to /dashboard
-  if (pathname === '/login' && token) {
+  if (pathname === '/login' && (token || refreshToken)) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
