@@ -56,7 +56,7 @@ export function ManageDivisionMembersDialog({
   if (!division) return null;
 
   const currentMemberIds = new Set(
-    divisionDetail?.members.map((m) => m.id) ?? []
+    divisionDetail?.members?.map((m) => m.id) ?? []
   );
 
   // Users available to be added (active users not yet in this division)
@@ -174,7 +174,7 @@ export function ManageDivisionMembersDialog({
               <Loader2 className="size-6 animate-spin text-primary" />
               <p className="text-xs text-muted-foreground">Memuat anggota divisi...</p>
             </div>
-          ) : divisionDetail?.members.length === 0 ? (
+          ) : divisionDetail?.members?.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-center p-6 rounded-xl border border-dashed border-border/80">
               <Users className="size-8 text-muted-foreground/60 mb-2" />
               <p className="text-sm font-medium text-foreground">
@@ -186,7 +186,7 @@ export function ManageDivisionMembersDialog({
             </div>
           ) : (
             <div className="divide-y divide-border/50 rounded-xl border border-border/70 overflow-hidden">
-              {divisionDetail?.members.map((member) => {
+              {divisionDetail?.members?.map((member) => {
                 const isCoordinator = member.role === 'COORDINATOR';
                 const initials = member.name
                   .split(' ')

@@ -52,7 +52,7 @@ export function HierarchyBreakdownView({
   const isCoordinator = Boolean(
     isGlobalAdmin ||
       (divisionId &&
-        user?.divisions.some(
+        user?.divisions?.some(
           (d) => d.divisionId === divisionId && d.role === 'COORDINATOR'
         ))
   );

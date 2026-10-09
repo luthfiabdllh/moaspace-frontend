@@ -146,7 +146,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
   const isGlobalAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
   const isCoordinator = Boolean(
     isGlobalAdmin ||
-      user?.divisions.some(
+      user?.divisions?.some(
         (d) => d.divisionId === epic.ownerDivisionId && d.role === 'COORDINATOR'
       )
   );

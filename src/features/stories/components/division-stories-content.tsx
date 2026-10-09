@@ -61,7 +61,7 @@ export function DivisionStoriesContent({
   const isGlobalAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
   const isCoordinator = Boolean(
     isGlobalAdmin ||
-      user?.divisions.some(
+      user?.divisions?.some(
         (d) => d.divisionId === divisionId && d.role === 'COORDINATOR'
       )
   );

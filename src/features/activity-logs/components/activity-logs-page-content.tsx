@@ -71,7 +71,7 @@ export function ActivityLogsPageContent() {
 
   // Flatten pages of items
   const allLogs = useMemo(() => {
-    return data?.pages.flatMap((page) => page.items) ?? [];
+    return data?.pages?.flatMap((page) => page.items) ?? [];
   }, [data]);
 
   const totalCount = data?.pages[0]?.meta?.total ?? 0;

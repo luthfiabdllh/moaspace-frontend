@@ -42,7 +42,7 @@ export function CreateEpicContent({ defaultDivisionId }: CreateEpicContentProps)
 
   // User coordinator divisions
   const userCoordinatorDivisions =
-    user?.divisions.filter((d) => d.role === 'COORDINATOR') ?? [];
+    user?.divisions?.filter((d) => d.role === 'COORDINATOR') ?? [];
 
   const {
     register,

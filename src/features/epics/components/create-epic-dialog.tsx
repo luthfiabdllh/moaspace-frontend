@@ -39,7 +39,7 @@ export function CreateEpicDialog({
   const isGlobalAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
 
   // User coordinator divisions
-  const userCoordinatorDivisions = user?.divisions.filter(
+  const userCoordinatorDivisions = user?.divisions?.filter(
     (d) => d.role === 'COORDINATOR'
   ) ?? [];
 

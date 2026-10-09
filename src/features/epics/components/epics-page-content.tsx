@@ -60,7 +60,7 @@ export function EpicsPageContent() {
   const canCreateEpic = Boolean(
     user?.isSuperAdmin ||
       user?.isKormanit ||
-      user?.divisions.some((d) => d.role === 'COORDINATOR')
+      user?.divisions?.some((d) => d.role === 'COORDINATOR')
   );
 
   // Filtered epics
