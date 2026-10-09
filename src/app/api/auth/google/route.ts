@@ -18,7 +18,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const origin = request.nextUrl.origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+  // NEXT_PUBLIC_APP_URL takes priority: in the standalone Docker server
+  // (HOSTNAME=0.0.0.0), request.nextUrl.origin resolves to the server's own
+  // bind address (e.g. https://0.0.0.0:3000), not the Host header a reverse
+  // proxy forwards — so it can't be trusted as the public-facing origin.
+  const origin = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin || 'http://localhost:3001';
   const redirectUri = process.env.GOOGLE_CALLBACK_URL || `${origin}/api/auth/google/callback`;
 
   const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
