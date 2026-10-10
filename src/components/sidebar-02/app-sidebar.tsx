@@ -16,6 +16,7 @@ import {
   History,
   User,
   PlusCircle,
+  Megaphone,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -127,6 +128,14 @@ export function DashboardSidebar() {
         icon: <CheckSquare className="size-4" />,
         link: '/my-tasks',
         isActive: pathname === '/my-tasks' || pathname.startsWith('/my-tasks/'),
+        group: 'MAIN',
+      },
+      {
+        id: 'announcements',
+        title: 'Pengumuman',
+        icon: <Megaphone className="size-4" />,
+        link: '/announcements',
+        isActive: pathname === '/announcements' || pathname.startsWith('/announcements/'),
         group: 'MAIN',
       },
     ];

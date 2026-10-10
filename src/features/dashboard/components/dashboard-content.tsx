@@ -10,6 +10,7 @@ import { DivisionSummaryWidget } from './division-summary-widget';
 import { IncomingActionsWidget } from './incoming-actions-widget';
 import { OrgOverviewWidget } from './org-overview-widget';
 import { ActivityFeedWidget } from './activity-feed-widget';
+import { DashboardAnnouncementsWidget } from './dashboard-announcements-widget';
 
 export function DashboardContent() {
   const { data: user } = useCurrentUser();
@@ -32,6 +33,9 @@ export function DashboardContent() {
           {format(new Date(), 'EEEE, d MMMM yyyy', { locale: idLocale })}
         </p>
       </div>
+
+      {/* Announcements & Agenda Widget */}
+      <DashboardAnnouncementsWidget />
 
       {/* Personal Section */}
       <div className="grid gap-4 md:grid-cols-2">

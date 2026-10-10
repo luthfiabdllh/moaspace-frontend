@@ -123,6 +123,7 @@ export function AppHeader({
       'activity-logs': 'Activity Log',
       profile: 'Profil Saya',
       settings: 'Pengaturan',
+      announcements: 'Pengumuman',
       d: 'Divisi',
       capacity: 'Kapasitas Tim',
       stories: 'Stories & Backlog',
