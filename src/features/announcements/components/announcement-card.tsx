@@ -8,7 +8,6 @@ import {
   Pin,
   Pencil,
   Trash2,
-  Users,
   MapPin,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -20,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AnnouncementCategoryBadge } from './announcement-badge';
+import { AnnouncementCategoryBadge, AnnouncementTargetBadge } from './announcement-badge';
 import type { Announcement } from '../types';
 
 interface AnnouncementCardProps {
@@ -81,12 +80,12 @@ export function AnnouncementCard({
               </Badge>
             )}
 
-            <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
-              <Users className="size-3" />
-              {announcement.targetType === 'ALL'
-                ? 'Semua Tim'
-                : announcement.targetDivision?.name || 'Divisi'}
-            </Badge>
+            <AnnouncementTargetBadge
+              targetType={announcement.targetType}
+              divisionName={announcement.targetDivision?.name}
+              subunitName={announcement.targetSubunit?.name}
+              cluster={announcement.targetCluster}
+            />
           </div>
 
           {canManage && (

@@ -6,7 +6,6 @@ import {
   Clock,
   MapPin,
   Pin,
-  Users,
 } from 'lucide-react';
 import {
   Dialog,
@@ -15,7 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { AnnouncementCategoryBadge } from './announcement-badge';
+import { AnnouncementCategoryBadge, AnnouncementTargetBadge } from './announcement-badge';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import type { Announcement } from '../types';
 
@@ -58,12 +57,12 @@ export function AnnouncementDetailDialog({
               </Badge>
             )}
 
-            <Badge variant="outline" className="text-xs text-muted-foreground gap-1">
-              <Users className="size-3" />
-              {announcement.targetType === 'ALL'
-                ? 'Semua Tim KKN'
-                : `Divisi ${announcement.targetDivision?.name || 'Spesifik'}`}
-            </Badge>
+            <AnnouncementTargetBadge
+              targetType={announcement.targetType}
+              divisionName={announcement.targetDivision?.name}
+              subunitName={announcement.targetSubunit?.name}
+              cluster={announcement.targetCluster}
+            />
           </div>
 
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground leading-snug">

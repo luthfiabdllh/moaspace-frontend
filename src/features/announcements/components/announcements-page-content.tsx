@@ -21,6 +21,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import { useSubunits } from '@/features/subunits/api/use-queries';
 import {
   useAnnouncements,
   useAnnouncementPermissions,
@@ -30,17 +31,21 @@ import { AnnouncementCard } from './announcement-card';
 import { AnnouncementDetailDialog } from './announcement-detail-dialog';
 import { AnnouncementFormDialog } from './announcement-form-dialog';
 import { AnnouncementCalendarView } from './announcement-calendar-view';
-import type { Announcement, AnnouncementCategory } from '../types';
+import type { Announcement, AnnouncementCategory, AnnouncementTarget } from '../types';
 
 export function AnnouncementsPageContent() {
   const { data: user } = useCurrentUser();
   const { data: divisions = [] } = useDivisions();
+  const { data: subunits = [] } = useSubunits();
   const { data: permissions } = useAnnouncementPermissions();
 
   const [viewMode, setViewMode] = React.useState<'list' | 'calendar'>('list');
   const [search, setSearch] = React.useState('');
   const [categoryFilter, setCategoryFilter] = React.useState<string>('all');
+  const [targetTypeFilter, setTargetTypeFilter] = React.useState<string>('all');
   const [divisionFilter, setDivisionFilter] = React.useState<string>('all');
+  const [subunitFilter, setSubunitFilter] = React.useState<string>('all');
+  const [clusterFilter, setClusterFilter] = React.useState<string>('all');
 
   // Modals state
   const [formOpen, setFormOpen] = React.useState(false);
@@ -56,7 +61,10 @@ export function AnnouncementsPageContent() {
 
   const { data: announcements = [], isLoading } = useAnnouncements({
     category: categoryFilter !== 'all' ? (categoryFilter as AnnouncementCategory) : undefined,
+    targetType: targetTypeFilter !== 'all' ? (targetTypeFilter as AnnouncementTarget) : undefined,
     divisionId: divisionFilter !== 'all' ? divisionFilter : undefined,
+    subunitId: subunitFilter !== 'all' ? subunitFilter : undefined,
+    cluster: clusterFilter !== 'all' ? clusterFilter : undefined,
     search: search.trim() || undefined,
   });
 
@@ -186,20 +194,77 @@ export function AnnouncementsPageContent() {
             </SelectContent>
           </Select>
 
-          {/* Division Filter */}
-          <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-            <SelectTrigger className="w-40 text-xs h-8">
-              <SelectValue placeholder="Target Divisi" />
+          {/* Target Type Filter */}
+          <Select
+            value={targetTypeFilter}
+            onValueChange={(val) => {
+              setTargetTypeFilter(val);
+              if (val !== 'DIVISION') setDivisionFilter('all');
+              if (val !== 'SUBUNIT') setSubunitFilter('all');
+              if (val !== 'CLUSTER') setClusterFilter('all');
+            }}
+          >
+            <SelectTrigger className="w-38 text-xs h-8">
+              <SelectValue placeholder="Target Audiens" />
             </SelectTrigger>
             <SelectContent className="text-xs">
               <SelectItem value="all">Semua Target</SelectItem>
-              {divisions.map((div) => (
-                <SelectItem key={div.id} value={div.id}>
-                  Divisi {div.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="ALL">Seluruh Tim KKN</SelectItem>
+              <SelectItem value="DIVISION">Khusus Divisi</SelectItem>
+              <SelectItem value="SUBUNIT">Khusus Posko / Subunit</SelectItem>
+              <SelectItem value="CLUSTER">Khusus Klaster</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Conditional Sub-filter: Division */}
+          {targetTypeFilter === 'DIVISION' && (
+            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+              <SelectTrigger className="w-40 text-xs h-8">
+                <SelectValue placeholder="Pilih Divisi" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">Semua Divisi</SelectItem>
+                {divisions.map((div) => (
+                  <SelectItem key={div.id} value={div.id}>
+                    Divisi {div.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Conditional Sub-filter: Subunit */}
+          {targetTypeFilter === 'SUBUNIT' && (
+            <Select value={subunitFilter} onValueChange={setSubunitFilter}>
+              <SelectTrigger className="w-40 text-xs h-8">
+                <SelectValue placeholder="Pilih Posko" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">Semua Posko</SelectItem>
+                {subunits.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>
+                    Posko {sub.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          {/* Conditional Sub-filter: Cluster */}
+          {targetTypeFilter === 'CLUSTER' && (
+            <Select value={clusterFilter} onValueChange={setClusterFilter}>
+              <SelectTrigger className="w-36 text-xs h-8">
+                <SelectValue placeholder="Pilih Klaster" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">Semua Klaster</SelectItem>
+                <SelectItem value="SAINTEK">Saintek</SelectItem>
+                <SelectItem value="SOSHUM">Soshum</SelectItem>
+                <SelectItem value="MEDIKA">Medika</SelectItem>
+                <SelectItem value="AGRO">Agro</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 

@@ -22,13 +22,14 @@ import {
 } from '@/components/ui/select';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import { useSubunits } from '@/features/subunits/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useAnnouncementPermissions } from '../api/use-queries';
 import {
   useCreateAnnouncement,
   useUpdateAnnouncement,
 } from '../api/use-mutations';
-import type { Announcement, AnnouncementCategory, AnnouncementTarget } from '../types';
+import type { Announcement, AnnouncementCategory, AnnouncementTarget, AcademicCluster } from '../types';
 
 interface AnnouncementFormDialogProps {
   open: boolean;
@@ -74,6 +75,13 @@ interface AnnouncementFormBodyProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const CLUSTERS: Array<{ value: AcademicCluster; label: string }> = [
+  { value: 'SAINTEK', label: 'Sains & Teknologi (Saintek)' },
+  { value: 'SOSHUM', label: 'Sosial Humaniora (Soshum)' },
+  { value: 'MEDIKA', label: 'Kesehatan / Medika' },
+  { value: 'AGRO', label: 'Pertanian / Agro' },
+];
+
 function AnnouncementFormBody({
   announcement,
   divisions,
@@ -83,15 +91,27 @@ function AnnouncementFormBody({
 
   const { data: user } = useCurrentUser();
   const { data: permissions } = useAnnouncementPermissions();
+  const { data: subunits = [] } = useSubunits();
 
   const isGlobalManager = Boolean(
     user?.isSuperAdmin || user?.isKormanit || permissions?.isGlobalManager
   );
   const coordinatedDivisionIds = permissions?.coordinatedDivisionIds ?? [];
+  const coordinatedSubunitIds = permissions?.coordinatedSubunitIds ?? [];
+  const isClusterCoordinator = Boolean(permissions?.isClusterCoordinator);
+  const coordinatedCluster = permissions?.coordinatedCluster as AcademicCluster | null | undefined;
 
   const selectableDivisions = isGlobalManager
     ? divisions
     : divisions.filter((d) => coordinatedDivisionIds.includes(d.id));
+
+  const selectableSubunits = isGlobalManager
+    ? subunits
+    : subunits.filter((s) => coordinatedSubunitIds.includes(s.id));
+
+  const selectableClusters = isGlobalManager
+    ? CLUSTERS
+    : CLUSTERS.filter((c) => c.value === coordinatedCluster);
 
   const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
@@ -108,12 +128,30 @@ function AnnouncementFormBody({
   );
   const [targetType, setTargetType] = React.useState<AnnouncementTarget>(() => {
     if (announcement?.targetType) return announcement.targetType;
-    return isGlobalManager ? 'ALL' : 'DIVISION';
+    if (isGlobalManager) return 'ALL';
+    if (coordinatedDivisionIds.length > 0) return 'DIVISION';
+    if (coordinatedSubunitIds.length > 0) return 'SUBUNIT';
+    if (isClusterCoordinator) return 'CLUSTER';
+    return 'ALL';
   });
   const [targetDivisionId, setTargetDivisionId] = React.useState<string>(() => {
     if (announcement?.targetDivisionId) return announcement.targetDivisionId;
     if (!isGlobalManager && selectableDivisions.length > 0) {
       return selectableDivisions[0].id;
+    }
+    return '';
+  });
+  const [targetSubunitId, setTargetSubunitId] = React.useState<string>(() => {
+    if (announcement?.targetSubunitId) return announcement.targetSubunitId;
+    if (!isGlobalManager && selectableSubunits.length > 0) {
+      return selectableSubunits[0].id;
+    }
+    return '';
+  });
+  const [targetCluster, setTargetCluster] = React.useState<AcademicCluster | ''>(() => {
+    if (announcement?.targetCluster) return announcement.targetCluster;
+    if (!isGlobalManager && coordinatedCluster) {
+      return coordinatedCluster;
     }
     return '';
   });
@@ -153,6 +191,16 @@ function AnnouncementFormBody({
       return;
     }
 
+    if (targetType === 'SUBUNIT' && !targetSubunitId) {
+      setValidationError('Silakan pilih posko / subunit target penerima pengumuman.');
+      return;
+    }
+
+    if (targetType === 'CLUSTER' && !targetCluster) {
+      setValidationError('Silakan pilih klaster target penerima pengumuman.');
+      return;
+    }
+
     if (hasEventSchedule && !eventStartDate) {
       setValidationError('Waktu mulai agenda wajib ditentukan.');
       return;
@@ -171,6 +219,8 @@ function AnnouncementFormBody({
       category,
       targetType,
       targetDivisionId: targetType === 'DIVISION' ? targetDivisionId : undefined,
+      targetSubunitId: targetType === 'SUBUNIT' ? targetSubunitId : undefined,
+      targetCluster: targetType === 'CLUSTER' && targetCluster ? targetCluster : undefined,
       isPinned,
       eventStartDate: hasEventSchedule && eventStartDate ? new Date(eventStartDate).toISOString() : undefined,
       eventEndDate: hasEventSchedule && eventEndDate ? new Date(eventEndDate).toISOString() : undefined,
@@ -260,7 +310,7 @@ function AnnouncementFormBody({
             <Select
               value={targetType}
               onValueChange={(val: AnnouncementTarget) => setTargetType(val)}
-              disabled={isPending || !isGlobalManager}
+              disabled={isPending}
             >
               <SelectTrigger className="w-full text-xs">
                 <SelectValue placeholder="Pilih Target Penerima" />
@@ -269,14 +319,26 @@ function AnnouncementFormBody({
                 {isGlobalManager && (
                   <SelectItem value="ALL">Semua Tim KKN (Publik)</SelectItem>
                 )}
-                <SelectItem value="DIVISION">
-                  {isGlobalManager ? 'Divisi Tertentu' : 'Divisi Anda (Koordinator)'}
-                </SelectItem>
+                {(isGlobalManager || coordinatedDivisionIds.length > 0) && (
+                  <SelectItem value="DIVISION">
+                    {isGlobalManager ? 'Divisi Tertentu' : 'Divisi Anda (Koordinator)'}
+                  </SelectItem>
+                )}
+                {(isGlobalManager || coordinatedSubunitIds.length > 0) && (
+                  <SelectItem value="SUBUNIT">
+                    {isGlobalManager ? 'Posko / Subunit Tertentu' : 'Posko / Subunit Anda (Kormasit)'}
+                  </SelectItem>
+                )}
+                {(isGlobalManager || isClusterCoordinator) && (
+                  <SelectItem value="CLUSTER">
+                    {isGlobalManager ? 'Klaster Tertentu' : `Klaster ${coordinatedCluster || ''} (Kormater)`}
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
             {!isGlobalManager && (
               <p className="text-[11px] text-muted-foreground">
-                Sebagai Koordinator Divisi, pengumuman hanya ditujukan ke anggota divisi Anda.
+                Pilihan target pengumuman disesuaikan dengan tanggung jawab koordinasi Anda.
               </p>
             )}
           </div>
@@ -301,6 +363,58 @@ function AnnouncementFormBody({
                 {selectableDivisions.map((div) => (
                   <SelectItem key={div.id} value={div.id}>
                     {div.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Target Subunit Select (if SUBUNIT) */}
+        {targetType === 'SUBUNIT' && (
+          <div className="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/60">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <Users className="size-3.5 text-primary" />
+              Pilih Posko / Subunit Target <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={targetSubunitId}
+              onValueChange={setTargetSubunitId}
+              disabled={isPending || (!isGlobalManager && selectableSubunits.length <= 1)}
+            >
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue placeholder="Pilih Posko / Subunit" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                {selectableSubunits.map((sub) => (
+                  <SelectItem key={sub.id} value={sub.id}>
+                    {sub.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Target Cluster Select (if CLUSTER) */}
+        {targetType === 'CLUSTER' && (
+          <div className="space-y-1.5 bg-muted/20 p-3 rounded-lg border border-border/60">
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <Users className="size-3.5 text-primary" />
+              Pilih Klaster Target <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={targetCluster}
+              onValueChange={(val: AcademicCluster) => setTargetCluster(val)}
+              disabled={isPending || (!isGlobalManager && selectableClusters.length <= 1)}
+            >
+              <SelectTrigger className="w-full text-xs">
+                <SelectValue placeholder="Pilih Klaster" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                {selectableClusters.map((cls) => (
+                  <SelectItem key={cls.value} value={cls.value}>
+                    {cls.label}
                   </SelectItem>
                 ))}
               </SelectContent>

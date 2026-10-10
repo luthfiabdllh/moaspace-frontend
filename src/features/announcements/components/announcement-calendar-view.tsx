@@ -12,7 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AnnouncementCategoryBadge } from './announcement-badge';
+import { AnnouncementCategoryBadge, AnnouncementTargetBadge } from './announcement-badge';
 import type { Announcement } from '../types';
 
 interface AnnouncementCalendarViewProps {
@@ -288,8 +288,16 @@ export function AnnouncementCalendarView({
                   onClick={() => onSelectAnnouncement(announcement)}
                   className="p-3 rounded-lg border border-border/70 bg-card hover:border-primary/40 hover:shadow-xs transition-all cursor-pointer space-y-2 text-xs group"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <AnnouncementCategoryBadge category={announcement.category} />
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <AnnouncementCategoryBadge category={announcement.category} />
+                      <AnnouncementTargetBadge
+                        targetType={announcement.targetType}
+                        divisionName={announcement.targetDivision?.name}
+                        subunitName={announcement.targetSubunit?.name}
+                        cluster={announcement.targetCluster}
+                      />
+                    </div>
                     <ExternalLink className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
 

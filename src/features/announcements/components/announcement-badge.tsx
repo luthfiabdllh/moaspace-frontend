@@ -55,3 +55,60 @@ export function AnnouncementCategoryBadge({ category, className }: AnnouncementB
       );
   }
 }
+
+interface AnnouncementTargetBadgeProps {
+  targetType: 'ALL' | 'DIVISION' | 'SUBUNIT' | 'CLUSTER';
+  divisionName?: string | null;
+  subunitName?: string | null;
+  cluster?: string | null;
+  className?: string;
+}
+
+export function AnnouncementTargetBadge({
+  targetType,
+  divisionName,
+  subunitName,
+  cluster,
+  className,
+}: AnnouncementTargetBadgeProps) {
+  switch (targetType) {
+    case 'DIVISION':
+      return (
+        <Badge
+          variant="outline"
+          className={`text-xs gap-1 border-indigo-500/30 text-indigo-700 dark:text-indigo-400 bg-indigo-500/5 ${className || ''}`}
+        >
+          <Users className="size-3" />
+          Divisi {divisionName || 'Spesifik'}
+        </Badge>
+      );
+    case 'SUBUNIT':
+      return (
+        <Badge
+          variant="outline"
+          className={`text-xs gap-1 border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/5 ${className || ''}`}
+        >
+          <Users className="size-3" />
+          Posko {subunitName || 'Spesifik'}
+        </Badge>
+      );
+    case 'CLUSTER':
+      return (
+        <Badge
+          variant="outline"
+          className={`text-xs gap-1 border-violet-500/30 text-violet-700 dark:text-violet-400 bg-violet-500/5 ${className || ''}`}
+        >
+          <Users className="size-3" />
+          Klaster {cluster || 'Spesifik'}
+        </Badge>
+      );
+    case 'ALL':
+    default:
+      return (
+        <Badge variant="outline" className={`text-xs text-muted-foreground gap-1 ${className || ''}`}>
+          <Users className="size-3" />
+          Semua Tim
+        </Badge>
+      );
+  }
+}

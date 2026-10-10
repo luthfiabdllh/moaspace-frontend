@@ -1,5 +1,6 @@
 export type AnnouncementCategory = 'URGENT' | 'MEETING' | 'INFO' | 'ACTIVITY';
-export type AnnouncementTarget = 'ALL' | 'DIVISION';
+export type AnnouncementTarget = 'ALL' | 'DIVISION' | 'SUBUNIT' | 'CLUSTER';
+export type AcademicCluster = 'SAINTEK' | 'SOSHUM' | 'MEDIKA' | 'AGRO';
 
 export interface AnnouncementAuthor {
   id: string;
@@ -13,6 +14,12 @@ export interface AnnouncementTargetDivision {
   slug: string;
 }
 
+export interface AnnouncementTargetSubunit {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface Announcement {
   id: string;
   title: string;
@@ -20,6 +27,8 @@ export interface Announcement {
   category: AnnouncementCategory;
   targetType: AnnouncementTarget;
   targetDivisionId: string | null;
+  targetSubunitId: string | null;
+  targetCluster: AcademicCluster | null;
   isPinned: boolean;
   eventStartDate: string | null;
   eventEndDate: string | null;
@@ -29,6 +38,7 @@ export interface Announcement {
   updatedAt: string;
   author: AnnouncementAuthor;
   targetDivision: AnnouncementTargetDivision | null;
+  targetSubunit: AnnouncementTargetSubunit | null;
 }
 
 export interface CreateAnnouncementDTO {
@@ -37,6 +47,8 @@ export interface CreateAnnouncementDTO {
   category?: AnnouncementCategory;
   targetType?: AnnouncementTarget;
   targetDivisionId?: string;
+  targetSubunitId?: string;
+  targetCluster?: AcademicCluster;
   isPinned?: boolean;
   eventStartDate?: string;
   eventEndDate?: string;
@@ -50,6 +62,8 @@ export interface UpdateAnnouncementDTO {
   category?: AnnouncementCategory;
   targetType?: AnnouncementTarget;
   targetDivisionId?: string;
+  targetSubunitId?: string;
+  targetCluster?: AcademicCluster;
   isPinned?: boolean;
   eventStartDate?: string;
   eventEndDate?: string;
@@ -61,6 +75,8 @@ export interface QueryAnnouncementsParams {
   category?: AnnouncementCategory;
   targetType?: AnnouncementTarget;
   divisionId?: string;
+  subunitId?: string;
+  cluster?: string;
   search?: string;
 }
 
@@ -68,4 +84,7 @@ export interface AnnouncementPermissionsResponse {
   canCreate: boolean;
   isGlobalManager?: boolean;
   coordinatedDivisionIds?: string[];
+  coordinatedSubunitIds?: string[];
+  isClusterCoordinator?: boolean;
+  coordinatedCluster?: string | null;
 }
