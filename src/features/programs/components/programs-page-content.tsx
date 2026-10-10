@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 import {
   Briefcase,
@@ -29,8 +30,6 @@ import {
 import { CreateProgramDialog } from './create-program-dialog';
 import { EditProgramDialog } from './edit-program-dialog';
 import { ReviewProgramDialog } from './review-program-dialog';
-import { ProgramDetailDialog } from './program-detail-dialog';
-import { CreateEpicDialog } from '@/features/epics/components/create-epic-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -70,8 +69,6 @@ export function ProgramsPageContent() {
   const [selectedProgramForEdit, setSelectedProgramForEdit] = useState<ProgramItem | null>(null);
   const [selectedProgramForReview, setSelectedProgramForReview] = useState<ProgramItem | null>(null);
   const [reviewType, setReviewType] = useState<'CLUSTER' | 'GOVERNANCE' | null>(null);
-  const [detailProgramId, setDetailProgramId] = useState<string | null>(null);
-  const [createEpicProgramId, setCreateEpicProgramId] = useState<string | null>(null);
 
   // Filter client-side untuk tab khusus
   const filteredPrograms = programs.filter((prog) => {
@@ -301,12 +298,20 @@ export function ProgramsPageContent() {
             return (
               <div
                 key={prog.id}
-                className="group flex flex-col justify-between rounded-xl border bg-card hover:shadow-md hover:border-primary/40 transition-all duration-200 overflow-hidden"
+                className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-card hover:shadow-md hover:border-primary/50 transition-all duration-200 overflow-hidden"
               >
-                <div className="p-5 space-y-3.5">
-                  {/* Tag Badges */}
+                {/* Clickable Area ke Detail Page */}
+                <Link
+                  href={`/programs/${prog.id}`}
+                  className="absolute inset-0 z-0"
+                  aria-label={`Lihat detail ${prog.title}`}
+                />
+
+                <div className="p-5 space-y-3.5 relative z-10 pointer-events-none">
+                  {/* Top Badges & Action Menu */}
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5 pointer-events-auto">
+                      <ProgramStatusBadge status={prog.status} />
                       <ProgramScopeBadge
                         scope={prog.scope}
                         subunitName={prog.subunit?.name}
@@ -314,63 +319,67 @@ export function ProgramsPageContent() {
                       <ProgramClusterBadge cluster={prog.cluster} />
                     </div>
 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 opacity-70 group-hover:opacity-100"
-                        >
-                          <MoreVertical className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setDetailProgramId(prog.id)}>
-                          <ExternalLink className="size-4 mr-2" />
-                          Lihat Detail & Epics
-                        </DropdownMenuItem>
-                        {isPicOrAdmin && (
-                          <>
-                            <DropdownMenuItem onClick={() => setSelectedProgramForEdit(prog)}>
-                              <Edit className="size-4 mr-2" />
-                              Edit Program
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => handleDelete(prog.id, prog.title)}
-                            >
-                              <Trash2 className="size-4 mr-2" />
-                              Hapus Program
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 opacity-70 group-hover:opacity-100"
+                          >
+                            <MoreVertical className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/programs/${prog.id}`}>
+                              <ExternalLink className="size-4 mr-2" />
+                              Lihat Detail & Epics
+                            </Link>
+                          </DropdownMenuItem>
+                          {isPicOrAdmin && (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/programs/${prog.id}`}>
+                                  <Edit className="size-4 mr-2" />
+                                  Edit Program
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onClick={() => handleDelete(prog.id, prog.title)}
+                              >
+                                <Trash2 className="size-4 mr-2" />
+                                Hapus Program
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
-                  {/* Judul & Status */}
+                  {/* Judul & Deskripsi Program */}
                   <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <ProgramStatusBadge status={prog.status} />
-                    </div>
-                    <h3
-                      onClick={() => setDetailProgramId(prog.id)}
-                      className="font-bold text-base text-foreground leading-snug line-clamp-2 hover:text-primary transition-colors cursor-pointer"
-                    >
+                    <h3 className="font-bold text-base text-foreground leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                       {prog.title}
                     </h3>
-                    {prog.description && (
+                    {prog.description ? (
                       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                         {prog.description}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground/60 italic">
+                        Belum ada deskripsi singkat
                       </p>
                     )}
                   </div>
 
-                  {/* Dual Approval Badge & Action Review */}
+                  {/* Status Persetujuan Paralel */}
                   <div className="pt-2 border-t space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground font-medium">Status Approval:</span>
+                      <span className="text-muted-foreground font-medium">Approval:</span>
                       <DualApprovalStatusBadge
                         clusterStatus={prog.clusterApprovalStatus}
                         governanceStatus={prog.governanceApprovalStatus}
@@ -378,16 +387,22 @@ export function ProgramsPageContent() {
                       />
                     </div>
 
-                    {/* Tombol review jika user berwenang & belum disetujui */}
+                    {/* Tombol review jika user berwenang & masih pending */}
                     {(canReviewCluster && prog.clusterApprovalStatus === 'PENDING') ||
                     (canReviewGovernance && prog.governanceApprovalStatus === 'PENDING') ? (
-                      <div className="flex gap-2 pt-1">
+                      <div
+                        className="flex gap-2 pt-1 pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         {canReviewCluster && prog.clusterApprovalStatus === 'PENDING' && (
                           <Button
                             size="sm"
                             variant="outline"
                             className="h-7 text-[11px] gap-1 w-full border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10"
-                            onClick={() => handleOpenReview(prog, 'CLUSTER')}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenReview(prog, 'CLUSTER');
+                            }}
                           >
                             <Sparkles className="size-3" />
                             Review Kormater
@@ -398,7 +413,10 @@ export function ProgramsPageContent() {
                             size="sm"
                             variant="outline"
                             className="h-7 text-[11px] gap-1 w-full border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
-                            onClick={() => handleOpenReview(prog, 'GOVERNANCE')}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleOpenReview(prog, 'GOVERNANCE');
+                            }}
                           >
                             <ShieldCheck className="size-3" />
                             Review Tata Kelola
@@ -429,18 +447,18 @@ export function ProgramsPageContent() {
                 </div>
 
                 {/* Footer Kartu: PIC & Anggota */}
-                <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground">
+                <div className="px-5 py-3 border-t bg-muted/20 flex items-center justify-between text-xs text-muted-foreground relative z-10 pointer-events-none">
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="size-6 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px] shrink-0">
                       {prog.primaryPic?.name?.charAt(0) || 'P'}
                     </div>
                     <span className="font-medium text-foreground truncate">
-                      PIC: {prog.primaryPic?.name}
+                      PIC: {prog.primaryPic?.name || 'Belum ada PIC'}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 text-[11px] shrink-0">
-                    <Users className="size-3" />
+                  <div className="flex items-center gap-1 text-[11px] shrink-0 font-medium">
+                    <Users className="size-3 text-muted-foreground" />
                     <span>+{prog.members?.length || 0} tim</span>
                   </div>
                 </div>
@@ -473,23 +491,6 @@ export function ProgramsPageContent() {
           }
         }}
       />
-
-      <ProgramDetailDialog
-        programId={detailProgramId}
-        open={Boolean(detailProgramId)}
-        onOpenChange={(op) => !op && setDetailProgramId(null)}
-        onOpenCreateEpic={(progId) => {
-          setCreateEpicProgramId(progId);
-          setDetailProgramId(null);
-        }}
-      />
-
-      {createEpicProgramId && (
-        <CreateEpicDialog
-          open={Boolean(createEpicProgramId)}
-          onOpenChange={(op) => !op && setCreateEpicProgramId(null)}
-        />
-      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Target, Loader2, Plus, Layers, Network } from 'lucide-react';
@@ -77,6 +78,18 @@ export function CreateEpicDialog({
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
   const description = useWatch({ control, name: 'description' });
+
+  // Sinkronisasi defaultProgramId & defaultDivisionId saat dialog dibuka
+  React.useEffect(() => {
+    if (open) {
+      if (defaultProgramId) {
+        setValue('programId', defaultProgramId);
+      }
+      if (defaultDivisionId) {
+        setValue('ownerDivisionId', defaultDivisionId);
+      }
+    }
+  }, [open, defaultProgramId, defaultDivisionId, setValue]);
 
   const toggleParticipatingDivision = (divId: string) => {
     if (participatingIds.includes(divId)) {

@@ -131,6 +131,9 @@ export interface ProgramDetail extends ProgramItem {
     title: string;
     description?: string | null;
     scope: 'DIVISION' | 'CROSS';
+    prokerTag?: string | null;
+    ownerDivisionId?: string | null;
+    ownerDivisionName?: string | null;
     startDate?: string | null;
     endDate?: string | null;
     closedAt?: string | null;
