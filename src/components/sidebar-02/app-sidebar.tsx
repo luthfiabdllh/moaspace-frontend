@@ -27,7 +27,6 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { Logo } from '@/components/sidebar-02/logo';
 import type { Route } from '@/components/sidebar-02/nav-main';
 import DashboardNavigation from '@/components/sidebar-02/nav-main';
 import { TeamSwitcher, type Team } from '@/components/sidebar-02/team-switcher';

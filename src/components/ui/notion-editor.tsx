@@ -162,6 +162,7 @@ const ResizableImageComponent: React.FC<NodeViewProps> = ({
         )}
         style={{ width: displayWidth, maxWidth: '100%' }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- editor node renders arbitrary user-pasted/blob image sources with manual resize handles; next/image's static sizing doesn't fit this use case */}
         <img
           src={src}
           alt={alt || ''}

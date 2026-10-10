@@ -7,7 +7,6 @@ import {
   MapPin,
   Pin,
   Users,
-  X,
 } from 'lucide-react';
 import {
   Dialog,
@@ -127,7 +126,7 @@ export function AnnouncementDetailDialog({
           <NotionEditor
             value={htmlContent}
             readOnly={true}
-            className="border-none bg-transparent p-0 shadow-none min-h-[150px]"
+            className="border-none bg-transparent p-0 shadow-none min-h-37.5"
           />
         </div>
       </DialogContent>

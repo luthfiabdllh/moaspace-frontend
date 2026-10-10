@@ -95,17 +95,20 @@ export function AnnouncementCalendarView({
   };
 
   // Find announcements on a specific date
-  const getEventsForDate = (date: Date) => {
-    return scheduledAnnouncements.filter((a) => {
-      if (!a.eventStartDate) return false;
-      const eventDate = new Date(a.eventStartDate);
-      return isSameDay(eventDate, date);
-    });
-  };
+  const getEventsForDate = React.useCallback(
+    (date: Date) => {
+      return scheduledAnnouncements.filter((a) => {
+        if (!a.eventStartDate) return false;
+        const eventDate = new Date(a.eventStartDate);
+        return isSameDay(eventDate, date);
+      });
+    },
+    [scheduledAnnouncements]
+  );
 
   const selectedDateEvents = React.useMemo(() => {
     return getEventsForDate(selectedDate);
-  }, [selectedDate, scheduledAnnouncements]);
+  }, [selectedDate, getEventsForDate]);
 
   const monthNames = [
     'Januari',
@@ -189,7 +192,7 @@ export function AnnouncementCalendarView({
                 <div
                   key={idx}
                   onClick={() => setSelectedDate(date)}
-                  className={`min-h-[90px] sm:min-h-[105px] p-1.5 sm:p-2 transition-colors cursor-pointer flex flex-col justify-between ${
+                  className={`min-h-22.5 sm:min-h-26.25 p-1.5 sm:p-2 transition-colors cursor-pointer flex flex-col justify-between ${
                     !isCurrentMonth ? 'bg-muted/10 text-muted-foreground/40' : 'bg-card'
                   } ${isSelected ? 'ring-2 ring-primary ring-inset z-10' : 'hover:bg-muted/30'}`}
                 >
@@ -268,7 +271,7 @@ export function AnnouncementCalendarView({
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
+        <CardContent className="p-4 space-y-3 max-h-125 overflow-y-auto">
           {selectedDateEvents.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground text-xs space-y-2">
               <CalendarIcon className="size-8 mx-auto text-muted-foreground/30 stroke-1" />

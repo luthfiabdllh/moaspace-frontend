@@ -53,13 +53,13 @@ export function AnnouncementCard({
       onClick={() => onView(announcement)}
       className={`group relative border transition-all duration-200 hover:shadow-md hover:border-primary/40 cursor-pointer overflow-hidden ${
         announcement.isPinned
-          ? 'bg-amber-500/[0.02] border-amber-500/30 dark:border-amber-500/20'
+          ? 'bg-amber-500/2 border-amber-500/30 dark:border-amber-500/20'
           : 'bg-card border-border/70'
       }`}
     >
       {announcement.isPinned && (
         <div className="absolute top-0 right-0 w-12 h-12 overflow-hidden pointer-events-none">
-          <div className="absolute transform rotate-45 bg-amber-500 text-white text-[9px] font-bold py-0.5 right-[-35px] top-[14px] w-[120px] text-center shadow-xs">
+          <div className="absolute transform rotate-45 bg-amber-500 text-white text-[9px] font-bold py-0.5 -right-8.75 top-3.5 w-30 text-center shadow-xs">
             PIN
           </div>
         </div>
@@ -170,7 +170,7 @@ export function AnnouncementCard({
             {announcement.location && (
               <>
                 <span className="text-muted-foreground/40">•</span>
-                <div className="flex items-center gap-1 truncate max-w-[150px]">
+                <div className="flex items-center gap-1 truncate max-w-37.5">
                   <MapPin className="size-3 text-destructive" />
                   <span className="truncate">{announcement.location}</span>
                 </div>
