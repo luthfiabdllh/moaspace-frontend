@@ -309,8 +309,8 @@ export function ProgramsPageContent() {
 
                 <div className="p-5 space-y-3.5 relative z-10 pointer-events-none">
                   {/* Top Badges & Action Menu */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5 pointer-events-auto">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 pointer-events-auto min-w-0 flex-1">
                       <ProgramStatusBadge status={prog.status} />
                       <ProgramScopeBadge
                         scope={prog.scope}
@@ -319,7 +319,7 @@ export function ProgramsPageContent() {
                       <ProgramClusterBadge cluster={prog.cluster} />
                     </div>
 
-                    <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="pointer-events-auto shrink-0" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -378,8 +378,8 @@ export function ProgramsPageContent() {
 
                   {/* Status Persetujuan Paralel */}
                   <div className="pt-2 border-t space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground font-medium">Approval:</span>
+                    <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
+                      <span className="text-muted-foreground font-medium shrink-0">Approval:</span>
                       <DualApprovalStatusBadge
                         clusterStatus={prog.clusterApprovalStatus}
                         governanceStatus={prog.governanceApprovalStatus}
@@ -387,39 +387,39 @@ export function ProgramsPageContent() {
                       />
                     </div>
 
-                    {/* Tombol review jika user berwenang & masih pending */}
+                    {/* Tombol review jika user berwenang & masih pending (Disusun vertikal agar tidak offside) */}
                     {(canReviewCluster && prog.clusterApprovalStatus === 'PENDING') ||
                     (canReviewGovernance && prog.governanceApprovalStatus === 'PENDING') ? (
                       <div
-                        className="flex gap-2 pt-1 pointer-events-auto"
+                        className="flex flex-col gap-1.5 pt-1 pointer-events-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {canReviewCluster && prog.clusterApprovalStatus === 'PENDING' && (
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 text-[11px] gap-1 w-full border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10"
+                            className="h-7 text-[11px] gap-1.5 w-full justify-center border-indigo-500/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-500/10"
                             onClick={(e) => {
                               e.preventDefault();
                               handleOpenReview(prog, 'CLUSTER');
                             }}
                           >
-                            <Sparkles className="size-3" />
-                            Review Kormater
+                            <Sparkles className="size-3 shrink-0" />
+                            <span>Review Kormater</span>
                           </Button>
                         )}
                         {canReviewGovernance && prog.governanceApprovalStatus === 'PENDING' && (
                           <Button
                             size="sm"
                             variant="outline"
-                            className="h-7 text-[11px] gap-1 w-full border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
+                            className="h-7 text-[11px] gap-1.5 w-full justify-center border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10"
                             onClick={(e) => {
                               e.preventDefault();
                               handleOpenReview(prog, 'GOVERNANCE');
                             }}
                           >
-                            <ShieldCheck className="size-3" />
-                            Review Tata Kelola
+                            <ShieldCheck className="size-3 shrink-0" />
+                            <span>Review Tata Kelola</span>
                           </Button>
                         )}
                       </div>
