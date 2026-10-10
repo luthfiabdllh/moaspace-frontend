@@ -14,6 +14,7 @@ import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table
 import { computePosition, flip, shift, offset, type VirtualElement } from '@floating-ui/dom';
 import { toast } from 'sonner';
 import { uploadImage } from '@/features/uploads/api/upload-image';
+import { formatFileSize } from '@/features/uploads/lib/compress-image';
 import {
   Bold,
   Italic,
@@ -424,16 +425,22 @@ export function NotionEditor({
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editorRef.current) return;
     setIsUploading(true);
-    const toastId = toast.loading('Mengunggah gambar ke storage Cloudflare R2...');
+    const toastId = toast.loading('Mengompres dan mengunggah gambar ke storage Cloudflare R2...');
 
     try {
-      const { fileUrl } = await uploadImage(file);
+      const { fileUrl, compression } = await uploadImage(file);
       editorRef.current
         .chain()
         .focus()
         .setImage({ src: fileUrl, alt: file.name })
         .run();
-      toast.success('Gambar berhasil diunggah!', { id: toastId });
+
+      if (compression?.wasCompressed) {
+        const savedInfo = `hemat ${compression.savedPercentage}% • ${formatFileSize(compression.compressedSize)}`;
+        toast.success(`Gambar berhasil diunggah (${savedInfo})!`, { id: toastId });
+      } else {
+        toast.success('Gambar berhasil diunggah!', { id: toastId });
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Gagal mengunggah gambar.', { id: toastId });
     } finally {

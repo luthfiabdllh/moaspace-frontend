@@ -21,13 +21,13 @@ describe('uploadImage helper', () => {
     );
   });
 
-  it('rejects files larger than 5 MB', async () => {
+  it('rejects files larger than 10 MB', async () => {
     const largeFile = new File([new Uint8Array(MAX_IMAGE_SIZE_BYTES + 10)], 'huge.png', {
       type: 'image/png',
     });
 
     await expect(uploadImage(largeFile)).rejects.toThrow(
-      'Ukuran gambar melebihi batas maksimal 5 MB.'
+      'Ukuran gambar melebihi batas maksimal 10 MB.'
     );
   });
 
@@ -67,10 +67,11 @@ describe('uploadImage helper', () => {
       })
     );
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       fileUrl: '/api/uploads/file?key=editor%2F2026%2F10%2Ftest.png',
       key: 'editor/2026/10/test.png',
     });
+    expect(result.compression).toBeDefined();
   });
 
   it('preserves custom CDN domain in fileUrl if not on r2.dev', async () => {

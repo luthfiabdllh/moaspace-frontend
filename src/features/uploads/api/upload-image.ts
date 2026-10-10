@@ -1,8 +1,10 @@
 import { apiClient } from '@/lib/api-client';
+import { compressImage, type CompressResult } from '../lib/compress-image';
 
 export interface UploadImageResult {
   fileUrl: string;
   key: string;
+  compression?: CompressResult;
 }
 
 export const ALLOWED_IMAGE_TYPES = [
@@ -12,7 +14,7 @@ export const ALLOWED_IMAGE_TYPES = [
   'image/gif',
 ];
 
-export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function uploadImage(file: File): Promise<UploadImageResult> {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
@@ -20,29 +22,33 @@ export async function uploadImage(file: File): Promise<UploadImageResult> {
   }
 
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    throw new Error('Ukuran gambar melebihi batas maksimal 5 MB.');
+    throw new Error('Ukuran gambar melebihi batas maksimal 10 MB.');
   }
 
-  // 1. Dapatkan presigned upload URL dari backend melalui BFF
+  // 1. Kompresi gambar client-side (WebP 80%, max 1920px) untuk menghemat storage R2
+  const compression = await compressImage(file);
+  const targetFile = compression.file;
+
+  // 2. Dapatkan presigned upload URL dari backend melalui BFF
   const response = await apiClient.post<{
     uploadUrl: string;
     fileUrl: string;
     key: string;
   }>('/uploads/presigned-url', {
-    filename: file.name,
-    contentType: file.type,
-    size: file.size,
+    filename: targetFile.name,
+    contentType: targetFile.type,
+    size: targetFile.size,
   });
 
   const { uploadUrl, fileUrl, key } = response.data;
 
-  // 2. Unggah file biner langsung ke Cloudflare R2 bucket via HTTP PUT
+  // 3. Unggah file biner langsung ke Cloudflare R2 bucket via HTTP PUT
   const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
-      'Content-Type': file.type,
+      'Content-Type': targetFile.type,
     },
-    body: file,
+    body: targetFile,
   });
 
   if (!uploadResponse.ok) {
@@ -56,5 +62,5 @@ export async function uploadImage(file: File): Promise<UploadImageResult> {
       ? `/api/uploads/file?key=${encodeURIComponent(key)}`
       : fileUrl;
 
-  return { fileUrl: resolvedUrl, key };
+  return { fileUrl: resolvedUrl, key, compression };
 }
