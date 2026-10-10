@@ -23,6 +23,8 @@ export const useCreateTask = () => {
         assigneeId: dto.assigneeId || undefined,
         status: dto.status || 'BACKLOG',
         priority: dto.priority || 'MEDIUM',
+        storyPoints: dto.storyPoints ?? undefined,
+        override: dto.override ?? undefined,
         dueDate: dto.dueDate ? new Date(dto.dueDate).toISOString() : undefined,
         isBlocked: dto.isBlocked ?? false,
         blockedReason: dto.blockedReason || undefined,

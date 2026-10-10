@@ -23,6 +23,7 @@ import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { StoryPointGuidePopover } from './story-point-guide-popover';
 
 interface CreateTaskDialogProps {
   open: boolean;
@@ -79,6 +80,24 @@ export function CreateTaskDialog({
   const dueDate = useWatch({ control, name: 'dueDate' });
   const assigneeId = useWatch({ control, name: 'assigneeId' });
   const priority = useWatch({ control, name: 'priority' });
+
+  // Reset form with clean default values whenever dialog opens
+  React.useEffect(() => {
+    if (open) {
+      reset({
+        storyId,
+        title: '',
+        description: '',
+        assigneeId: '',
+        status: 'BACKLOG',
+        priority: 'MEDIUM',
+        storyPoints: 2,
+        dueDate: '',
+        isBlocked: false,
+        blockedReason: '',
+      });
+    }
+  }, [open, storyId, reset]);
 
   const executeCreate = async (payload: CreateTaskDTO) => {
     try {
@@ -168,7 +187,7 @@ export function CreateTaskDialog({
                   <Zap className="size-3.5 text-violet-500" />
                   Estimasi Story Point (SP)
                 </Label>
-                <span className="text-3xs text-muted-foreground">Skala Fibonacci KKN (Max 8 SP)</span>
+                <StoryPointGuidePopover />
               </div>
               <div className="flex items-center gap-2">
                 {STORY_POINTS_SCALE.map((sp) => {

@@ -43,6 +43,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { STORY_POINTS_SCALE, type TaskStatus, type TaskPriority, type UpdateTaskDTO } from '../types';
+import { StoryPointGuidePopover } from './story-point-guide-popover';
 
 interface TaskDetailSheetProps {
   taskId: string | null;
@@ -630,14 +631,17 @@ export function TaskDetailSheet({
                     <Zap className="size-4 text-violet-500" />
                     <span>Story Point (Estimasi Beban Kerja)</span>
                   </div>
-                  {isSpLocked ? (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                      <Lock className="size-3" />
-                      Terkunci Sejak In Progress
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-muted-foreground">Belum Dikunci</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    <StoryPointGuidePopover />
+                    {isSpLocked ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        <Lock className="size-3" />
+                        Terkunci Sejak In Progress
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-muted-foreground">Belum Dikunci</span>
+                    )}
+                  </div>
                 </div>
 
                 {!isEditingSp ? (
@@ -671,7 +675,10 @@ export function TaskDetailSheet({
                 ) : (
                   <div className="space-y-3 pt-2 border-t">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Pilih Skala Story Point:</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-medium">Pilih Skala Story Point:</Label>
+                        <StoryPointGuidePopover />
+                      </div>
                       <div className="flex items-center gap-1.5">
                         {STORY_POINTS_SCALE.map((sp) => (
                           <button
