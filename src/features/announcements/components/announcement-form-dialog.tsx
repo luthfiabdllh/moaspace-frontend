@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Loader2, Pin, Calendar, MapPin, Users, AlertCircle } from 'lucide-react';
+import { Loader2, Pin, Calendar, MapPin, Users, AlertCircle, Mail } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -118,6 +118,7 @@ function AnnouncementFormBody({
     return '';
   });
   const [isPinned, setIsPinned] = React.useState(announcement?.isPinned ?? false);
+  const [sendEmail, setSendEmail] = React.useState(!isEdit);
 
   // Agenda / schedule
   const [hasEventSchedule, setHasEventSchedule] = React.useState(
@@ -174,6 +175,7 @@ function AnnouncementFormBody({
       eventStartDate: hasEventSchedule && eventStartDate ? new Date(eventStartDate).toISOString() : undefined,
       eventEndDate: hasEventSchedule && eventEndDate ? new Date(eventEndDate).toISOString() : undefined,
       location: hasEventSchedule && location.trim() ? location.trim() : undefined,
+      sendEmail,
     };
 
     if (isEdit && announcement) {
@@ -321,6 +323,27 @@ function AnnouncementFormBody({
             id="pin-switch"
             checked={isPinned}
             onCheckedChange={setIsPinned}
+            disabled={isPending}
+          />
+        </div>
+
+        {/* Email Notification Switch */}
+        <div className="flex items-center justify-between p-3 rounded-lg border border-border/60 bg-card/60">
+          <div className="space-y-0.5">
+            <Label htmlFor="email-switch" className="text-xs font-semibold flex items-center gap-1.5 cursor-pointer">
+              <Mail className="size-3.5 text-primary" />
+              Kirim Notifikasi Email
+            </Label>
+            <p className="text-[11px] text-muted-foreground">
+              {isEdit
+                ? 'Kirim notifikasi email pembaruan ke anggota target pengumuman.'
+                : 'Kirim notifikasi email pengumuman langsung ke anggota target pengumuman.'}
+            </p>
+          </div>
+          <Switch
+            id="email-switch"
+            checked={sendEmail}
+            onCheckedChange={setSendEmail}
             disabled={isPending}
           />
         </div>

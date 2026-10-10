@@ -41,6 +41,7 @@ export interface CreateAnnouncementDTO {
   eventStartDate?: string;
   eventEndDate?: string;
   location?: string;
+  sendEmail?: boolean;
 }
 
 export interface UpdateAnnouncementDTO {
@@ -53,6 +54,7 @@ export interface UpdateAnnouncementDTO {
   eventStartDate?: string;
   eventEndDate?: string;
   location?: string;
+  sendEmail?: boolean;
 }
 
 export interface QueryAnnouncementsParams {
