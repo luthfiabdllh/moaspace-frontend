@@ -23,13 +23,13 @@ export function DashboardContent() {
   const isCoordinator = coordinatedDivisionIds.length > 0;
 
   return (
-    <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-5 sm:space-y-6 min-w-0">
       {/* Welcome Banner */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           Halo, {user?.name ?? 'Pengguna'}!
         </h1>
-        <p className="text-muted-foreground mt-1 text-sm capitalize">
+        <p className="text-muted-foreground mt-1 text-xs sm:text-sm capitalize">
           {format(new Date(), 'EEEE, d MMMM yyyy', { locale: idLocale })}
         </p>
       </div>
@@ -38,14 +38,14 @@ export function DashboardContent() {
       <DashboardAnnouncementsWidget />
 
       {/* Personal Section */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <MyTasksWidget />
         <MyCapacityWidget />
       </div>
 
       {/* Coordinator Section */}
       {isCoordinator && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
           <DivisionSummaryWidget divisionIds={coordinatedDivisionIds} />
           <IncomingActionsWidget />
         </div>
@@ -53,7 +53,7 @@ export function DashboardContent() {
 
       {/* Org Admin Section */}
       {isOrgAdmin && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <OrgOverviewWidget />
           </div>

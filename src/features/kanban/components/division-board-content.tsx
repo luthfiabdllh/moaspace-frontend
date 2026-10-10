@@ -169,15 +169,15 @@ export function DivisionBoardContent({
 
       {/* Modern Filter and Search Bar */}
       <div className="flex flex-col gap-3 p-3 rounded-xl border border-border/80 bg-card shadow-2xs">
-        <div className="flex flex-col md:flex-row gap-2.5 items-stretch md:items-center justify-between">
+        <div className="flex flex-col lg:flex-row gap-2.5 items-stretch lg:items-center justify-between">
           {/* Search Input */}
-          <div className="relative flex-1 min-w-56">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari task di papan..."
-              className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/70 focus-visible:bg-background"
+              className="pl-9 pr-8 h-9 text-xs sm:text-sm bg-background/70 focus-visible:bg-background w-full"
             />
             {searchQuery && (
               <button
@@ -192,10 +192,10 @@ export function DivisionBoardContent({
           </div>
 
           {/* Filter Controls Group */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 lg:pb-0 scrollbar-none w-full lg:w-auto shrink-0">
             {/* Epic Filter */}
             <Select value={selectedEpicId} onValueChange={setSelectedEpicId}>
-              <SelectTrigger className="h-9 min-w-36 max-w-52 text-xs bg-background">
+              <SelectTrigger className="h-9 min-w-36 max-w-48 text-xs bg-background shrink-0">
                 <SelectValue placeholder="Semua Epic" />
               </SelectTrigger>
               <SelectContent>
@@ -210,7 +210,7 @@ export function DivisionBoardContent({
 
             {/* Priority Filter */}
             <Select value={selectedPriority} onValueChange={setSelectedPriority}>
-              <SelectTrigger className="h-9 min-w-32 text-xs bg-background">
+              <SelectTrigger className="h-9 min-w-32 text-xs bg-background shrink-0">
                 <SelectValue placeholder="Semua Prioritas" />
               </SelectTrigger>
               <SelectContent>
@@ -247,7 +247,7 @@ export function DivisionBoardContent({
               value={swimlaneMode}
               onValueChange={(val) => setSwimlaneMode(val as SwimlaneMode)}
             >
-              <SelectTrigger className="h-9 min-w-36 text-xs bg-background">
+              <SelectTrigger className="h-9 min-w-36 text-xs bg-background shrink-0">
                 <SelectValue placeholder="Swimlane" />
               </SelectTrigger>
               <SelectContent>
@@ -265,7 +265,7 @@ export function DivisionBoardContent({
               size="sm"
               onClick={() => setOnlyBlocked(!onlyBlocked)}
               className={cn(
-                'h-9 gap-1.5 text-xs font-medium transition-all shadow-2xs',
+                'h-9 gap-1.5 text-xs font-medium transition-all shadow-2xs shrink-0',
                 onlyBlocked
                   ? 'bg-destructive/15 text-destructive border-destructive/40 hover:bg-destructive/25'
                   : 'text-muted-foreground hover:text-foreground bg-background'
@@ -285,11 +285,11 @@ export function DivisionBoardContent({
                 variant="ghost"
                 size="sm"
                 onClick={resetFilters}
-                className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1 px-2.5"
+                className="h-9 text-xs text-muted-foreground hover:text-foreground gap-1 px-2.5 shrink-0"
                 title="Reset semua filter"
               >
                 <RotateCcw className="size-3.5" />
-                <span className="hidden sm:inline">Reset</span>
+                <span>Reset</span>
               </Button>
             )}
 

@@ -45,7 +45,7 @@ export function KanbanColumn({
     <ReuiKanbanColumn
       value={columnValue}
       className={cn(
-        'flex flex-col flex-1 min-w-72 max-w-85 rounded-xl border border-border/80 bg-muted/30 p-3 transition-colors duration-200 select-none',
+        'flex flex-col flex-1 min-w-[84vw] sm:min-w-72 max-w-[88vw] sm:max-w-85 snap-center sm:snap-align-none shrink-0 rounded-xl border border-border/80 bg-muted/30 p-3 transition-colors duration-200 select-none',
         className
       )}
       {...props}

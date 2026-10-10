@@ -39,14 +39,14 @@ export function OrgOverviewWidget() {
       <h3 className="text-sm font-semibold text-foreground">Ringkasan Organisasi</h3>
 
       {isLoading ? (
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 animate-pulse">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4 animate-pulse">
           {[0, 1, 2, 3].map((i) => (
             <div key={i} className="h-16 rounded-xl bg-muted" />
           ))}
         </div>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
             <StatCard icon={Users} label="User Aktif" value={activeUsers} />
             <StatCard icon={Layers} label="Divisi" value={divisions.length} />
             <StatCard icon={GitPullRequest} label="Request Aktif" value={activeRequests.length} tone="warning" />

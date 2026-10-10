@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
   FolderKanban,
@@ -45,34 +45,20 @@ export function GlobalBoardContent() {
     return divisions;
   }, [divisions, userDivisions, isGlobalAdmin]);
 
-  // Selected Division Slug
-  const [selectedSlug, setSelectedSlug] = useState<string>('');
-
-  // Adjusted during render (not in an effect) whenever the URL division param
-  // or the loaded division list changes — see react-hooks/set-state-in-effect.
-  const [prevSyncKey, setPrevSyncKey] = useState({
-    queryDivSlug,
-    divisions,
-    availableDivisions,
-    selectedSlug,
-  });
-  if (
-    queryDivSlug !== prevSyncKey.queryDivSlug ||
-    divisions !== prevSyncKey.divisions ||
-    availableDivisions !== prevSyncKey.availableDivisions ||
-    selectedSlug !== prevSyncKey.selectedSlug
-  ) {
-    setPrevSyncKey({ queryDivSlug, divisions, availableDivisions, selectedSlug });
+  // Synchronously compute active division slug directly from URL or first available division
+  const activeSlug = useMemo(() => {
     if (queryDivSlug && divisions.some((d) => d.slug === queryDivSlug)) {
-      setSelectedSlug(queryDivSlug);
-    } else if (!selectedSlug && availableDivisions.length > 0) {
-      setSelectedSlug(availableDivisions[0].slug);
+      return queryDivSlug;
     }
-  }
+    if (availableDivisions.length > 0) {
+      return availableDivisions[0].slug;
+    }
+    return '';
+  }, [queryDivSlug, divisions, availableDivisions]);
 
   const activeDivision = useMemo(() => {
-    return divisions.find((d) => d.slug === selectedSlug);
-  }, [divisions, selectedSlug]);
+    return divisions.find((d) => d.slug === activeSlug);
+  }, [divisions, activeSlug]);
 
   const isUserCoord = Boolean(
     isGlobalAdmin ||
@@ -82,34 +68,28 @@ export function GlobalBoardContent() {
         ))
   );
 
-  // Active Tab state synced with URL ?tab=
-  const initialTab: BoardTab = useMemo(() => {
+  // Active Tab derived directly from URL ?tab= (defaults to KANBAN)
+  const activeTab: BoardTab = useMemo(() => {
     if (queryTab === 'HIERARCHY') return 'HIERARCHY';
     if (queryTab === 'STORIES') return 'STORIES';
     if (queryTab === 'CAPACITY') return 'CAPACITY';
     return 'KANBAN';
   }, [queryTab]);
 
-  const [activeTab, setActiveTab] = useState<BoardTab>(initialTab);
-
-  // Adjusted during render (not in an effect) when the URL tab param changes
-  // — see react-hooks/set-state-in-effect.
-  const [prevQueryTab, setPrevQueryTab] = useState(queryTab);
-  if (queryTab !== prevQueryTab) {
-    setPrevQueryTab(queryTab);
-    if (queryTab && ['KANBAN', 'HIERARCHY', 'STORIES', 'CAPACITY'].includes(queryTab)) {
-      setActiveTab(queryTab as BoardTab);
+  // Keep URL in sync whenever division or tab parameter is absent
+  useEffect(() => {
+    if (activeSlug && (!queryDivSlug || !queryTab)) {
+      const tabParam = (queryTab || 'kanban').toLowerCase();
+      router.replace(`/board?division=${activeSlug}&tab=${tabParam}`);
     }
-  }
+  }, [activeSlug, queryDivSlug, queryTab, router]);
 
   const handleSelectTab = (tab: BoardTab) => {
-    setActiveTab(tab);
     const tabParam = tab.toLowerCase();
-    router.replace(`/board?division=${selectedSlug}&tab=${tabParam}`);
+    router.replace(`/board?division=${activeSlug}&tab=${tabParam}`);
   };
 
   const handleSelectDivision = (slug: string) => {
-    setSelectedSlug(slug);
     const tabParam = activeTab.toLowerCase();
     router.replace(`/board?division=${slug}&tab=${tabParam}`);
   };
@@ -165,14 +145,14 @@ export function GlobalBoardContent() {
       </div>
 
       {/* Control Deck: Division Pills + View Tabs */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 p-2.5 rounded-xl border border-border/80 bg-card shadow-2xs">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-2.5 rounded-xl border border-border/80 bg-card shadow-2xs">
         {/* Division Selector Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 xl:pb-0 scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 lg:pb-0 scrollbar-none w-full lg:w-auto">
           <span className="text-xs font-semibold text-muted-foreground px-1 shrink-0">
             Divisi:
           </span>
           {availableDivisions.map((div) => {
-            const isSelected = div.slug === selectedSlug;
+            const isSelected = div.slug === activeSlug;
             const isDivCoord = userDivisions.some(
               (ud) => ud.divisionId === div.id && ud.role === 'COORDINATOR'
             );
@@ -203,11 +183,11 @@ export function GlobalBoardContent() {
         </div>
 
         {/* View Switcher Tabs (4 Tabs) */}
-        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0 self-start xl:self-auto overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/40 p-1 text-xs font-medium shrink-0 self-stretch lg:self-auto overflow-x-auto scrollbar-none">
           <button
             onClick={() => handleSelectTab('KANBAN')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none shrink-0',
               activeTab === 'KANBAN'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -220,7 +200,7 @@ export function GlobalBoardContent() {
           <button
             onClick={() => handleSelectTab('HIERARCHY')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none shrink-0',
               activeTab === 'HIERARCHY'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -233,7 +213,7 @@ export function GlobalBoardContent() {
           <button
             onClick={() => handleSelectTab('STORIES')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none shrink-0',
               activeTab === 'STORIES'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -246,7 +226,7 @@ export function GlobalBoardContent() {
           <button
             onClick={() => handleSelectTab('CAPACITY')}
             className={cn(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all select-none shrink-0',
               activeTab === 'CAPACITY'
                 ? 'bg-background text-foreground shadow-2xs font-semibold'
                 : 'text-muted-foreground hover:text-foreground'
@@ -259,25 +239,25 @@ export function GlobalBoardContent() {
       </div>
 
       {/* Content depending on Active Tab */}
-      {selectedSlug && (
+      {activeSlug && (
         <div className="min-w-0">
           {activeTab === 'KANBAN' && (
-            <DivisionBoardContent divisionSlug={selectedSlug} hideHeader={true} />
+            <DivisionBoardContent divisionSlug={activeSlug} hideHeader={true} />
           )}
 
           {activeTab === 'HIERARCHY' && activeDivision && (
             <HierarchyBreakdownView
               divisionId={activeDivision.id}
-              divisionSlug={selectedSlug}
+              divisionSlug={activeSlug}
             />
           )}
 
           {activeTab === 'STORIES' && (
-            <DivisionStoriesContent divisionSlug={selectedSlug} hideHeader={true} />
+            <DivisionStoriesContent divisionSlug={activeSlug} hideHeader={true} />
           )}
 
           {activeTab === 'CAPACITY' && (
-            <DivisionCapacityContent slug={selectedSlug} hideHeader={true} />
+            <DivisionCapacityContent slug={activeSlug} hideHeader={true} />
           )}
         </div>
       )}

@@ -268,7 +268,7 @@ export function KanbanBoard({
             onValueCommit={handleValueCommit}
             getItemValue={(item) => item.id}
           >
-            <ReuiKanbanBoard className="flex gap-4 overflow-x-auto pb-4 pt-1 items-start sm:grid-cols-none min-h-137.5">
+            <ReuiKanbanBoard className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 pt-1 items-start snap-x snap-mandatory scroll-smooth sm:snap-none sm:grid-cols-none min-h-137.5">
               {Object.keys(board).map((colId) => {
                 const colDef = COLUMN_DEFS.find((c) => c.id === colId);
                 if (!colDef) return null;
@@ -354,7 +354,7 @@ export function KanbanBoard({
                     onValueCommit={handleValueCommit}
                     getItemValue={(item) => item.id}
                   >
-                    <ReuiKanbanBoard className="flex gap-4 overflow-x-auto pb-2 items-start sm:grid-cols-none">
+                    <ReuiKanbanBoard className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 items-start snap-x snap-mandatory scroll-smooth sm:snap-none sm:grid-cols-none">
                       {COLUMN_DEFS.map((col) => (
                         <KanbanColumn
                           key={`${lane.id}-${col.id}`}
