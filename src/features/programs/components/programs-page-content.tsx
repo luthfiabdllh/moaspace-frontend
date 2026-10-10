@@ -103,7 +103,7 @@ export function ProgramsPageContent() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
+    <div className="flex flex-col gap-6 p-6 mx-auto w-full">
       {/* ─── Hero Header ──────────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-linear-to-r from-primary/10 via-background to-indigo-500/10 border border-primary/20 shadow-sm">
         <div className="space-y-1.5">
@@ -111,7 +111,7 @@ export function ProgramsPageContent() {
             <Briefcase className="size-4" />
             <span>Portofolio KKN • Manajemen Kerja</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
             Program Kerja (Proker)
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
