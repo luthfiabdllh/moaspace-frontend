@@ -1,10 +1,18 @@
 import * as z from 'zod';
 
+export const academicClusterEnum = z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']);
+export type AcademicCluster = z.infer<typeof academicClusterEnum>;
+
+
 export const createUserSchema = z.object({
   name: z.string().min(1, { error: 'Nama lengkap wajib diisi.' }),
   email: z.email({ error: 'Masukkan alamat email yang valid.' }),
   divisionId: z.string().min(1, { error: 'Divisi wajib dipilih.' }),
   role: z.enum(['MEMBER', 'COORDINATOR', 'KORMANIT', 'KOORDINATOR_MAHASISWA_UNIT']),
+  cluster: academicClusterEnum.optional(),
+  isClusterCoordinator: z.boolean().optional(),
+  subunitId: z.string().optional(),
+  subunitRole: z.enum(['MEMBER', 'COORDINATOR']).optional(),
 });
 
 export type CreateUserDTO = z.infer<typeof createUserSchema>;
@@ -14,6 +22,13 @@ export interface DivisionItem {
   name: string;
   slug: string;
   requestApprovalEnabled?: boolean;
+}
+
+export interface UserSubunit {
+  id: string;
+  name: string;
+  slug: string;
+  role: 'MEMBER' | 'COORDINATOR';
 }
 
 export interface UserDivision {
@@ -31,11 +46,22 @@ export interface UserListItem {
   email: string;
   isSuperAdmin: boolean;
   isKormanit?: boolean;
+  cluster?: AcademicCluster | null;
+  isClusterCoordinator?: boolean;
+  subunit?: UserSubunit | null;
   status: 'ACTIVE' | 'INACTIVE';
   isActivated: boolean;
   createdAt: string;
   divisions: UserDivision[];
 }
+
+export interface UpdateUserAcademicDTO {
+  cluster?: AcademicCluster | null;
+  isClusterCoordinator?: boolean;
+  subunitId?: string | null;
+  subunitRole?: 'MEMBER' | 'COORDINATOR';
+}
+
 
 export interface AddUserDivisionDTO {
   divisionId: string;

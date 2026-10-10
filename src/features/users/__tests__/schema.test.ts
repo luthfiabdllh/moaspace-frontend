@@ -84,4 +84,19 @@ describe('createUserSchema', () => {
     });
     expect(res.success).toBe(false);
   });
+
+  it('accepts valid academic cluster and subunit placement', () => {
+    const res = createUserSchema.safeParse({
+      name: 'Ahmad Dahlan',
+      email: 'ahmad@example.com',
+      divisionId: 'div-123',
+      role: 'MEMBER',
+      cluster: 'SAINTEK',
+      isClusterCoordinator: true,
+      subunitId: 'sub-1',
+      subunitRole: 'COORDINATOR',
+    });
+    expect(res.success).toBe(true);
+  });
 });
+

@@ -11,12 +11,14 @@ import {
   Check,
   UserX,
   UserCog,
+  MapPin,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import type { UserListItem, DivisionItem } from '../types';
 import { useUpdateUserStatus, useResendActivation } from '../api/use-mutations';
 import { ManageUserDialog } from './manage-user-dialog';
+import { ClusterBadge } from '@/features/subunits/components/cluster-badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -162,6 +164,8 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
             <thead className="border-b bg-muted/40 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-4 py-3.5">Anggota</th>
+                <th className="px-4 py-3.5">Klaster</th>
+                <th className="px-4 py-3.5">Subunit Posko</th>
                 <th className="px-4 py-3.5">Divisi & Role</th>
                 <th className="px-4 py-3.5">Status Akun</th>
                 <th className="px-4 py-3.5">Aktivasi</th>
@@ -171,13 +175,13 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="py-10 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-10 text-center text-muted-foreground">
                     Memuat data anggota...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="py-12 text-center text-muted-foreground">
                     <UserX className="mx-auto mb-2 h-8 w-8 text-muted-foreground/60" />
                     <p className="font-medium text-foreground">Tidak ada anggota yang cocok</p>
                     <p className="text-xs mt-1">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
@@ -228,6 +232,38 @@ export function UsersTable({ users, divisions, isLoading }: UsersTableProps) {
                             <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
+                      </td>
+
+                      {/* Klaster */}
+                      <td className="px-4 py-3.5">
+                        {user.cluster ? (
+                          <ClusterBadge
+                            cluster={user.cluster}
+                            isCoordinator={user.isClusterCoordinator}
+                            size="sm"
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">—</span>
+                        )}
+                      </td>
+
+                      {/* Subunit Posko */}
+                      <td className="px-4 py-3.5">
+                        {user.subunit ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="font-medium text-xs text-foreground flex items-center gap-1">
+                              <MapPin className="size-3 text-primary/70 shrink-0" />
+                              {user.subunit.name}
+                            </span>
+                            {user.subunit.role === 'COORDINATOR' && (
+                              <Badge className="w-fit text-[10px] px-1.5 py-0 bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 font-semibold">
+                                👑 Kormasit
+                              </Badge>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">Belum ditempatkan</span>
+                        )}
                       </td>
 
                       {/* Division & Role */}

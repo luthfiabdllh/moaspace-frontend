@@ -9,22 +9,28 @@ import {
   Shield,
   Trash2,
   Users,
+  Home,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import type { UserListItem, DivisionItem, ActivityLogItem } from '../types';
+import type { UserListItem, DivisionItem, ActivityLogItem, AcademicCluster } from '../types';
 import {
   useAddUserDivision,
   useMoveUserDivision,
   useRemoveUserDivision,
   useUpdateUserDivisionRole,
   useUpdateUserGlobalRole,
+  useUpdateUserAcademic,
 } from '../api/use-mutations';
+import { useSubunits } from '@/features/subunits/api/use-queries';
 import { useActivityLogs } from '../api/use-queries';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -47,7 +53,7 @@ export function ManageUserDialog({
   isOpen,
   onClose,
 }: ManageUserDialogProps) {
-  const [activeTab, setActiveTab] = useState<'manage' | 'logs'>('manage');
+  const [activeTab, setActiveTab] = useState<'manage' | 'academic' | 'logs'>('manage');
 
   // Form states for adding to division
   const [newDivisionId, setNewDivisionId] = useState('');
@@ -240,6 +246,18 @@ export function ManageUserDialog({
           >
             <Users size={15} />
             <span>Keanggotaan Divisi & Peran</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('academic')}
+            className={`pb-2.5 flex items-center gap-1.5 transition-colors border-b-2 -mb-0.5 ${
+              activeTab === 'academic'
+                ? 'border-primary text-primary font-semibold'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Home size={15} />
+            <span>Subunit & Klaster</span>
           </button>
           <button
             type="button"
@@ -501,7 +519,12 @@ export function ManageUserDialog({
           </div>
         )}
 
-        {/* TAB 2: ACTIVITY LOG (AUDIT TRAIL) */}
+        {/* TAB 2: SUBUNIT & KLASTER */}
+        {activeTab === 'academic' && (
+          <AcademicAssignmentSection user={user} key={user.id} />
+        )}
+
+        {/* TAB 3: ACTIVITY LOG (AUDIT TRAIL) */}
         {activeTab === 'logs' && (
           <div className="space-y-3 pt-1">
             <div className="flex items-center justify-between">
@@ -591,3 +614,144 @@ export function ManageUserDialog({
     </>
   );
 }
+
+function AcademicAssignmentSection({ user }: { user: UserListItem }) {
+  const { data: subunits = [] } = useSubunits();
+  const updateAcademicMutation = useUpdateUserAcademic();
+
+  const [academicCluster, setAcademicCluster] = useState<AcademicCluster | 'NONE'>(
+    user.cluster ?? 'NONE',
+  );
+  const [academicIsKormater, setAcademicIsKormater] = useState(
+    Boolean(user.isClusterCoordinator),
+  );
+  const [academicSubunitId, setAcademicSubunitId] = useState<string>(
+    user.subunit?.id ?? 'NONE',
+  );
+  const [academicSubunitRole, setAcademicSubunitRole] = useState<'MEMBER' | 'COORDINATOR'>(
+    user.subunit?.role ?? 'MEMBER',
+  );
+
+  const handleSaveAcademic = () => {
+    updateAcademicMutation.mutate({
+      userId: user.id,
+      payload: {
+        cluster: academicCluster === 'NONE' ? null : academicCluster,
+        isClusterCoordinator: academicIsKormater,
+        subunitId: academicSubunitId === 'NONE' ? null : academicSubunitId,
+        subunitRole: academicSubunitRole,
+      },
+    });
+  };
+
+  return (
+    <div className="space-y-6 pt-1">
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+        <div className="flex items-center gap-2 font-medium text-sm text-foreground">
+          <Sparkles size={16} className="text-primary" />
+          <span>Klaster Keilmuan Mahasiswa</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Klaster</Label>
+            <Select
+              value={academicCluster}
+              onValueChange={(v) => setAcademicCluster(v as AcademicCluster | 'NONE')}
+            >
+              <SelectTrigger className="w-full h-9 text-xs bg-background">
+                <SelectValue placeholder="Pilih Klaster..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Belum Ditentukan</SelectItem>
+                <SelectItem value="SAINTEK">🔵 Sains & Teknologi (Saintek)</SelectItem>
+                <SelectItem value="SOSHUM">🟢 Sosial & Humaniora (Soshum)</SelectItem>
+                <SelectItem value="MEDIKA">🔴 Medika & Kesehatan (Medika)</SelectItem>
+                <SelectItem value="AGRO">🟡 Agro & Pertanian (Agro)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between p-2.5 rounded-md border bg-background">
+            <div className="space-y-0.5">
+              <Label htmlFor="academic-kormater" className="text-xs font-medium cursor-pointer">
+                Kormater (Koordinator Klaster)
+              </Label>
+              <p className="text-[10px] text-muted-foreground">
+                Koordinator Klaster Keilmuan
+              </p>
+            </div>
+            <Switch
+              id="academic-kormater"
+              checked={academicIsKormater}
+              onCheckedChange={setAcademicIsKormater}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+        <div className="flex items-center gap-2 font-medium text-sm text-foreground">
+          <MapPin size={16} className="text-primary" />
+          <span>Penempatan Subunit Posko (Dusun)</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Subunit Posko</Label>
+            <Select
+              value={academicSubunitId}
+              onValueChange={setAcademicSubunitId}
+            >
+              <SelectTrigger className="w-full h-9 text-xs bg-background">
+                <SelectValue placeholder="Pilih Posko Dusun..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="NONE">Belum Ditempatkan (Lepas dari Subunit)</SelectItem>
+                {subunits.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name} {s.location ? `(${s.location})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {academicSubunitId !== 'NONE' && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">Peran di Subunit</Label>
+              <Select
+                value={academicSubunitRole}
+                onValueChange={(v) => setAcademicSubunitRole(v as 'MEMBER' | 'COORDINATOR')}
+              >
+                <SelectTrigger className="w-full h-9 text-xs bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MEMBER">Anggota Posko</SelectItem>
+                  <SelectItem value="COORDINATOR">👑 Kormasit (Koordinator Subunit)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          * Mahasiswa hanya dapat terdaftar di 1 subunit posko dusun KKN.
+        </p>
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <Button
+          type="button"
+          onClick={handleSaveAcademic}
+          disabled={updateAcademicMutation.isPending}
+          className="gap-2 text-xs h-9"
+        >
+          {updateAcademicMutation.isPending && (
+            <Loader2 size={14} className="animate-spin" />
+          )}
+          <span>Simpan Penugasan Klaster & Subunit</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+

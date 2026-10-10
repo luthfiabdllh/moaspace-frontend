@@ -17,6 +17,8 @@ import {
   User,
   PlusCircle,
   Megaphone,
+  Home,
+  MapPin,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -137,6 +139,14 @@ export function DashboardSidebar() {
         isActive: pathname === '/announcements' || pathname.startsWith('/announcements/'),
         group: 'MAIN',
       },
+      {
+        id: 'subunits',
+        title: 'Subunit & Posko',
+        icon: <Home className="size-4" />,
+        link: '/subunits',
+        isActive: pathname === '/subunits' || pathname.startsWith('/subunits/'),
+        group: 'MAIN',
+      },
     ];
 
     // Admin Routes
@@ -156,6 +166,14 @@ export function DashboardSidebar() {
             isActive:
               pathname === '/admin/users' ||
               pathname.startsWith('/admin/users/'),
+          },
+          {
+            title: 'Kelola Subunit',
+            link: '/admin/subunits',
+            icon: <MapPin className="size-4" />,
+            isActive:
+              pathname === '/admin/subunits' ||
+              pathname.startsWith('/admin/subunits/'),
           },
           {
             title: 'Kelola Divisi',

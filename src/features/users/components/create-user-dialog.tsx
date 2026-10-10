@@ -8,6 +8,7 @@ import { UserPlus, Loader2, Copy, Check } from 'lucide-react';
 
 import { createUserSchema, type CreateUserDTO, type DivisionItem } from '../types';
 import { useCreateUser } from '../api/use-mutations';
+import { useSubunits } from '@/features/subunits/api/use-queries';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface CreateUserDialogProps {
@@ -36,6 +38,7 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
   const [copied, setCopied] = useState(false);
 
   const createUserMutation = useCreateUser();
+  const { data: subunits = [] } = useSubunits();
 
   const {
     register,
@@ -51,11 +54,20 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
       email: '',
       divisionId: divisions[0]?.id || '',
       role: 'MEMBER',
+      cluster: undefined,
+      isClusterCoordinator: false,
+      subunitId: undefined,
+      subunitRole: 'MEMBER',
     },
   });
 
   const divisionId = useWatch({ control, name: 'divisionId' });
   const role = useWatch({ control, name: 'role' });
+  const cluster = useWatch({ control, name: 'cluster' });
+  const isClusterCoordinator = useWatch({ control, name: 'isClusterCoordinator' });
+  const subunitId = useWatch({ control, name: 'subunitId' });
+  const subunitRole = useWatch({ control, name: 'subunitRole' });
+
 
   const onSubmit = async (data: CreateUserDTO) => {
     try {
@@ -223,6 +235,100 @@ export function CreateUserDialog({ divisions }: CreateUserDialogProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Klaster Keilmuan & Kormater */}
+            <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+              <div className="text-xs font-semibold text-foreground">
+                Dimensi 2: Klaster Keilmuan Mahasiswa
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="create-cluster" className="text-xs">Klaster</Label>
+                <Select
+                  value={cluster ?? 'NONE'}
+                  onValueChange={(v) =>
+                    setValue('cluster', v === 'NONE' ? undefined : (v as CreateUserDTO['cluster']))
+                  }
+                >
+                  <SelectTrigger id="create-cluster" className="w-full h-9 text-xs">
+                    <SelectValue placeholder="Pilih Klaster Keilmuan..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Belum Ditentukan</SelectItem>
+                    <SelectItem value="SAINTEK">🔵 Sains & Teknologi (Saintek)</SelectItem>
+                    <SelectItem value="SOSHUM">🟢 Sosial & Humaniora (Soshum)</SelectItem>
+                    <SelectItem value="MEDIKA">🔴 Medika & Kesehatan (Medika)</SelectItem>
+                    <SelectItem value="AGRO">🟡 Agro & Pertanian (Agro)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <div className="space-y-0.5">
+                  <Label htmlFor="create-kormater" className="text-xs font-medium cursor-pointer">
+                    Koordinator Klaster (Kormater)
+                  </Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Tandai jika anggota ini adalah perwakilan koordinator klaster.
+                  </p>
+                </div>
+                <Switch
+                  id="create-kormater"
+                  checked={Boolean(isClusterCoordinator)}
+                  onCheckedChange={(val) => setValue('isClusterCoordinator', val)}
+                />
+              </div>
+            </div>
+
+            {/* Subunit Posko Penempatan */}
+            <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+              <div className="text-xs font-semibold text-foreground">
+                Dimensi 3: Wilayah Posko Subunit
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="create-subunit" className="text-xs">Subunit Posko</Label>
+                <Select
+                  value={subunitId ?? 'NONE'}
+                  onValueChange={(v) =>
+                    setValue('subunitId', v === 'NONE' ? undefined : v)
+                  }
+                >
+                  <SelectTrigger id="create-subunit" className="w-full h-9 text-xs">
+                    <SelectValue placeholder="Pilih Posko Dusun..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">Belum Ditempatkan</SelectItem>
+                    {subunits.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} {s.location ? `(${s.location})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {subunitId && (
+                <div className="space-y-1.5 pt-1">
+                  <Label htmlFor="create-subunit-role" className="text-xs">Peran di Subunit</Label>
+                  <Select
+                    value={subunitRole ?? 'MEMBER'}
+                    onValueChange={(v) =>
+                      setValue('subunitRole', v as 'MEMBER' | 'COORDINATOR')
+                    }
+                  >
+                    <SelectTrigger id="create-subunit-role" className="w-full h-9 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MEMBER">Anggota Subunit</SelectItem>
+                      <SelectItem value="COORDINATOR">
+                        👑 Kormasit (Koordinator Mahasiswa Subunit)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
 
             <div className="flex justify-end gap-2 pt-3">
               <Button

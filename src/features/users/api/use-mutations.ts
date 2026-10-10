@@ -12,6 +12,7 @@ import type {
   UpdateUserDivisionRoleDTO,
   MoveUserDivisionDTO,
   UpdateUserGlobalRoleDTO,
+  UpdateUserAcademicDTO,
 } from '../types';
 
 interface CreateUserResponse {
@@ -250,3 +251,36 @@ export const useUpdateUserGlobalRole = () => {
     },
   });
 };
+
+export const useUpdateUserAcademic = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      payload,
+    }: {
+      userId: string;
+      payload: UpdateUserAcademicDTO;
+    }) => {
+      const { data } = await apiClient.patch<{
+        success: boolean;
+        message: string;
+      }>(`/users/${userId}/academic`, payload);
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['subunits'] });
+      queryClient.invalidateQueries({ queryKey: ['activity-logs'] });
+      toast.success(data.message || 'Informasi klaster dan subunit diperbarui.');
+    },
+    onError: (err) => {
+      const msg = isAxiosError(err)
+        ? err.response?.data?.error?.message
+        : undefined;
+      toast.error(msg || (err instanceof Error ? err.message : undefined) || 'Gagal memperbarui klaster & subunit.');
+    },
+  });
+};
+
