@@ -48,6 +48,9 @@ import {
   Unlink,
   ExternalLink,
   X,
+  Undo2,
+  Redo2,
+  RemoveFormatting,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -1073,6 +1076,267 @@ export function NotionEditor({
           }
         }}
       />
+
+      {/* Fixed Sticky Top Toolbar for Basic Text & Block Formatting */}
+      {!readOnly && (
+        <div className="sticky top-0 z-10 flex items-center gap-1 px-2.5 py-1.5 border-b border-border/80 bg-background/95 backdrop-blur-md rounded-t-xl overflow-x-auto scrollbar-none select-none text-xs">
+          {/* History: Undo / Redo */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              disabled={!editor.can().undo()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().undo().run()}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-35 disabled:pointer-events-none transition-colors cursor-pointer"
+              title="Urungkan (Undo - Ctrl+Z)"
+            >
+              <Undo2 className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              disabled={!editor.can().redo()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().redo().run()}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground disabled:opacity-35 disabled:pointer-events-none transition-colors cursor-pointer"
+              title="Ulangi (Redo - Ctrl+Y)"
+            >
+              <Redo2 className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border/70 mx-1 shrink-0" />
+
+          {/* Block Types: Normal, H1, H2, H3 */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().setParagraph().run()}
+              className={cn(
+                'px-2 py-1 rounded-md text-xs font-medium hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('paragraph') &&
+                  !editor.isActive('bulletList') &&
+                  !editor.isActive('orderedList') &&
+                  !editor.isActive('taskList') &&
+                  !editor.isActive('blockquote') &&
+                  !editor.isActive('codeBlock') &&
+                  'bg-muted text-primary font-bold'
+              )}
+              title="Teks Normal / Paragraf"
+            >
+              Teks
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={cn(
+                'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('heading', { level: 1 }) && 'bg-muted text-primary font-bold'
+              )}
+              title="Heading 1"
+            >
+              H1
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={cn(
+                'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('heading', { level: 2 }) && 'bg-muted text-primary font-bold'
+              )}
+              title="Heading 2"
+            >
+              H2
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={cn(
+                'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('heading', { level: 3 }) && 'bg-muted text-primary font-bold'
+              )}
+              title="Heading 3"
+            >
+              H3
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border/70 mx-1 shrink-0" />
+
+          {/* Basic Text Formats: Bold, Italic, Underline, Strikethrough, Code, Link */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('bold') && 'bg-muted text-primary font-bold'
+              )}
+              title="Tebal (Bold - Ctrl+B)"
+            >
+              <Bold className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('italic') && 'bg-muted text-primary font-bold'
+              )}
+              title="Miring (Italic - Ctrl+I)"
+            >
+              <Italic className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('underline') && 'bg-muted text-primary font-bold'
+              )}
+              title="Garis Bawah (Underline - Ctrl+U)"
+            >
+              <UnderlineIcon className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('strike') && 'bg-muted text-primary font-bold'
+              )}
+              title="Coretan (Strikethrough)"
+            >
+              <Strikethrough className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('code') && 'bg-muted text-primary font-mono font-bold'
+              )}
+              title="Inline Kode"
+            >
+              <Code className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => openLinkEditor()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('link') && 'bg-muted text-primary font-bold'
+              )}
+              title="Tautan / Link (Ctrl+K)"
+            >
+              <LinkIcon className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border/70 mx-1 shrink-0" />
+
+          {/* Lists: Bullet, Numbered, Checklist */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('bulletList') && 'bg-muted text-primary font-bold'
+              )}
+              title="Daftar Poin (Bullet List)"
+            >
+              <List className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('orderedList') && 'bg-muted text-primary font-bold'
+              )}
+              title="Daftar Nomor (Numbered List)"
+            >
+              <ListOrdered className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleTaskList().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('taskList') && 'bg-muted text-primary font-bold'
+              )}
+              title="Checklist Tugas"
+            >
+              <CheckSquare className="size-3.5" />
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border/70 mx-1 shrink-0" />
+
+          {/* Block Quotes, Code Block, Image */}
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleBlockquote().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('blockquote') && 'bg-muted text-primary font-bold'
+              )}
+              title="Kutipan / Blockquote"
+            >
+              <Quote className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              className={cn(
+                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                editor.isActive('codeBlock') && 'bg-muted text-primary font-bold'
+              )}
+              title="Blok Kode"
+            >
+              <FileCode2 className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              title="Unggah Gambar"
+            >
+              <ImageIcon className="size-3.5 text-primary" />
+            </button>
+          </div>
+
+          <div className="h-4 w-px bg-border/70 mx-1 shrink-0" />
+
+          {/* Clear Formatting */}
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+            className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer ml-auto shrink-0"
+            title="Hapus Semua Format (Clear Formatting)"
+          >
+            <RemoveFormatting className="size-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Dynamic Notion Table Toolbar (Appears whenever cursor is inside any table) */}
       {isInsideTable && !readOnly && (
