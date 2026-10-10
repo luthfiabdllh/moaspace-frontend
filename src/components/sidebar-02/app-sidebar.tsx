@@ -19,6 +19,7 @@ import {
   Megaphone,
   Home,
   MapPin,
+  Briefcase,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -91,6 +92,14 @@ export function DashboardSidebar() {
         icon: <FolderKanban className="size-4" />,
         link: activeDivisionSlug ? `/board?division=${activeDivisionSlug}&tab=kanban` : '/board?tab=kanban',
         isActive: pathname === '/board',
+        group: 'MAIN',
+      },
+      {
+        id: 'programs',
+        title: 'Program Kerja',
+        icon: <Briefcase className="size-4" />,
+        link: '/programs',
+        isActive: pathname === '/programs' || pathname.startsWith('/programs/'),
         group: 'MAIN',
       },
       {

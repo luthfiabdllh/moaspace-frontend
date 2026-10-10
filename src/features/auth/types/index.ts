@@ -54,15 +54,32 @@ export const divisionMembershipSchema = z.object({
   divisionSlug: z.string(),
 });
 
+export const subunitMembershipSchema = z.object({
+  subunitId: z.string(),
+  role: z.enum(['MEMBER', 'COORDINATOR']),
+  subunitName: z.string(),
+  subunitSlug: z.string(),
+});
+
+export const academicClusterEnum = z.enum([
+  'SAINTEK',
+  'SOSHUM',
+  'MEDIKA',
+  'AGRO',
+]);
+
 export const userSchema = z.object({
   id: z.string(),
   email: z.string().email(),
   name: z.string().min(1),
   isSuperAdmin: z.boolean().default(false),
   isKormanit: z.boolean().default(false),
+  cluster: academicClusterEnum.nullable().optional(),
+  isClusterCoordinator: z.boolean().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
   role: z.string().default('user'),
   divisions: z.array(divisionMembershipSchema).default([]),
+  subunits: z.array(subunitMembershipSchema).optional(),
   hasPassword: z.boolean().optional(),
   googleLinked: z.boolean().optional(),
   createdAt: z.string().datetime().optional(),

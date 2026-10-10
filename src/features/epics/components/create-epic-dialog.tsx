@@ -6,6 +6,7 @@ import { Target, Loader2, Plus, Layers, Network } from 'lucide-react';
 import { createEpicSchema, type CreateEpicDTO } from '../types';
 import { useCreateEpic } from '../api/use-mutations';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import { usePrograms } from '@/features/programs/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import {
   Dialog,
@@ -26,16 +27,19 @@ interface CreateEpicDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDivisionId?: string;
+  defaultProgramId?: string;
 }
 
 export function CreateEpicDialog({
   open,
   onOpenChange,
   defaultDivisionId,
+  defaultProgramId,
 }: CreateEpicDialogProps) {
   const createMutation = useCreateEpic();
   const { data: user } = useCurrentUser();
   const { data: divisions = [] } = useDivisions();
+  const { data: programs = [] } = usePrograms();
 
   const isGlobalAdmin = Boolean(user?.isSuperAdmin || user?.isKormanit);
 
@@ -57,6 +61,7 @@ export function CreateEpicDialog({
       title: '',
       description: '',
       prokerTag: '',
+      programId: defaultProgramId || '',
       startDate: '',
       endDate: '',
       scope: 'DIVISION',
@@ -67,6 +72,7 @@ export function CreateEpicDialog({
 
   const scope = useWatch({ control, name: 'scope' });
   const ownerDivisionId = useWatch({ control, name: 'ownerDivisionId' });
+  const selectedProgramId = useWatch({ control, name: 'programId' });
   const participatingIds = useWatch({ control, name: 'participatingDivisionIds' }) || [];
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
@@ -237,14 +243,36 @@ export function CreateEpicDialog({
             </div>
           </div>
 
-          {/* Proker Tag & Description */}
-          <div className="space-y-2">
-            <Label htmlFor="proker-tag">Tag Proker (Opsional)</Label>
-            <Input
-              id="proker-tag"
-              placeholder="Contoh: PROKER-01 atau SOSMED-BRANDING"
-              {...register('prokerTag')}
-            />
+          {/* Program Kerja Induk & Proker Tag */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="parent-program">Program Kerja Induk (Proker)</Label>
+              <Select
+                value={selectedProgramId || 'NONE'}
+                onValueChange={(val) => setValue('programId', val === 'NONE' ? undefined : val)}
+              >
+                <SelectTrigger id="parent-program" className="text-xs">
+                  <SelectValue placeholder="-- Tanpa Program Induk --" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="NONE">-- Tanpa Program Induk --</SelectItem>
+                  {programs.map((p) => (
+                    <SelectItem key={p.id} value={p.id} className="text-xs">
+                      {p.title} {p.subunit ? `(${p.subunit.name})` : '(Unit)'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="proker-tag">Tag Proker / Singkatan</Label>
+              <Input
+                id="proker-tag"
+                placeholder="Contoh: PROKER-01"
+                {...register('prokerTag')}
+              />
+            </div>
           </div>
 
           <div className="space-y-1.5">
