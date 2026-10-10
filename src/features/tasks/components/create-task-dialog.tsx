@@ -45,7 +45,7 @@ export function CreateTaskDialog({
   // Fetch division members & capacity utilization
   const { data: division } = useDivision(divisionId || '', Boolean(divisionId));
   const { data: memberCapacities = [] } = useDivisionCapacities(divisionId, undefined);
-  const members = division?.members ?? [];
+  const members = (division?.members ?? []).filter((m) => m.status === 'ACTIVE');
 
   // Overcapacity modal state
   const [overcapacityData, setOvercapacityData] = React.useState<OvercapacityWarningData | null>(null);

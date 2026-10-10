@@ -79,7 +79,7 @@ export function TaskDetailSheet({
 
   const { data: division } = useDivision(task?.divisionId || '', Boolean(task?.divisionId));
   const { data: memberCapacities = [] } = useDivisionCapacities(task?.divisionId, undefined);
-  const members = division?.members ?? [];
+  const members = (division?.members ?? []).filter((m) => m.status === 'ACTIVE');
 
   const [isEditingBlocker, setIsEditingBlocker] = React.useState(false);
   const [blockerReasonInput, setBlockerReasonInput] = React.useState('');
@@ -754,6 +754,11 @@ export function TaskDetailSheet({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="NONE">-- Belum Ditugaskan --</SelectItem>
+                        {task.assigneeId && !members.some((m) => m.id === task.assigneeId) && (
+                          <SelectItem value={task.assigneeId} disabled className="text-muted-foreground italic">
+                            {task.assigneeName || 'Pengguna Nonaktif'} (Nonaktif)
+                          </SelectItem>
+                        )}
                         {members.map((m) => {
                           const cap = memberCapacities.find((c) => c.userId === m.id);
                           const utilText = cap ? ` [${cap.utilizationPercentage}%]` : '';
