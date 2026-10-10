@@ -175,18 +175,24 @@ function EditProgramForm({
         <div className="space-y-1.5">
           <Label>PIC Utama</Label>
           <Select
-            value={selectedPicId || ''}
+            value={selectedPicId || undefined}
             onValueChange={(val) => setValue('primaryPicId', val)}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {activeUsers.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.name}
-                </SelectItem>
-              ))}
+              {activeUsers.map((u) => {
+                const metaParts: string[] = [];
+                if (u.cluster) metaParts.push(u.cluster);
+                if (u.subunit?.name) metaParts.push(u.subunit.name);
+                const metaText = metaParts.length > 0 ? ` (${metaParts.join(' • ')})` : '';
+                return (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}{metaText}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

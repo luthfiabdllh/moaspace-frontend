@@ -76,6 +76,19 @@ export function CreateProgramDialog({
   const startDate = useWatch({ control, name: 'startDate' });
   const endDate = useWatch({ control, name: 'endDate' });
 
+  // Auto-fill PIC dengan user yang sedang login saat dialog dibuka
+  React.useEffect(() => {
+    if (open) {
+      if (user?.id && !selectedPicId) {
+        setValue('primaryPicId', user.id);
+      }
+      if (defaultSubunitId) {
+        setValue('subunitId', defaultSubunitId);
+        setValue('scope', 'SUBUNIT');
+      }
+    }
+  }, [open, user?.id, selectedPicId, defaultSubunitId, setValue]);
+
   const onSubmit = async (values: CreateProgramDTO) => {
     try {
       const payload: CreateProgramDTO = {
@@ -83,7 +96,16 @@ export function CreateProgramDialog({
         subunitId: values.scope === 'SUBUNIT' ? values.subunitId : undefined,
       };
       await createMutation.mutateAsync(payload);
-      reset();
+      reset({
+        title: '',
+        description: '',
+        scope: defaultSubunitId ? 'SUBUNIT' : 'SUBUNIT',
+        subunitId: defaultSubunitId || '',
+        cluster: 'UNIT_SHARED',
+        primaryPicId: user?.id || '',
+        startDate: '',
+        endDate: '',
+      });
       onOpenChange(false);
     } catch {
       // error handled in mutation
@@ -203,18 +225,24 @@ export function CreateProgramDialog({
                 PIC Utama <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={selectedPicId || ''}
+                value={selectedPicId || undefined}
                 onValueChange={(val) => setValue('primaryPicId', val)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih penanggung jawab" />
                 </SelectTrigger>
                 <SelectContent>
-                  {activeUsers.map((u) => (
-                    <SelectItem key={u.id} value={u.id}>
-                      {u.name} {u.cluster ? `(${u.cluster})` : ''}
-                    </SelectItem>
-                  ))}
+                  {activeUsers.map((u) => {
+                    const metaParts: string[] = [];
+                    if (u.cluster) metaParts.push(u.cluster);
+                    if (u.subunit?.name) metaParts.push(u.subunit.name);
+                    const metaText = metaParts.length > 0 ? ` (${metaParts.join(' • ')})` : '';
+                    return (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.name}{metaText}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
               {errors.primaryPicId && (
