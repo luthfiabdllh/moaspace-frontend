@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/select';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import { useCurrentUser } from '@/features/auth/api/use-queries';
+import { useAnnouncementPermissions } from '../api/use-queries';
 import {
   useCreateAnnouncement,
   useUpdateAnnouncement,
@@ -79,6 +81,18 @@ function AnnouncementFormBody({
 }: AnnouncementFormBodyProps) {
   const isEdit = Boolean(announcement);
 
+  const { data: user } = useCurrentUser();
+  const { data: permissions } = useAnnouncementPermissions();
+
+  const isGlobalManager = Boolean(
+    user?.isSuperAdmin || user?.isKormanit || permissions?.isGlobalManager
+  );
+  const coordinatedDivisionIds = permissions?.coordinatedDivisionIds ?? [];
+
+  const selectableDivisions = isGlobalManager
+    ? divisions
+    : divisions.filter((d) => coordinatedDivisionIds.includes(d.id));
+
   const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
 
@@ -92,12 +106,17 @@ function AnnouncementFormBody({
   const [category, setCategory] = React.useState<AnnouncementCategory>(
     announcement?.category ?? 'INFO'
   );
-  const [targetType, setTargetType] = React.useState<AnnouncementTarget>(
-    announcement?.targetType ?? 'ALL'
-  );
-  const [targetDivisionId, setTargetDivisionId] = React.useState<string>(
-    announcement?.targetDivisionId || ''
-  );
+  const [targetType, setTargetType] = React.useState<AnnouncementTarget>(() => {
+    if (announcement?.targetType) return announcement.targetType;
+    return isGlobalManager ? 'ALL' : 'DIVISION';
+  });
+  const [targetDivisionId, setTargetDivisionId] = React.useState<string>(() => {
+    if (announcement?.targetDivisionId) return announcement.targetDivisionId;
+    if (!isGlobalManager && selectableDivisions.length > 0) {
+      return selectableDivisions[0].id;
+    }
+    return '';
+  });
   const [isPinned, setIsPinned] = React.useState(announcement?.isPinned ?? false);
 
   // Agenda / schedule
@@ -239,16 +258,25 @@ function AnnouncementFormBody({
             <Select
               value={targetType}
               onValueChange={(val: AnnouncementTarget) => setTargetType(val)}
-              disabled={isPending}
+              disabled={isPending || !isGlobalManager}
             >
               <SelectTrigger className="w-full text-xs">
                 <SelectValue placeholder="Pilih Target Penerima" />
               </SelectTrigger>
               <SelectContent className="text-xs">
-                <SelectItem value="ALL">Semua Tim KKN (Publik)</SelectItem>
-                <SelectItem value="DIVISION">Divisi Tertentu</SelectItem>
+                {isGlobalManager && (
+                  <SelectItem value="ALL">Semua Tim KKN (Publik)</SelectItem>
+                )}
+                <SelectItem value="DIVISION">
+                  {isGlobalManager ? 'Divisi Tertentu' : 'Divisi Anda (Koordinator)'}
+                </SelectItem>
               </SelectContent>
             </Select>
+            {!isGlobalManager && (
+              <p className="text-[11px] text-muted-foreground">
+                Sebagai Koordinator Divisi, pengumuman hanya ditujukan ke anggota divisi Anda.
+              </p>
+            )}
           </div>
         </div>
 
@@ -262,13 +290,13 @@ function AnnouncementFormBody({
             <Select
               value={targetDivisionId}
               onValueChange={setTargetDivisionId}
-              disabled={isPending}
+              disabled={isPending || (!isGlobalManager && selectableDivisions.length <= 1)}
             >
               <SelectTrigger className="w-full text-xs">
                 <SelectValue placeholder="Pilih Divisi" />
               </SelectTrigger>
               <SelectContent className="text-xs">
-                {divisions.map((div) => (
+                {selectableDivisions.map((div) => (
                   <SelectItem key={div.id} value={div.id}>
                     {div.name}
                   </SelectItem>

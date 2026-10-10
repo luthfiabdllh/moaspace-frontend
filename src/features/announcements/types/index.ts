@@ -64,4 +64,6 @@ export interface QueryAnnouncementsParams {
 
 export interface AnnouncementPermissionsResponse {
   canCreate: boolean;
+  isGlobalManager?: boolean;
+  coordinatedDivisionIds?: string[];
 }
