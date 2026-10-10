@@ -10,6 +10,7 @@ import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { computePosition, flip, shift, offset, type VirtualElement } from '@floating-ui/dom';
 import { toast } from 'sonner';
@@ -43,6 +44,10 @@ import {
   AlignCenter,
   AlignRight,
   Loader2,
+  Link as LinkIcon,
+  Unlink,
+  ExternalLink,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -318,6 +323,15 @@ const COMMAND_ITEMS: SlashCommandItem[] = [
         .run(),
   },
   {
+    id: 'link',
+    title: 'Tautan / Link Web',
+    description: 'Sisipkan atau edit tautan hyperlink web (Ctrl+K)',
+    icon: LinkIcon,
+    shortcut: 'Ctrl+K',
+    keywords: ['link', 'tautan', 'url', 'hyperlink', 'web', 'situs'],
+    action: () => {},
+  },
+  {
     id: 'image',
     title: 'Gambar / Foto',
     description: 'Unggah gambar (JPG, PNG, WebP, GIF maks 5 MB)',
@@ -421,6 +435,105 @@ export function NotionEditor({
   const [slashQuery, setSlashQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  // Editor ref
+  const editorRef = useRef<Editor | null>(null);
+
+  // Link state & helpers
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const isEditingLinkRef = useRef(false);
+  useEffect(() => {
+    isEditingLinkRef.current = isEditingLink;
+  }, [isEditingLink]);
+
+  const openLinkEditor = useCallback(() => {
+    if (!editorRef.current) return;
+    const currentEditor = editorRef.current;
+    const currentHref = currentEditor.getAttributes('link').href || '';
+    setLinkUrl(currentHref);
+    setIsEditingLink(true);
+
+    const { state, view } = currentEditor;
+    const { from, to, empty } = state.selection;
+    try {
+      const startCoords = view.coordsAtPos(from);
+      const endCoords = view.coordsAtPos(empty ? from : to);
+      const virtualEl = {
+        getBoundingClientRect: () => ({
+          width: Math.max(1, Math.abs(endCoords.right - startCoords.left)),
+          height: Math.max(1, Math.abs(endCoords.bottom - startCoords.top)),
+          top: Math.min(startCoords.top, endCoords.top),
+          bottom: Math.max(startCoords.bottom, endCoords.bottom),
+          left: Math.min(startCoords.left, endCoords.left),
+          right: Math.max(startCoords.right, endCoords.right),
+          x: Math.min(startCoords.left, endCoords.left),
+          y: Math.min(startCoords.top, endCoords.top),
+          toJSON: () => {},
+        }),
+      };
+      if (bubbleRef.current) {
+        computePosition(virtualEl as VirtualElement, bubbleRef.current, {
+          placement: 'top',
+          middleware: [offset(8), flip(), shift({ padding: 12 })],
+        }).then(({ x, y }) => {
+          setBubblePos({ x, y });
+        });
+      } else {
+        setBubblePos({ x: startCoords.left, y: Math.max(10, startCoords.top - 46) });
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleApplyLink = useCallback((rawUrl: string) => {
+    if (!editorRef.current) return;
+    const currentEditor = editorRef.current;
+    const trimmed = rawUrl.trim();
+
+    if (!trimmed) {
+      currentEditor.chain().focus().extendMarkRange('link').unsetLink().run();
+    } else {
+      let validUrl = trimmed;
+      if (
+        !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(validUrl) &&
+        !validUrl.startsWith('#') &&
+        !validUrl.startsWith('/')
+      ) {
+        validUrl = `https://${validUrl}`;
+      }
+
+      if (currentEditor.state.selection.empty && !currentEditor.isActive('link')) {
+        currentEditor
+          .chain()
+          .focus()
+          .insertContent({
+            type: 'text',
+            text: trimmed,
+            marks: [{ type: 'link', attrs: { href: validUrl } }],
+          })
+          .run();
+      } else {
+        currentEditor
+          .chain()
+          .focus()
+          .extendMarkRange('link')
+          .setLink({ href: validUrl })
+          .run();
+      }
+    }
+
+    setIsEditingLink(false);
+    setLinkUrl('');
+  }, []);
+
+  const handleUnsetLink = useCallback(() => {
+    if (!editorRef.current) return;
+    editorRef.current.chain().focus().extendMarkRange('link').unsetLink().run();
+    setIsEditingLink(false);
+    setLinkUrl('');
+  }, []);
+
 
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editorRef.current) return;
@@ -497,8 +610,14 @@ export function NotionEditor({
         return;
       }
 
+      if (item.id === 'link') {
+        openLinkEditor();
+        return;
+      }
+
       item.action(editor);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
@@ -511,16 +630,27 @@ export function NotionEditor({
     };
   }, [slashOpen, filteredCommands, selectedIndex, executeCommand]);
 
-  const editorRef = useRef<Editor | null>(null);
-
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
         dropcursor: false,
+        link: false,
+        underline: false,
       }),
       Underline,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        defaultProtocol: 'https',
+        protocols: ['http', 'https', 'mailto', 'tel'],
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          class: 'text-primary underline underline-offset-2 hover:opacity-80 transition-opacity cursor-pointer font-medium',
+        },
+      }),
       CustomImage.configure({
         allowBase64: false,
       }),
@@ -586,6 +716,12 @@ export function NotionEditor({
         return false;
       },
       handleKeyDown: (_view, event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault();
+          openLinkEditor();
+          return true;
+        }
+
         const { slashOpen: isOpen, filteredCommands: commands, selectedIndex: idx, executeCommand: exec } =
           slashStateRef.current;
 
@@ -635,7 +771,6 @@ export function NotionEditor({
   // which has no safe alternative for this exact pattern short of
   // restructuring the editor's entire callback wiring.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability -- see comment above
     editorRef.current = editor;
   }, [editor]);
 
@@ -753,11 +888,16 @@ export function NotionEditor({
 
     setSlashOpen(false);
 
-    // ─── 2. Floating Bubble Menu Check (Selection Highlighted) ───
-    if (!empty) {
+    // ─── 2. Floating Bubble Menu Check (Selection Highlighted or Cursor on Link) ───
+    if (isEditingLinkRef.current) {
+      return;
+    }
+
+    const isLinkActive = editor.isActive('link');
+    if (!empty || isLinkActive) {
       try {
         const startCoords = view.coordsAtPos(from);
-        const endCoords = view.coordsAtPos(to);
+        const endCoords = view.coordsAtPos(empty ? from : to);
 
         const virtualEl = {
           getBoundingClientRect: () => ({
@@ -788,6 +928,7 @@ export function NotionEditor({
       }
     } else {
       setBubblePos(null);
+      setIsEditingLink(false);
     }
   }, [editor, readOnly]);
 
@@ -1063,149 +1204,281 @@ export function NotionEditor({
             }}
             className="flex items-center gap-0.5 rounded-lg border border-border/80 bg-popover/95 p-1 text-popover-foreground shadow-xl backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 select-none"
           >
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBold().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('bold') && 'bg-muted text-primary font-bold'
-              )}
-              title="Tebal (Ctrl+B)"
-            >
-              <Bold className="size-3.5" />
-            </button>
+            {isEditingLink ? (
+              <div className="flex items-center gap-1.5 p-0.5">
+                <LinkIcon className="size-3.5 text-primary ml-1 shrink-0" />
+                <input
+                  type="url"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleApplyLink(linkUrl);
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setIsEditingLink(false);
+                    }
+                  }}
+                  placeholder="Ketik atau tempel URL (misal: https://...)"
+                  className="h-7 w-52 sm:w-64 rounded-md border border-input bg-background px-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleApplyLink(linkUrl)}
+                  className="h-7 px-2.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-medium transition-colors cursor-pointer"
+                  title="Terapkan tautan (Enter)"
+                >
+                  Terapkan
+                </button>
+                {editor.isActive('link') && (
+                  <>
+                    {editor.getAttributes('link').href && (
+                      <a
+                        href={editor.getAttributes('link').href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        title="Buka tautan di tab baru"
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={handleUnsetLink}
+                      className="p-1.5 rounded-md hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                      title="Hapus tautan"
+                    >
+                      <Unlink className="size-3.5" />
+                    </button>
+                  </>
+                )}
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => setIsEditingLink(false)}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Tutup (Esc)"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </div>
+            ) : editor.state.selection.empty && editor.isActive('link') ? (
+              <div className="flex items-center gap-1.5 px-2 py-1 text-xs">
+                <LinkIcon className="size-3.5 text-primary shrink-0" />
+                <a
+                  href={editor.getAttributes('link').href || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary underline underline-offset-2 hover:opacity-80 max-w-44 truncate"
+                  title={editor.getAttributes('link').href}
+                >
+                  {editor.getAttributes('link').href}
+                </a>
+                <a
+                  href={editor.getAttributes('link').href || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  title="Buka tautan di tab baru"
+                >
+                  <ExternalLink className="size-3.5" />
+                </a>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => openLinkEditor()}
+                  className="px-1.5 py-0.5 rounded text-3xs font-medium border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Ubah URL tautan"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={handleUnsetLink}
+                  className="p-1 rounded hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                  title="Hapus tautan"
+                >
+                  <Unlink className="size-3.5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleBold().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('bold') && 'bg-muted text-primary font-bold'
+                  )}
+                  title="Tebal (Ctrl+B)"
+                >
+                  <Bold className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('italic') && 'bg-muted text-primary'
-              )}
-              title="Miring (Ctrl+I)"
-            >
-              <Italic className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleItalic().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('italic') && 'bg-muted text-primary'
+                  )}
+                  title="Miring (Ctrl+I)"
+                >
+                  <Italic className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('underline') && 'bg-muted text-primary'
-              )}
-              title="Garis Bawah (Ctrl+U)"
-            >
-              <UnderlineIcon className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleUnderline().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('underline') && 'bg-muted text-primary'
+                  )}
+                  title="Garis Bawah (Ctrl+U)"
+                >
+                  <UnderlineIcon className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('strike') && 'bg-muted text-primary'
-              )}
-              title="Coretan"
-            >
-              <Strikethrough className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleStrike().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('strike') && 'bg-muted text-primary'
+                  )}
+                  title="Coretan"
+                >
+                  <Strikethrough className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleCode().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('code') && 'bg-muted text-primary font-mono'
-              )}
-              title="Inline Kode"
-            >
-              <Code className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleCode().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('code') && 'bg-muted text-primary font-mono'
+                  )}
+                  title="Inline Kode"
+                >
+                  <Code className="size-3.5" />
+                </button>
 
-            <div className="h-4 w-px bg-border mx-1" />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => openLinkEditor()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('link') && 'bg-muted text-primary font-bold'
+                  )}
+                  title="Sisipkan/Ubah Tautan (Ctrl+K)"
+                >
+                  <LinkIcon className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-              className={cn(
-                'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('heading', { level: 2 }) && 'bg-muted text-primary'
-              )}
-              title="Heading 2"
-            >
-              H2
-            </button>
+                {editor.isActive('link') && (
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={handleUnsetLink}
+                    className="p-1.5 rounded-md hover:bg-destructive/10 text-destructive transition-colors cursor-pointer"
+                    title="Hapus Tautan"
+                  >
+                    <Unlink className="size-3.5" />
+                  </button>
+                )}
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-              className={cn(
-                'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('heading', { level: 3 }) && 'bg-muted text-primary'
-              )}
-              title="Heading 3"
-            >
-              H3
-            </button>
+                <div className="h-4 w-px bg-border mx-1" />
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBulletList().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('bulletList') && 'bg-muted text-primary'
-              )}
-              title="Daftar Poin"
-            >
-              <List className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                  className={cn(
+                    'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('heading', { level: 2 }) && 'bg-muted text-primary'
+                  )}
+                  title="Heading 2"
+                >
+                  H2
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleTaskList().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('taskList') && 'bg-muted text-primary'
-              )}
-              title="Checklist Tugas"
-            >
-              <CheckSquare className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                  className={cn(
+                    'px-1.5 py-1 rounded-md text-xs font-semibold hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('heading', { level: 3 }) && 'bg-muted text-primary'
+                  )}
+                  title="Heading 3"
+                >
+                  H3
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => editor.chain().focus().toggleBlockquote().run()}
-              className={cn(
-                'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
-                editor.isActive('blockquote') && 'bg-muted text-primary'
-              )}
-              title="Kutipan"
-            >
-              <Quote className="size-3.5" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleBulletList().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('bulletList') && 'bg-muted text-primary'
+                  )}
+                  title="Daftar Poin"
+                >
+                  <List className="size-3.5" />
+                </button>
 
-            <div className="h-4 w-px bg-border mx-0.5" />
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleTaskList().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('taskList') && 'bg-muted text-primary'
+                  )}
+                  title="Checklist Tugas"
+                >
+                  <CheckSquare className="size-3.5" />
+                </button>
 
-            <button
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-              title="Sisipkan Gambar dari Komputer"
-            >
-              <ImageIcon className="size-3.5 text-primary" />
-            </button>
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                  className={cn(
+                    'p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer',
+                    editor.isActive('blockquote') && 'bg-muted text-primary'
+                  )}
+                  title="Kutipan"
+                >
+                  <Quote className="size-3.5" />
+                </button>
+
+                <div className="h-4 w-px bg-border mx-0.5" />
+
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Sisipkan Gambar dari Komputer"
+                >
+                  <ImageIcon className="size-3.5 text-primary" />
+                </button>
+              </>
+            )}
           </div>,
           document.body
         )}

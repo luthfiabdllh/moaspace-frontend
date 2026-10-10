@@ -411,6 +411,21 @@
   text-decoration: line-through !important;
 }
 
+.ProseMirror a,
+.prose-notion a {
+  color: var(--primary) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  font-weight: 500 !important;
+  transition: opacity 0.15s ease !important;
+  cursor: pointer !important;
+}
+
+.ProseMirror a:hover,
+.prose-notion a:hover {
+  opacity: 0.8 !important;
+}
+
 /* Bullet & Ordered Lists */
 .ProseMirror ul:not([data-type="taskList"]),
 .prose-notion ul:not([data-type="taskList"]) {
