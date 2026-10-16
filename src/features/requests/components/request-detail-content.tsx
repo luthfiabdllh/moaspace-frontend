@@ -39,6 +39,9 @@ import {
   Kanban,
   Target,
   XCircle,
+  Building2,
+  Home,
+  GraduationCap,
 } from "lucide-react";
 
 interface RequestDetailContentProps {
@@ -140,6 +143,25 @@ export function RequestDetailContent({ requestId }: RequestDetailContentProps) {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             {/* Division Route & Template */}
             <div className="flex items-center gap-2 flex-wrap text-xs">
+              {request.originType === 'SUBUNIT' && (
+                <span className="inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                  <Home className="size-3" />
+                  <span>Subunit Posko</span>
+                </span>
+              )}
+              {request.originType === 'CLUSTER' && (
+                <span className="inline-flex items-center gap-1 text-2xs font-medium px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800">
+                  <GraduationCap className="size-3" />
+                  <span>Klaster {request.fromCluster || ''}</span>
+                </span>
+              )}
+              {(!request.originType || request.originType === 'DIVISION') && (
+                <span className="inline-flex items-center gap-1 text-2xs font-normal px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border/70">
+                  <Building2 className="size-3" />
+                  <span>Divisi</span>
+                </span>
+              )}
+
               <span className="font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md border border-border/60 shadow-2xs">
                 {request.fromDivisionName}
               </span>

@@ -8,6 +8,9 @@ export function useRequests(filters: {
   divisionId?: string;
   status?: string;
   search?: string;
+  originType?: string;
+  subunitId?: string;
+  cluster?: string;
 }) {
   return useQuery({
     queryKey: requestsKeys.list(filters),
@@ -17,6 +20,9 @@ export function useRequests(filters: {
       if (filters.divisionId) params.append('divisionId', filters.divisionId);
       if (filters.status) params.append('status', filters.status);
       if (filters.search) params.append('search', filters.search);
+      if (filters.originType) params.append('originType', filters.originType);
+      if (filters.subunitId) params.append('subunitId', filters.subunitId);
+      if (filters.cluster) params.append('cluster', filters.cluster);
 
       const res = await axios.get(`/api/requests?${params.toString()}`);
       return res.data;

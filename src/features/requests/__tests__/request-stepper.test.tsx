@@ -8,6 +8,7 @@ const baseMockRequest: RequestDetail = {
   id: 'req-123',
   title: 'Desain Banner Acara Dies Natalis',
   status: 'SUBMITTED',
+  originType: 'DIVISION',
   fromDivisionId: 'div-1',
   fromDivisionName: 'Sponsorship',
   toDivisionId: 'div-2',

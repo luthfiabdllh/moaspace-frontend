@@ -80,12 +80,19 @@ export interface RequestPermissions {
   canStartRevision: boolean;
 }
 
+export const requestOriginTypeEnum = z.enum(['DIVISION', 'SUBUNIT', 'CLUSTER']);
+export type RequestOriginType = z.infer<typeof requestOriginTypeEnum>;
+
 export const requestListItemSchema = z.object({
   id: z.string(),
   title: z.string(),
   status: requestStatusEnum,
+  originType: requestOriginTypeEnum.default('DIVISION'),
   deadline: z.string().nullable().optional(),
-  fromDivisionId: z.string(),
+  fromDivisionId: z.string().nullable().optional(),
+  fromSubunitId: z.string().nullable().optional(),
+  fromSubunitName: z.string().nullable().optional(),
+  fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).nullable().optional(),
   toDivisionId: z.string(),
   requesterId: z.string(),
   templateId: z.string().nullable().optional(),
@@ -135,21 +142,51 @@ export const requestDetailSchema = requestListItemSchema.extend({
 });
 export type RequestDetail = z.infer<typeof requestDetailSchema>;
 
-export const createRequestSchema = z.object({
-  fromDivisionId: z.string().min(1, 'Divisi asal wajib dipilih'),
-  toDivisionId: z.string().min(1, 'Divisi tujuan wajib dipilih'),
-  templateId: z.string().optional(),
-  title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255),
-  brief: z.record(z.string(), z.unknown()),
-  deadline: z.string().optional(),
-  sourceTaskId: z.string().optional(),
-  sourceStoryId: z.string().optional(),
-  isDraft: z.boolean().optional(),
-});
+export const createRequestSchema = z
+  .object({
+    originType: requestOriginTypeEnum.default('DIVISION'),
+    fromDivisionId: z.string().optional(),
+    fromSubunitId: z.string().optional(),
+    fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).optional(),
+    toDivisionId: z.string().min(1, 'Divisi tujuan wajib dipilih'),
+    templateId: z.string().optional(),
+    title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255),
+    brief: z.record(z.string(), z.unknown()),
+    deadline: z.string().optional(),
+    sourceTaskId: z.string().optional(),
+    sourceStoryId: z.string().optional(),
+    isDraft: z.boolean().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.originType === 'DIVISION' && !data.fromDivisionId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Divisi asal wajib dipilih',
+        path: ['fromDivisionId'],
+      });
+    }
+    if (data.originType === 'SUBUNIT' && !data.fromSubunitId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Subunit asal wajib dipilih',
+        path: ['fromSubunitId'],
+      });
+    }
+    if (data.originType === 'CLUSTER' && !data.fromCluster) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Klaster asal wajib dipilih',
+        path: ['fromCluster'],
+      });
+    }
+  });
 export type CreateRequestDTO = z.infer<typeof createRequestSchema>;
 
 export const updateRequestSchema = z.object({
-  fromDivisionId: z.string().optional(),
+  originType: requestOriginTypeEnum.optional(),
+  fromDivisionId: z.string().nullable().optional(),
+  fromSubunitId: z.string().nullable().optional(),
+  fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).nullable().optional(),
   toDivisionId: z.string().optional(),
   title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255).optional(),
   templateId: z.string().optional(),

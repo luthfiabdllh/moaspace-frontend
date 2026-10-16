@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/stepper';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
 import { useDivisions } from '@/features/divisions/api/use-queries';
+import { useSubunits } from '@/features/subunits/api/use-queries';
 import { useDivisionTemplates } from '../api/use-queries';
 import { useUpdateDraft, useSubmitDraft } from '../api/use-mutations';
 import { DynamicFormRenderer } from './dynamic-form-renderer';
@@ -41,10 +42,23 @@ import {
   Check,
   GitPullRequest,
   Loader2,
+  Building2,
+  Home,
+  GraduationCap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { RequestDetail } from '../types';
+
+const CLUSTER_OPTIONS: Array<{
+  value: 'SAINTEK' | 'SOSHUM' | 'MEDIKA' | 'AGRO';
+  label: string;
+}> = [
+  { value: 'SAINTEK', label: 'Sains & Teknologi (SAINTEK)' },
+  { value: 'SOSHUM', label: 'Sosial Humaniora (SOSHUM)' },
+  { value: 'MEDIKA', label: 'Kesehatan & Medika (MEDIKA)' },
+  { value: 'AGRO', label: 'Agro & Pertanian (AGRO)' },
+];
 
 interface DraftRequestContentProps {
   request: RequestDetail;
@@ -53,14 +67,14 @@ interface DraftRequestContentProps {
 export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const { data: user } = useCurrentUser();
   const { data: divisions } = useDivisions();
+  const { data: allSubunits = [] } = useSubunits();
 
-  // Wizard state: 1 = Rute Divisi, 2 = Template, 3 = Rincian & Brief
-  // Default to step 3 for existing drafts with divisions already set
-  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(
-    request.fromDivisionId && request.toDivisionId ? 3 : 1
+  const [originType, setOriginType] = useState<'DIVISION' | 'SUBUNIT' | 'CLUSTER'>(
+    request.originType || 'DIVISION'
   );
-
   const [fromDivisionId, setFromDivisionId] = useState(request.fromDivisionId || '');
+  const [fromSubunitId, setFromSubunitId] = useState(request.fromSubunitId || '');
+  const [fromCluster, setFromCluster] = useState<string>(request.fromCluster || '');
   const [toDivisionId, setToDivisionId] = useState(request.toDivisionId || '');
   const [templateId, setTemplateId] = useState(request.templateId || '');
   const [title, setTitle] = useState(request.title || '');
@@ -69,19 +83,31 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   );
   const [brief, setBrief] = useState<Record<string, unknown>>(request.brief || {});
 
+  const isOriginSet =
+    (originType === 'DIVISION' && Boolean(request.fromDivisionId)) ||
+    (originType === 'SUBUNIT' && Boolean(request.fromSubunitId)) ||
+    (originType === 'CLUSTER' && Boolean(request.fromCluster));
+
+  // Wizard state: 1 = Rute Permohonan, 2 = Template, 3 = Rincian & Brief
+  // Default to step 3 for existing drafts with origin and target already set
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(
+    isOriginSet && request.toDivisionId ? 3 : 1
+  );
+
   const { data: templates, isLoading: loadingTemplates } =
     useDivisionTemplates(toDivisionId);
 
   const updateDraftMutation = useUpdateDraft(request.id);
   const submitDraftMutation = useSubmitDraft(request.id);
 
-  // Sync state if request updates from server. Adjusted during render (not
-  // in an effect) when a different draft loads — see
-  // react-hooks/set-state-in-effect.
+  // Sync state if request updates from server
   const [prevRequestId, setPrevRequestId] = useState(request.id);
   if (request.id !== prevRequestId) {
     setPrevRequestId(request.id);
+    setOriginType(request.originType || 'DIVISION');
     setFromDivisionId(request.fromDivisionId || '');
+    setFromSubunitId(request.fromSubunitId || '');
+    setFromCluster(request.fromCluster || '');
     setToDivisionId(request.toDivisionId || '');
     setTemplateId(request.templateId || '');
     setTitle(request.title || '');
@@ -113,23 +139,65 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
           name: d.divisionName,
         })) || [];
 
-  // Available destination divisions (exclude chosen origin division)
-  const availableTargetDivisions =
-    divisions?.filter((d) => d.id !== fromDivisionId) || [];
+  // Available origin subunits
+  const availableSubunits =
+    user?.isSuperAdmin || user?.isKormanit
+      ? allSubunits
+      : user?.subunits?.map((s) => ({
+          id: s.subunitId,
+          name: s.subunitName,
+        })) || [];
 
-  const fromDivisionName =
-    divisions?.find((d) => d.id === fromDivisionId)?.name ||
-    request.fromDivisionName ||
-    'Pilih Divisi';
+  // Available origin clusters
+  const availableClusters =
+    user?.isSuperAdmin || user?.isKormanit
+      ? CLUSTER_OPTIONS
+      : user?.cluster
+      ? CLUSTER_OPTIONS.filter((c) => c.value === user.cluster)
+      : CLUSTER_OPTIONS;
+
+  // Available destination divisions
+  const availableTargetDivisions =
+    originType === 'DIVISION'
+      ? divisions?.filter((d) => d.id !== fromDivisionId) || []
+      : divisions || [];
+
+  const originName =
+    originType === 'DIVISION'
+      ? availableOriginDivisions.find((d) => d.id === fromDivisionId)?.name ||
+        request.fromDivisionName ||
+        'Pilih Divisi'
+      : originType === 'SUBUNIT'
+      ? availableSubunits.find((s) => s.id === fromSubunitId)?.name ||
+        request.fromSubunitName ||
+        'Pilih Subunit'
+      : fromCluster
+      ? `Klaster ${fromCluster}`
+      : 'Pilih Klaster';
+
   const toDivisionName =
     divisions?.find((d) => d.id === toDivisionId)?.name ||
     request.toDivisionName ||
     'Pilih Divisi';
 
+  const isStep1Valid =
+    Boolean(toDivisionId) &&
+    ((originType === 'DIVISION' && Boolean(fromDivisionId)) ||
+      (originType === 'SUBUNIT' && Boolean(fromSubunitId)) ||
+      (originType === 'CLUSTER' && Boolean(fromCluster)));
+
   // Navigation handlers
   const handleNextFromStep1 = () => {
-    if (!fromDivisionId) {
+    if (originType === 'DIVISION' && !fromDivisionId) {
       toast.error('Pilih divisi asal pemohon.');
+      return;
+    }
+    if (originType === 'SUBUNIT' && !fromSubunitId) {
+      toast.error('Pilih subunit posko asal pemohon.');
+      return;
+    }
+    if (originType === 'CLUSTER' && !fromCluster) {
+      toast.error('Pilih klaster keilmuan asal pemohon.');
       return;
     }
     if (!toDivisionId) {
@@ -149,16 +217,16 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
       return;
     }
     if (stepIndex === 2) {
-      if (!fromDivisionId || !toDivisionId) {
-        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+      if (!isStep1Valid) {
+        toast.info('Lengkapi asal pengaju dan divisi tujuan terlebih dahulu.');
         return;
       }
       setCurrentStep(2);
       return;
     }
     if (stepIndex === 3) {
-      if (!fromDivisionId || !toDivisionId) {
-        toast.info('Lengkapi divisi asal dan tujuan terlebih dahulu.');
+      if (!isStep1Valid) {
+        toast.info('Lengkapi asal pengaju dan divisi tujuan terlebih dahulu.');
         return;
       }
       setCurrentStep(3);
@@ -166,8 +234,18 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   };
 
   const handleSaveDraft = async () => {
-    if (!fromDivisionId) {
+    if (originType === 'DIVISION' && !fromDivisionId) {
       toast.error('Pilih divisi asal pembuat request.');
+      setCurrentStep(1);
+      return;
+    }
+    if (originType === 'SUBUNIT' && !fromSubunitId) {
+      toast.error('Pilih subunit posko pembuat request.');
+      setCurrentStep(1);
+      return;
+    }
+    if (originType === 'CLUSTER' && !fromCluster) {
+      toast.error('Pilih klaster pembuat request.');
       setCurrentStep(1);
       return;
     }
@@ -184,7 +262,10 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
 
     try {
       await updateDraftMutation.mutateAsync({
-        fromDivisionId,
+        originType,
+        fromDivisionId: originType === 'DIVISION' ? fromDivisionId : undefined,
+        fromSubunitId: originType === 'SUBUNIT' ? fromSubunitId : undefined,
+        fromCluster: originType === 'CLUSTER' ? (fromCluster as any) : undefined,
         toDivisionId,
         templateId: templateId || undefined,
         title: title.trim(),
@@ -199,8 +280,18 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!fromDivisionId) {
+    if (originType === 'DIVISION' && !fromDivisionId) {
       toast.error('Pilih divisi asal pembuat request.');
+      setCurrentStep(1);
+      return;
+    }
+    if (originType === 'SUBUNIT' && !fromSubunitId) {
+      toast.error('Pilih subunit posko pembuat request.');
+      setCurrentStep(1);
+      return;
+    }
+    if (originType === 'CLUSTER' && !fromCluster) {
+      toast.error('Pilih klaster pembuat request.');
       setCurrentStep(1);
       return;
     }
@@ -238,7 +329,10 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
     try {
       // Save changes first
       await updateDraftMutation.mutateAsync({
-        fromDivisionId,
+        originType,
+        fromDivisionId: originType === 'DIVISION' ? fromDivisionId : undefined,
+        fromSubunitId: originType === 'SUBUNIT' ? fromSubunitId : undefined,
+        fromCluster: originType === 'CLUSTER' ? (fromCluster as any) : undefined,
         toDivisionId,
         templateId: templateId || undefined,
         title: title.trim(),
@@ -261,7 +355,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const step1State: StepState =
     currentStep === 1
       ? 'active'
-      : fromDivisionId && toDivisionId
+      : isStep1Valid
         ? 'completed'
         : 'active';
 
@@ -277,11 +371,11 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
   const steps = [
     {
       step: 1 as const,
-      title: 'Rute Divisi',
+      title: 'Rute Permohonan',
       desc:
-        fromDivisionId && toDivisionId
-          ? `${fromDivisionName} ➔ ${toDivisionName}`
-          : 'Pilih divisi asal & tujuan',
+        isStep1Valid
+          ? `${originName} ➔ ${toDivisionName}`
+          : 'Pilih asal & divisi tujuan',
       state: step1State,
     },
     {
@@ -374,7 +468,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
       </Card>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* ─── TAHAP 1: RUTE DIVISI ────────────────────────────────────────── */}
+        {/* ─── TAHAP 1: RUTE PERMOHONAN ────────────────────────────────────── */}
         {currentStep === 1 && (
           <Card>
             <CardHeader className="pb-3">
@@ -383,55 +477,248 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
                     1
                   </span>
-                  Pilih Divisi Asal (Pemohon) &amp; Divisi Tujuan
+                  Pilih Asal Pengaju &amp; Divisi Pelaksana (Tujuan)
                 </CardTitle>
                 <Badge variant="outline" className="text-3xs font-mono">
                   Langkah 1 dari 3
                 </Badge>
               </div>
               <CardDescription className="text-xs">
-                Tentukan divisi Anda sebagai pemohon dan divisi yang dituju untuk berkolaborasi.
+                Tentukan entitas pengaju Anda (Divisi, Subunit Posko, atau Klaster Keilmuan) serta divisi yang dituju untuk berkolaborasi.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="draftFromDivision" className="text-xs font-medium">
-                    Divisi Asal (Pemohon) <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={fromDivisionId || undefined}
-                    onValueChange={(value) => {
-                      setFromDivisionId(value);
-                      if (toDivisionId === value) {
-                        setToDivisionId('');
-                      }
+              {/* Origin Type Selector */}
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-foreground">
+                  Ajukan Permohonan Sebagai <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {/* Option 1: Divisi */}
+                  <div
+                    onClick={() => {
+                      setOriginType("DIVISION");
+                      if (toDivisionId === fromDivisionId) setToDivisionId("");
                     }}
+                    className={cn(
+                      "flex flex-col p-3 rounded-xl border transition-all cursor-pointer select-none",
+                      originType === "DIVISION"
+                        ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-xs"
+                        : "border-border/80 bg-background hover:bg-muted/40",
+                    )}
                   >
-                    <SelectTrigger id="draftFromDivision" className="h-9 w-full text-sm">
-                      <SelectValue placeholder="Pilih Divisi Asal..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableOriginDivisions.map((div) => (
-                        <SelectItem key={div.id} value={div.id}>
-                          {div.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "p-1.5 rounded-lg",
+                            originType === "DIVISION"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <Building2 className="size-4" />
+                        </div>
+                        <span className="text-xs font-semibold text-foreground">
+                          Divisi Internal
+                        </span>
+                      </div>
+                      {originType === "DIVISION" && (
+                        <div className="size-4 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                          <Check className="size-2.5 stroke-3" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-3xs text-muted-foreground">
+                      Kolaborasi antar divisi internal organisasi KKN.
+                    </p>
+                  </div>
 
+                  {/* Option 2: Subunit Posko */}
+                  <div
+                    onClick={() => setOriginType("SUBUNIT")}
+                    className={cn(
+                      "flex flex-col p-3 rounded-xl border transition-all cursor-pointer select-none",
+                      originType === "SUBUNIT"
+                        ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20 ring-2 ring-emerald-500/20 shadow-xs"
+                        : "border-border/80 bg-background hover:bg-muted/40",
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "p-1.5 rounded-lg",
+                            originType === "SUBUNIT"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <Home className="size-4" />
+                        </div>
+                        <span className="text-xs font-semibold text-foreground">
+                          Subunit Posko
+                        </span>
+                      </div>
+                      {originType === "SUBUNIT" && (
+                        <div className="size-4 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+                          <Check className="size-2.5 stroke-3" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-3xs text-muted-foreground">
+                      Permohonan kebutuhan posko subunit ke divisi pelaksana.
+                    </p>
+                  </div>
+
+                  {/* Option 3: Klaster Keilmuan */}
+                  <div
+                    onClick={() => setOriginType("CLUSTER")}
+                    className={cn(
+                      "flex flex-col p-3 rounded-xl border transition-all cursor-pointer select-none",
+                      originType === "CLUSTER"
+                        ? "border-sky-500 bg-sky-50/50 dark:bg-sky-950/20 ring-2 ring-sky-500/20 shadow-xs"
+                        : "border-border/80 bg-background hover:bg-muted/40",
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn(
+                            "p-1.5 rounded-lg",
+                            originType === "CLUSTER"
+                              ? "bg-sky-600 text-white"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <GraduationCap className="size-4" />
+                        </div>
+                        <span className="text-xs font-semibold text-foreground">
+                          Klaster Keilmuan
+                        </span>
+                      </div>
+                      {originType === "CLUSTER" && (
+                        <div className="size-4 rounded-full bg-sky-600 text-white flex items-center justify-center">
+                          <Check className="size-2.5 stroke-3" />
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-3xs text-muted-foreground">
+                      Permohonan bidang rumpun ilmu (Saintek, Soshum, Medika, Agro).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Inputs: Origin Specific + Target Division */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Origin: DIVISI */}
+                {originType === "DIVISION" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="draftFromDivision" className="text-xs font-medium flex items-center gap-1.5">
+                      <Building2 className="size-3.5 text-primary" />
+                      <span>Divisi Asal (Pemohon)</span>
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={fromDivisionId || undefined}
+                      onValueChange={(value) => {
+                        setFromDivisionId(value);
+                        if (toDivisionId === value) {
+                          setToDivisionId("");
+                        }
+                      }}
+                    >
+                      <SelectTrigger id="draftFromDivision" className="h-9 w-full text-sm">
+                        <SelectValue placeholder="Pilih Divisi Asal..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableOriginDivisions.map((div) => (
+                          <SelectItem key={div.id} value={div.id}>
+                            {div.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Origin: SUBUNIT */}
+                {originType === "SUBUNIT" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="draftFromSubunit" className="text-xs font-medium flex items-center gap-1.5">
+                      <Home className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Subunit Posko Asal</span>
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={fromSubunitId || undefined}
+                      onValueChange={(value) => setFromSubunitId(value)}
+                    >
+                      <SelectTrigger id="draftFromSubunit" className="h-9 w-full text-sm">
+                        <SelectValue placeholder="Pilih Subunit Posko..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSubunits.length === 0 ? (
+                          <div className="p-2 text-xs text-muted-foreground text-center">
+                            Anda belum terdaftar dalam subunit manapun.
+                          </div>
+                        ) : (
+                          availableSubunits.map((sub) => (
+                            <SelectItem key={sub.id} value={sub.id}>
+                              {sub.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Origin: CLUSTER */}
+                {originType === "CLUSTER" && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="draftFromCluster" className="text-xs font-medium flex items-center gap-1.5">
+                      <GraduationCap className="size-3.5 text-sky-600 dark:text-sky-400" />
+                      <span>Klaster Keilmuan Asal</span>
+                      <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={fromCluster || undefined}
+                      onValueChange={(value) => setFromCluster(value)}
+                    >
+                      <SelectTrigger id="draftFromCluster" className="h-9 w-full text-sm">
+                        <SelectValue placeholder="Pilih Klaster..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableClusters.map((cl) => (
+                          <SelectItem key={cl.value} value={cl.value}>
+                            {cl.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Target: Divisi Pelaksana */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="draftToDivision" className="text-xs font-medium">
-                    Divisi Tujuan <span className="text-destructive">*</span>
+                  <Label htmlFor="draftToDivision" className="text-xs font-medium flex items-center gap-1.5">
+                    <Building2 className="size-3.5 text-primary" />
+                    <span>Divisi Tujuan (Pelaksana)</span>
+                    <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={toDivisionId || undefined}
                     onValueChange={handleToDivisionChange}
-                    disabled={!fromDivisionId}
+                    disabled={
+                      (originType === "DIVISION" && !fromDivisionId) ||
+                      (originType === "SUBUNIT" && !fromSubunitId) ||
+                      (originType === "CLUSTER" && !fromCluster)
+                    }
                   >
                     <SelectTrigger id="draftToDivision" className="h-9 w-full text-sm">
-                      <SelectValue placeholder="Pilih Divisi Tujuan..." />
+                      <SelectValue placeholder="Pilih Divisi Pelaksana..." />
                     </SelectTrigger>
                     <SelectContent>
                       {availableTargetDivisions.map((div) => (
@@ -444,14 +731,20 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
                 </div>
               </div>
 
-              {fromDivisionId && toDivisionId && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs">
+              {/* Route Summary Banner */}
+              {isStep1Valid && (
+                <div className="flex items-center gap-2.5 p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs">
                   <Sparkles className="size-4 text-primary shrink-0" />
                   <span className="text-muted-foreground">
-                    Rute kolaborasi:{' '}
-                    <strong className="text-foreground">{fromDivisionName}</strong>{' '}
-                    akan mengajukan permohonan ke{' '}
-                    <strong className="text-foreground">{toDivisionName}</strong>.
+                    Rute permohonan:{" "}
+                    <strong className="text-foreground">
+                      {originName}
+                    </strong>{" "}
+                    akan mengajukan permohonan ke divisi pelaksana{" "}
+                    <strong className="text-primary font-semibold">
+                      {toDivisionName}
+                    </strong>
+                    .
                   </span>
                 </div>
               )}
@@ -478,7 +771,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
                     type="button"
                     size="sm"
                     onClick={handleNextFromStep1}
-                    disabled={!fromDivisionId || !toDivisionId}
+                    disabled={!isStep1Valid}
                     className="gap-2"
                   >
                     Lanjut ke Pilih Template
@@ -675,7 +968,7 @@ export function DraftRequestContent({ request }: DraftRequestContentProps) {
               <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 border text-2xs text-muted-foreground">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-semibold text-foreground">
-                    {fromDivisionName}
+                    {originName}
                   </span>
                   <ArrowRight className="size-3 text-muted-foreground" />
                   <span className="font-semibold text-foreground">

@@ -19,6 +19,9 @@ import {
   ChevronRight,
   GitPullRequest,
   AlertTriangle,
+  Building2,
+  Home,
+  GraduationCap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,9 +54,17 @@ const STATUS_OPTIONS: { value: string; label: string; dotColor?: string }[] = [
   { value: 'REJECTED', label: 'Ditolak', dotColor: 'bg-rose-500' },
 ];
 
+const ORIGIN_OPTIONS = [
+  { value: 'ALL', label: 'Semua Asal' },
+  { value: 'DIVISION', label: 'Divisi Internal' },
+  { value: 'SUBUNIT', label: 'Subunit Posko' },
+  { value: 'CLUSTER', label: 'Klaster Keilmuan' },
+];
+
 export function RequestsListContent() {
   const [direction, setDirection] = useState<'all' | 'incoming' | 'outgoing'>('all');
   const [status, setStatus] = useState<string>('ALL');
+  const [originFilter, setOriginFilter] = useState<string>('ALL');
   const [search, setSearch] = useState<string>('');
 
   // Fetch all requests to compute live overall KPI statistics
@@ -63,6 +74,7 @@ export function RequestsListContent() {
   const { data: requests, isLoading } = useRequests({
     direction,
     status: status === 'ALL' ? undefined : (status || undefined),
+    originType: originFilter === 'ALL' ? undefined : (originFilter || undefined),
     search: search ? search.trim() : undefined,
   });
 
@@ -81,12 +93,16 @@ export function RequestsListContent() {
   }, [allRequests]);
 
   const hasActiveFilters = Boolean(
-    direction !== 'all' || (status && status !== 'ALL') || search.trim()
+    direction !== 'all' ||
+      (status && status !== 'ALL') ||
+      (originFilter && originFilter !== 'ALL') ||
+      search.trim()
   );
 
   const handleResetFilters = () => {
     setDirection('all');
     setStatus('ALL');
+    setOriginFilter('ALL');
     setSearch('');
   };
 
@@ -347,6 +363,22 @@ export function RequestsListContent() {
             )}
           </div>
 
+          {/* Origin Dropdown (shadcn Select) */}
+          <div className="w-40 shrink-0">
+            <Select value={originFilter} onValueChange={(val) => setOriginFilter(val)}>
+              <SelectTrigger className="h-8 text-xs bg-background border-input">
+                <SelectValue placeholder="Semua Asal" />
+              </SelectTrigger>
+              <SelectContent align="end" className="text-xs">
+                {ORIGIN_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value} className="text-xs cursor-pointer">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Status Dropdown (shadcn Select) */}
           <div className="w-44 shrink-0">
             <Select value={status} onValueChange={(val) => setStatus(val)}>
@@ -462,6 +494,35 @@ export function RequestsListContent() {
                     <div className="space-y-2.5 flex-1 min-w-0">
                       {/* Flow & Badges Row */}
                       <div className="flex items-center gap-2 flex-wrap text-xs">
+                        {/* Origin Type Badge */}
+                        {item.originType === 'SUBUNIT' && (
+                          <Badge
+                            variant="outline"
+                            className="text-2xs bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 gap-1 font-medium py-0"
+                          >
+                            <Home className="size-3" />
+                            <span>Subunit</span>
+                          </Badge>
+                        )}
+                        {item.originType === 'CLUSTER' && (
+                          <Badge
+                            variant="outline"
+                            className="text-2xs bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800 gap-1 font-medium py-0"
+                          >
+                            <GraduationCap className="size-3" />
+                            <span>Klaster {item.fromCluster || ''}</span>
+                          </Badge>
+                        )}
+                        {(!item.originType || item.originType === 'DIVISION') && (
+                          <Badge
+                            variant="outline"
+                            className="text-2xs bg-muted/60 text-muted-foreground border-border/70 gap-1 font-normal py-0"
+                          >
+                            <Building2 className="size-3" />
+                            <span>Divisi</span>
+                          </Badge>
+                        )}
+
                         {/* Division Route Flow */}
                         <div className="flex items-center gap-1.5 bg-muted/60 dark:bg-muted/30 px-2 py-0.5 rounded-md border border-border/60 text-xs">
                           <span className="font-semibold text-foreground">

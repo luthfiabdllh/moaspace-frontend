@@ -50,7 +50,10 @@ export function ConvertToEpicContent({ requestId }: ConvertToEpicContentProps) {
     setPrevRequestId(request.id);
     setTitle(request.title);
     setDescription(typeof request.brief?.deskripsi === 'string' ? request.brief.deskripsi : '');
-    setParticipatingDivisionIds([request.fromDivisionId, request.toDivisionId]);
+    const initialDivs = [request.fromDivisionId, request.toDivisionId].filter(
+      (id): id is string => Boolean(id)
+    );
+    setParticipatingDivisionIds(initialDivs);
     setTargetDate(request.deadline ? request.deadline.split('T')[0] : '');
   }
 
@@ -266,7 +269,7 @@ export function ConvertToEpicContent({ requestId }: ConvertToEpicContentProps) {
                   {divisions.map((div) => {
                     const isChecked = participatingDivisionIds.includes(div.id);
                     const isTarget = div.id === request.toDivisionId;
-                    const isOrigin = div.id === request.fromDivisionId;
+                    const isOrigin = request.originType === 'DIVISION' && div.id === request.fromDivisionId;
 
                     return (
                       <label
