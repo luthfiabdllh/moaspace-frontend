@@ -68,10 +68,15 @@ export function EpicCard({ epic, onSelect }: EpicCardProps) {
           </div>
 
           <div>
-            {epic.isClosed ? (
+            {epic.status === 'WAITING_ACCEPTANCE' ? (
+              <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-2xs gap-1">
+                <Clock className="size-3" />
+                Menunggu Acceptance
+              </Badge>
+            ) : epic.isClosed || epic.status === 'CLOSED' ? (
               <Badge variant="secondary" className="gap-1 text-2xs text-muted-foreground">
                 <CheckCircle2 className="size-3 text-emerald-500" />
-                Ditutup
+                Selesai (Ditutup)
               </Badge>
             ) : (
               <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-500/20 text-2xs gap-1">

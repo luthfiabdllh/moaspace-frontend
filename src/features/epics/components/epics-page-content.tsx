@@ -33,7 +33,7 @@ export function EpicsPageContent() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedScope, setSelectedScope] = useState<'ALL' | 'DIVISION' | 'CROSS'>('ALL');
-  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
+  const [selectedStatus, setSelectedStatus] = useState<'ALL' | 'ACTIVE' | 'WAITING_ACCEPTANCE' | 'CLOSED'>('ALL');
   const [selectedDivisionId, setSelectedDivisionId] = useState<string>('ALL');
 
   // Redirect if epicId query param exists
@@ -73,11 +73,18 @@ export function EpicsPageContent() {
       }
 
       // Status filter
-      if (selectedStatus === 'ACTIVE' && epic.isClosed) {
-        return false;
-      }
-      if (selectedStatus === 'CLOSED' && !epic.isClosed) {
-        return false;
+      if (selectedStatus === 'ACTIVE') {
+        if (epic.isClosed || epic.status === 'WAITING_ACCEPTANCE' || epic.status === 'CLOSED') {
+          return false;
+        }
+      } else if (selectedStatus === 'WAITING_ACCEPTANCE') {
+        if (epic.status !== 'WAITING_ACCEPTANCE') {
+          return false;
+        }
+      } else if (selectedStatus === 'CLOSED') {
+        if (!epic.isClosed && epic.status !== 'CLOSED') {
+          return false;
+        }
       }
 
       // Division filter
@@ -276,7 +283,7 @@ export function EpicsPageContent() {
           {/* Status Selector */}
           <Select
             value={selectedStatus}
-            onValueChange={(v) => setSelectedStatus(v as 'ALL' | 'ACTIVE' | 'CLOSED')}
+            onValueChange={(v) => setSelectedStatus(v as 'ALL' | 'ACTIVE' | 'WAITING_ACCEPTANCE' | 'CLOSED')}
           >
             <SelectTrigger className="h-9 text-xs">
               <SelectValue />
@@ -284,6 +291,7 @@ export function EpicsPageContent() {
             <SelectContent>
               <SelectItem value="ALL">Semua Status</SelectItem>
               <SelectItem value="ACTIVE">Aktif Saja</SelectItem>
+              <SelectItem value="WAITING_ACCEPTANCE">Menunggu Acceptance</SelectItem>
               <SelectItem value="CLOSED">Selesai/Tutup</SelectItem>
             </SelectContent>
           </Select>

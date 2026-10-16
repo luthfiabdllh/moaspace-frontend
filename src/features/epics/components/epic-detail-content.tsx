@@ -28,8 +28,14 @@ import { useEpic } from '../api/use-queries';
 import { useStories } from '@/features/stories/api/use-queries';
 import { useTasks } from '@/features/tasks/api/use-queries';
 import { useCurrentUser } from '@/features/auth/api/use-queries';
-import { useUpdateEpic } from '../api/use-mutations';
+import {
+  useUpdateEpic,
+  useSubmitEpicAcceptance,
+  useAcceptEpic,
+  useReopenEpic,
+} from '../api/use-mutations';
 import { EditEpicDialog } from './edit-epic-dialog';
+import { RejectEpicDialog } from './reject-epic-dialog';
 import { NotionEditor } from '@/components/ui/notion-editor';
 import { CreateStoryDialog } from '@/features/stories/components/create-story-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
@@ -60,6 +66,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
 
   const [createStoryOpen, setCreateStoryOpen] = useState(false);
   const [editEpicOpen, setEditEpicOpen] = useState(false);
+  const [rejectEpicOpen, setRejectEpicOpen] = useState(false);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<{
     id: string;
@@ -70,6 +77,10 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
   const [expandedStories, setExpandedStories] = useState<Record<string, boolean>>({});
 
   const updateEpicMutation = useUpdateEpic();
+  const submitAcceptanceMutation = useSubmitEpicAcceptance();
+  const acceptEpicMutation = useAcceptEpic();
+  const reopenEpicMutation = useReopenEpic();
+
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [editedDesc, setEditedDesc] = useState(epic?.description || '');
 
@@ -93,12 +104,19 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
     setIsEditingDesc(false);
   };
 
-  const handleToggleClosed = async () => {
+  const handleSubmitAcceptance = async () => {
     if (!epic) return;
-    await updateEpicMutation.mutateAsync({
-      id: epic.id,
-      dto: { isClosed: !epic.isClosed },
-    });
+    await submitAcceptanceMutation.mutateAsync(epic.id);
+  };
+
+  const handleAcceptEpic = async () => {
+    if (!epic) return;
+    await acceptEpicMutation.mutateAsync(epic.id);
+  };
+
+  const handleReopenEpic = async () => {
+    if (!epic) return;
+    await reopenEpicMutation.mutateAsync(epic.id);
   };
 
   const toggleStory = (storyId: string) => {
@@ -151,6 +169,10 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
       )
   );
 
+  const isAllTasksDone = epic.totalTasks > 0 && epic.doneTasks === epic.totalTasks;
+  const isWaitingAcceptance = epic.status === 'WAITING_ACCEPTANCE';
+  const isClosed = epic.isClosed || epic.status === 'CLOSED';
+
   const dateRange =
     epic.startDate || epic.endDate
       ? `${epic.startDate ? new Date(epic.startDate).toLocaleDateString('id-ID', { dateStyle: 'medium' }) : ''} - ${
@@ -160,7 +182,7 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
 
   return (
     <div className="mx-auto space-y-6 pb-8">
-      {/* Top Breadcrumb */}
+      {/* Top Breadcrumb & Actions */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Link
@@ -176,8 +198,10 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
           </span>
         </div>
 
-        {isCoordinator && (
-          <div className="flex items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Edit Inisiatif */}
+          {isCoordinator && !isClosed && (
             <Button
               type="button"
               variant="outline"
@@ -188,26 +212,80 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
               <FileEdit className="size-3.5" />
               Edit Inisiatif
             </Button>
+          )}
+
+          {/* Workflow Acceptance Buttons */}
+          {/* 1. If ACTIVE: Koordinator / Admin can submit to Kormanit */}
+          {!isClosed && !isWaitingAcceptance && isCoordinator && (
+            <Button
+              type="button"
+              variant={isAllTasksDone ? 'default' : 'outline'}
+              size="sm"
+              onClick={handleSubmitAcceptance}
+              disabled={!isAllTasksDone || submitAcceptanceMutation.isPending}
+              className={cn(
+                'text-xs h-8.5 rounded-xl gap-1.5',
+                isAllTasksDone && 'bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-2xs'
+              )}
+              title={
+                !isAllTasksDone
+                  ? `Semua task harus selesai (DONE). Masih ada ${epic.totalTasks - epic.doneTasks} task yang belum selesai.`
+                  : 'Ajukan hasil pengerjaan epic ke Kormanit untuk verifikasi & acceptance'
+              }
+            >
+              <CheckCircle2 className="size-3.5" />
+              <span>
+                {submitAcceptanceMutation.isPending
+                  ? 'Mengajukan...'
+                  : 'Ajukan ke Kormanit'}
+              </span>
+            </Button>
+          )}
+
+          {/* 2. If WAITING_ACCEPTANCE: Kormanit / Admin can Accept or Reject */}
+          {isWaitingAcceptance && isGlobalAdmin && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRejectEpicOpen(true)}
+                disabled={acceptEpicMutation.isPending}
+                className="text-xs h-8.5 rounded-xl gap-1.5 text-amber-700 hover:text-amber-800 border-amber-300 dark:border-amber-800/60 dark:text-amber-400"
+              >
+                <AlertTriangle className="size-3.5" />
+                Minta Revisi
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleAcceptEpic}
+                disabled={acceptEpicMutation.isPending}
+                className="text-xs h-8.5 rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-2xs"
+              >
+                <Check className="size-3.5" />
+                {acceptEpicMutation.isPending ? 'Memproses...' : 'Terima & Selesaikan Epic'}
+              </Button>
+            </>
+          )}
+
+          {/* 3. If CLOSED: Kormanit / Admin can Reopen */}
+          {isClosed && isGlobalAdmin && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={handleToggleClosed}
-              disabled={updateEpicMutation.isPending}
+              onClick={handleReopenEpic}
+              disabled={reopenEpicMutation.isPending}
               className="text-xs h-8.5 rounded-xl gap-1.5"
             >
-              {epic.isClosed ? (
-                <>
-                  <RotateCcw className="size-3.5 text-primary" />
-                  Buka Kembali Inisiatif
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="size-3.5 text-emerald-500" />
-                  Tutup Inisiatif
-                </>
-              )}
+              <RotateCcw className="size-3.5 text-primary" />
+              {reopenEpicMutation.isPending ? 'Membuka...' : 'Buka Kembali Inisiatif'}
             </Button>
+          )}
+
+          {/* Tambah Story */}
+          {isCoordinator && !isClosed && (
             <Button
               size="sm"
               onClick={() => setCreateStoryOpen(true)}
@@ -216,9 +294,68 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
               <Plus className="size-3.5" />
               Tambah Story
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Acceptance Status Banners */}
+      {/* 1. WAITING_ACCEPTANCE Banner */}
+      {isWaitingAcceptance && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-900 dark:text-amber-200 shadow-2xs flex items-start gap-3">
+          <Clock className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="font-semibold text-sm text-foreground">
+              Menunggu Acceptance dari Kormanit
+            </h4>
+            <p className="leading-relaxed text-muted-foreground">
+              Epic ini telah selesai dikerjakan oleh divisi
+              {epic.submitterName ? ` dan diajukan oleh ${epic.submitterName}` : ''}
+              {epic.submittedForAcceptanceAt
+                ? ` pada ${new Date(epic.submittedForAcceptanceAt).toLocaleDateString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}`
+                : ''}
+              . Inisiatif sedang dalam tahap review akhir oleh Kormanit sebelum resmi dinyatakan selesai.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Rejection / Revision Note Banner (when status is back to ACTIVE with reason) */}
+      {!isClosed && !isWaitingAcceptance && epic.kormanitRejectionReason && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-900 dark:text-rose-200 shadow-2xs flex items-start gap-3">
+          <AlertTriangle className="size-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+          <div className="space-y-1.5">
+            <h4 className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+              <span>Catatan Revisi dari Kormanit</span>
+            </h4>
+            <div className="p-3 rounded-xl bg-card border border-rose-500/20 text-foreground font-medium whitespace-pre-wrap leading-relaxed">
+              &ldquo;{epic.kormanitRejectionReason}&rdquo;
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              Silakan sesuaikan pekerjaan atau lengkapi data yang diminta. Setelah semua task selesai (100% DONE), koordinator dapat mengajukan kembali ke Kormanit.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 3. CLOSED Banner */}
+      {isClosed && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-900 dark:text-emerald-200 shadow-2xs flex items-start gap-3">
+          <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="font-semibold text-sm text-foreground">
+              Inisiatif Resmi Selesai (Closed)
+            </h4>
+            <p className="leading-relaxed text-muted-foreground">
+              Inisiatif ini telah disetujui dan diverifikasi oleh Kormanit
+              {epic.kormanitAcceptorName ? ` (${epic.kormanitAcceptorName})` : ''}
+              {epic.kormanitAcceptedAt
+                ? ` pada ${new Date(epic.kormanitAcceptedAt).toLocaleDateString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}`
+                : ''}
+              .
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Header Banner */}
       <div className="p-6 rounded-2xl border border-border/80 bg-card shadow-2xs space-y-3">
@@ -246,23 +383,24 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
             )}
           </div>
 
-          <Badge
-            variant={epic.isClosed ? 'secondary' : 'default'}
-            className={cn(
-              'text-xs py-0.5 px-2.5 gap-1',
-              !epic.isClosed && 'bg-emerald-600/90 hover:bg-emerald-600 text-white'
-            )}
-          >
-            {epic.isClosed ? (
-              <>
-                <Clock className="size-3" /> Ditutup
-              </>
+          <div>
+            {isWaitingAcceptance ? (
+              <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-xs py-0.5 px-2.5 gap-1">
+                <Clock className="size-3" />
+                Menunggu Acceptance
+              </Badge>
+            ) : isClosed ? (
+              <Badge variant="secondary" className="text-xs py-0.5 px-2.5 gap-1 text-muted-foreground">
+                <CheckCircle2 className="size-3 text-emerald-500" />
+                Selesai (Ditutup)
+              </Badge>
             ) : (
-              <>
-                <Check className="size-3" /> Aktif Berjalan
-              </>
+              <Badge className="bg-emerald-600/90 hover:bg-emerald-600 text-white text-xs py-0.5 px-2.5 gap-1">
+                <Check className="size-3" />
+                Aktif Berjalan
+              </Badge>
             )}
-          </Badge>
+          </div>
         </div>
 
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
@@ -728,6 +866,15 @@ export function EpicDetailContent({ epicId }: EpicDetailContentProps) {
           epic={epic}
           open={editEpicOpen}
           onOpenChange={setEditEpicOpen}
+        />
+      )}
+
+      {isGlobalAdmin && (
+        <RejectEpicDialog
+          epicId={epic.id}
+          epicTitle={epic.title}
+          open={rejectEpicOpen}
+          onOpenChange={setRejectEpicOpen}
         />
       )}
 

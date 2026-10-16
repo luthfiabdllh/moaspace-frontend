@@ -6,6 +6,9 @@ export const epicDivisionSchema = z.object({
   slug: z.string(),
 });
 
+export const epicStatusSchema = z.enum(['ACTIVE', 'WAITING_ACCEPTANCE', 'CLOSED']);
+export type EpicStatus = z.infer<typeof epicStatusSchema>;
+
 export const epicItemSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -21,6 +24,14 @@ export const epicItemSchema = z.object({
   creatorName: z.string().optional(),
   sourceRequestId: z.string().nullable().optional(),
   requestTitle: z.string().nullable().optional(),
+  status: epicStatusSchema.default('ACTIVE'),
+  submittedForAcceptanceAt: z.string().nullable().optional(),
+  submittedForAcceptanceById: z.string().nullable().optional(),
+  submitterName: z.string().nullable().optional(),
+  kormanitAcceptedAt: z.string().nullable().optional(),
+  kormanitAcceptedById: z.string().nullable().optional(),
+  kormanitAcceptorName: z.string().nullable().optional(),
+  kormanitRejectionReason: z.string().nullable().optional(),
   closedAt: z.string().nullable().optional(),
   isClosed: z.boolean().default(false),
   participatingDivisions: z.array(epicDivisionSchema).default([]),
@@ -56,10 +67,20 @@ export const updateEpicSchema = z.object({
   programId: z.string().optional(),
   ownerDivisionId: z.string().optional(),
   participatingDivisionIds: z.array(z.string()).optional(),
+  status: epicStatusSchema.optional(),
   isClosed: z.boolean().optional(),
+});
+
+export const rejectEpicSchema = z.object({
+  reason: z
+    .string()
+    .trim()
+    .min(3, { error: 'Alasan penolakan / catatan revisi minimal 3 karakter.' })
+    .max(1000, { error: 'Alasan penolakan maksimal 1000 karakter.' }),
 });
 
 export type EpicDivision = z.infer<typeof epicDivisionSchema>;
 export type EpicItem = z.infer<typeof epicItemSchema>;
 export type CreateEpicDTO = z.infer<typeof createEpicSchema>;
 export type UpdateEpicDTO = z.infer<typeof updateEpicSchema>;
+export type RejectEpicDTO = z.infer<typeof rejectEpicSchema>;
