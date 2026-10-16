@@ -32,6 +32,7 @@ import { useDivisions } from "@/features/divisions/api/use-queries";
 import { useSubunits } from "@/features/subunits/api/use-queries";
 import { useDivisionTemplates } from "../api/use-queries";
 import { useCreateRequest } from "../api/use-mutations";
+import type { AcademicCluster } from "../types";
 import { DynamicFormRenderer } from "./dynamic-form-renderer";
 import {
   ArrowLeft,
@@ -49,7 +50,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const CLUSTER_OPTIONS: Array<{
-  value: 'SAINTEK' | 'SOSHUM' | 'MEDIKA' | 'AGRO';
+  value: AcademicCluster;
   label: string;
 }> = [
   { value: 'SAINTEK', label: 'Sains & Teknologi (SAINTEK)' },
@@ -70,7 +71,7 @@ export function CreateRequestContent() {
   const [originType, setOriginType] = useState<'DIVISION' | 'SUBUNIT' | 'CLUSTER'>('DIVISION');
   const [fromDivisionId, setFromDivisionId] = useState("");
   const [fromSubunitId, setFromSubunitId] = useState("");
-  const [fromCluster, setFromCluster] = useState<string>("");
+  const [fromCluster, setFromCluster] = useState<AcademicCluster | "">("");
   const [toDivisionId, setToDivisionId] = useState("");
   const [templateId, setTemplateId] = useState("");
   const [title, setTitle] = useState("");
@@ -240,7 +241,7 @@ export function CreateRequestContent() {
         originType,
         fromDivisionId: originType === "DIVISION" ? fromDivisionId : undefined,
         fromSubunitId: originType === "SUBUNIT" ? fromSubunitId : undefined,
-        fromCluster: originType === "CLUSTER" ? (fromCluster as any) : undefined,
+        fromCluster: originType === "CLUSTER" && fromCluster ? fromCluster : undefined,
         toDivisionId,
         templateId: templateId || undefined,
         title: title.trim(),
@@ -309,7 +310,7 @@ export function CreateRequestContent() {
         originType,
         fromDivisionId: originType === "DIVISION" ? fromDivisionId : undefined,
         fromSubunitId: originType === "SUBUNIT" ? fromSubunitId : undefined,
-        fromCluster: originType === "CLUSTER" ? (fromCluster as any) : undefined,
+        fromCluster: originType === "CLUSTER" && fromCluster ? fromCluster : undefined,
         toDivisionId,
         templateId: templateId || undefined,
         title: title.trim(),
@@ -649,7 +650,7 @@ export function CreateRequestContent() {
                     </Label>
                     <Select
                       value={fromCluster || undefined}
-                      onValueChange={(value) => setFromCluster(value)}
+                      onValueChange={(value) => setFromCluster(value as AcademicCluster)}
                     >
                       <SelectTrigger id="fromCluster" className="h-9 w-full text-sm">
                         <SelectValue placeholder="Pilih Klaster..." />

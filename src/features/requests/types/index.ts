@@ -83,6 +83,9 @@ export interface RequestPermissions {
 export const requestOriginTypeEnum = z.enum(['DIVISION', 'SUBUNIT', 'CLUSTER']);
 export type RequestOriginType = z.infer<typeof requestOriginTypeEnum>;
 
+export const academicClusterEnum = z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']);
+export type AcademicCluster = z.infer<typeof academicClusterEnum>;
+
 export const requestListItemSchema = z.object({
   id: z.string(),
   title: z.string(),
@@ -92,7 +95,7 @@ export const requestListItemSchema = z.object({
   fromDivisionId: z.string().nullable().optional(),
   fromSubunitId: z.string().nullable().optional(),
   fromSubunitName: z.string().nullable().optional(),
-  fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).nullable().optional(),
+  fromCluster: academicClusterEnum.nullable().optional(),
   toDivisionId: z.string(),
   requesterId: z.string(),
   templateId: z.string().nullable().optional(),
@@ -147,7 +150,7 @@ export const createRequestSchema = z
     originType: requestOriginTypeEnum.default('DIVISION'),
     fromDivisionId: z.string().optional(),
     fromSubunitId: z.string().optional(),
-    fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).optional(),
+    fromCluster: academicClusterEnum.optional(),
     toDivisionId: z.string().min(1, 'Divisi tujuan wajib dipilih'),
     templateId: z.string().optional(),
     title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255),
@@ -186,7 +189,7 @@ export const updateRequestSchema = z.object({
   originType: requestOriginTypeEnum.optional(),
   fromDivisionId: z.string().nullable().optional(),
   fromSubunitId: z.string().nullable().optional(),
-  fromCluster: z.enum(['SAINTEK', 'SOSHUM', 'MEDIKA', 'AGRO']).nullable().optional(),
+  fromCluster: academicClusterEnum.nullable().optional(),
   toDivisionId: z.string().optional(),
   title: z.string().trim().min(3, 'Judul permohonan minimal 3 karakter').max(255).optional(),
   templateId: z.string().optional(),
