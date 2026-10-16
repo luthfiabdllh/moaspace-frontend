@@ -8,6 +8,9 @@ import {
   Plus,
   Search,
   Loader2,
+  ArrowUpDown,
+  Clock,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,7 +34,14 @@ import { AnnouncementCard } from './announcement-card';
 import { AnnouncementDetailDialog } from './announcement-detail-dialog';
 import { AnnouncementFormDialog } from './announcement-form-dialog';
 import { AnnouncementCalendarView } from './announcement-calendar-view';
-import type { Announcement, AnnouncementCategory, AnnouncementTarget } from '../types';
+import type {
+  Announcement,
+  AnnouncementCategory,
+  AnnouncementTarget,
+  AnnouncementSortBy,
+  SortOrder,
+  EventPeriod,
+} from '../types';
 
 export function AnnouncementsPageContent() {
   const { data: user } = useCurrentUser();
@@ -46,6 +56,11 @@ export function AnnouncementsPageContent() {
   const [divisionFilter, setDivisionFilter] = React.useState<string>('all');
   const [subunitFilter, setSubunitFilter] = React.useState<string>('all');
   const [clusterFilter, setClusterFilter] = React.useState<string>('all');
+  const [eventPeriod, setEventPeriod] = React.useState<EventPeriod>('all');
+
+  // Sorting state - default urut sesuai waktu mulai dari terbaru
+  const [sortBy, setSortBy] = React.useState<AnnouncementSortBy>('eventStartDate');
+  const [sortOrder, setSortOrder] = React.useState<SortOrder>('desc');
 
   // Modals state
   const [formOpen, setFormOpen] = React.useState(false);
@@ -66,11 +81,45 @@ export function AnnouncementsPageContent() {
     subunitId: subunitFilter !== 'all' ? subunitFilter : undefined,
     cluster: clusterFilter !== 'all' ? clusterFilter : undefined,
     search: search.trim() || undefined,
+    sortBy,
+    sortOrder,
+    eventPeriod: eventPeriod !== 'all' ? eventPeriod : undefined,
   });
 
   const canCreate = Boolean(
     user?.isSuperAdmin || user?.isKormanit || permissions?.canCreate
   );
+
+  const sortValue = `${sortBy}:${sortOrder}`;
+  const handleSortChange = (val: string) => {
+    const [field, order] = val.split(':') as [AnnouncementSortBy, SortOrder];
+    setSortBy(field);
+    setSortOrder(order);
+  };
+
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    categoryFilter !== 'all' ||
+    targetTypeFilter !== 'all' ||
+    divisionFilter !== 'all' ||
+    subunitFilter !== 'all' ||
+    clusterFilter !== 'all' ||
+    eventPeriod !== 'all' ||
+    sortBy !== 'eventStartDate' ||
+    sortOrder !== 'desc'
+  );
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setCategoryFilter('all');
+    setTargetTypeFilter('all');
+    setDivisionFilter('all');
+    setSubunitFilter('all');
+    setClusterFilter('all');
+    setEventPeriod('all');
+    setSortBy('eventStartDate');
+    setSortOrder('desc');
+  };
 
   const handleCreateNew = () => {
     setSelectedForEdit(null);
@@ -135,136 +184,204 @@ export function AnnouncementsPageContent() {
         </div>
       </div>
 
-      {/* Control Bar: Dual View Tabs & Search/Filters */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
-        {/* Dual View Mode Tabs */}
-        <div className="inline-flex items-center p-1 rounded-lg bg-muted/60 border border-border/60 self-start">
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
-            size="xs"
-            onClick={() => setViewMode('list')}
-            className={`gap-1.5 text-xs h-7 px-3 font-medium transition-all ${
-              viewMode === 'list'
-                ? 'bg-background text-foreground shadow-2xs hover:bg-background'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <LayoutList className="size-3.5" />
-            <span>Daftar Pengumuman</span>
-          </Button>
+      {/* Control Bar: Dual View Tabs & Search/Sorting */}
+      <div className="space-y-3">
+        {/* Top Control Bar: Tabs + Search + Sort */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 flex-wrap">
+          {/* Dual View Mode Tabs */}
+          <div className="inline-flex items-center p-1 rounded-lg bg-muted/60 border border-border/60 self-start">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="xs"
+              onClick={() => setViewMode('list')}
+              className={`gap-1.5 text-xs h-7 px-3 font-medium transition-all ${
+                viewMode === 'list'
+                  ? 'bg-background text-foreground shadow-2xs hover:bg-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <LayoutList className="size-3.5" />
+              <span>Daftar Pengumuman</span>
+            </Button>
 
-          <Button
-            variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-            size="xs"
-            onClick={() => setViewMode('calendar')}
-            className={`gap-1.5 text-xs h-7 px-3 font-medium transition-all ${
-              viewMode === 'calendar'
-                ? 'bg-background text-foreground shadow-2xs hover:bg-background'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <CalendarIcon className="size-3.5" />
-            <span>Kalender Agenda</span>
-          </Button>
-        </div>
-
-        {/* Search & Filter Dropdowns */}
-        <div className="flex items-center gap-2 flex-wrap flex-1 justify-start md:justify-end">
-          <div className="relative w-full sm:w-56">
-            <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Cari pengumuman..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 text-xs h-8"
-            />
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="xs"
+              onClick={() => setViewMode('calendar')}
+              className={`gap-1.5 text-xs h-7 px-3 font-medium transition-all ${
+                viewMode === 'calendar'
+                  ? 'bg-background text-foreground shadow-2xs hover:bg-background'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <CalendarIcon className="size-3.5" />
+              <span>Kalender Agenda</span>
+            </Button>
           </div>
 
-          {/* Category Filter */}
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-36 text-xs h-8">
-              <SelectValue placeholder="Kategori" />
-            </SelectTrigger>
-            <SelectContent className="text-xs">
-              <SelectItem value="all">Semua Kategori</SelectItem>
-              <SelectItem value="INFO">Informasi</SelectItem>
-              <SelectItem value="MEETING">Rapat</SelectItem>
-              <SelectItem value="ACTIVITY">Kegiatan</SelectItem>
-              <SelectItem value="URGENT">Penting</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Search & Sort Dropdowns */}
+          <div className="flex items-center gap-2 flex-wrap flex-1 justify-start md:justify-end">
+            <div className="relative w-full sm:w-56">
+              <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Cari pengumuman..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 text-xs h-8"
+              />
+            </div>
 
-          {/* Target Type Filter */}
-          <Select
-            value={targetTypeFilter}
-            onValueChange={(val) => {
-              setTargetTypeFilter(val);
-              if (val !== 'DIVISION') setDivisionFilter('all');
-              if (val !== 'SUBUNIT') setSubunitFilter('all');
-              if (val !== 'CLUSTER') setClusterFilter('all');
-            }}
-          >
-            <SelectTrigger className="w-38 text-xs h-8">
-              <SelectValue placeholder="Target Audiens" />
-            </SelectTrigger>
-            <SelectContent className="text-xs">
-              <SelectItem value="all">Semua Target</SelectItem>
-              <SelectItem value="ALL">Seluruh Tim KKN</SelectItem>
-              <SelectItem value="DIVISION">Khusus Divisi</SelectItem>
-              <SelectItem value="SUBUNIT">Khusus Posko / Subunit</SelectItem>
-              <SelectItem value="CLUSTER">Khusus Klaster</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Conditional Sub-filter: Division */}
-          {targetTypeFilter === 'DIVISION' && (
-            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-              <SelectTrigger className="w-40 text-xs h-8">
-                <SelectValue placeholder="Pilih Divisi" />
+            {/* Sorting Dropdown */}
+            <Select value={sortValue} onValueChange={handleSortChange}>
+              <SelectTrigger className="w-48 text-xs h-8 bg-background border-border/80">
+                <ArrowUpDown className="size-3 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="Urutkan" />
               </SelectTrigger>
               <SelectContent className="text-xs">
-                <SelectItem value="all">Semua Divisi</SelectItem>
-                {divisions.map((div) => (
-                  <SelectItem key={div.id} value={div.id}>
-                    Divisi {div.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="eventStartDate:desc">
+                  Waktu Mulai: Terbaru (Default)
+                </SelectItem>
+                <SelectItem value="eventStartDate:asc">
+                  Waktu Mulai: Terlama
+                </SelectItem>
+                <SelectItem value="createdAt:desc">
+                  Waktu Dibuat: Terbaru
+                </SelectItem>
+                <SelectItem value="createdAt:asc">
+                  Waktu Dibuat: Terlama
+                </SelectItem>
+                <SelectItem value="title:asc">
+                  Judul: A - Z
+                </SelectItem>
+                <SelectItem value="title:desc">
+                  Judul: Z - A
+                </SelectItem>
               </SelectContent>
             </Select>
-          )}
+          </div>
+        </div>
 
-          {/* Conditional Sub-filter: Subunit */}
-          {targetTypeFilter === 'SUBUNIT' && (
-            <Select value={subunitFilter} onValueChange={setSubunitFilter}>
-              <SelectTrigger className="w-40 text-xs h-8">
-                <SelectValue placeholder="Pilih Posko" />
+        {/* Filter Toolbar: Event Period, Category, Audience Target */}
+        <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border/40">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Event Period Filter */}
+            <Select value={eventPeriod} onValueChange={(val) => setEventPeriod(val as EventPeriod)}>
+              <SelectTrigger className="w-38 text-xs h-8 bg-background border-border/70">
+                <Clock className="size-3 mr-1.5 text-muted-foreground" />
+                <SelectValue placeholder="Jadwal Agenda" />
               </SelectTrigger>
               <SelectContent className="text-xs">
-                <SelectItem value="all">Semua Posko</SelectItem>
-                {subunits.map((sub) => (
-                  <SelectItem key={sub.id} value={sub.id}>
-                    Posko {sub.name}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Semua Jadwal</SelectItem>
+                <SelectItem value="upcoming">Agenda Mendatang / Aktif</SelectItem>
+                <SelectItem value="past">Agenda Lampau</SelectItem>
               </SelectContent>
             </Select>
-          )}
 
-          {/* Conditional Sub-filter: Cluster */}
-          {targetTypeFilter === 'CLUSTER' && (
-            <Select value={clusterFilter} onValueChange={setClusterFilter}>
-              <SelectTrigger className="w-36 text-xs h-8">
-                <SelectValue placeholder="Pilih Klaster" />
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-36 text-xs h-8 bg-background border-border/70">
+                <SelectValue placeholder="Kategori" />
               </SelectTrigger>
               <SelectContent className="text-xs">
-                <SelectItem value="all">Semua Klaster</SelectItem>
-                <SelectItem value="SAINTEK">Saintek</SelectItem>
-                <SelectItem value="SOSHUM">Soshum</SelectItem>
-                <SelectItem value="MEDIKA">Medika</SelectItem>
-                <SelectItem value="AGRO">Agro</SelectItem>
+                <SelectItem value="all">Semua Kategori</SelectItem>
+                <SelectItem value="INFO">Informasi</SelectItem>
+                <SelectItem value="MEETING">Rapat</SelectItem>
+                <SelectItem value="ACTIVITY">Kegiatan</SelectItem>
+                <SelectItem value="URGENT">Penting</SelectItem>
               </SelectContent>
             </Select>
-          )}
+
+            {/* Target Type Filter */}
+            <Select
+              value={targetTypeFilter}
+              onValueChange={(val) => {
+                setTargetTypeFilter(val);
+                if (val !== 'DIVISION') setDivisionFilter('all');
+                if (val !== 'SUBUNIT') setSubunitFilter('all');
+                if (val !== 'CLUSTER') setClusterFilter('all');
+              }}
+            >
+              <SelectTrigger className="w-38 text-xs h-8 bg-background border-border/70">
+                <SelectValue placeholder="Target Audiens" />
+              </SelectTrigger>
+              <SelectContent className="text-xs">
+                <SelectItem value="all">Semua Target</SelectItem>
+                <SelectItem value="ALL">Seluruh Tim KKN</SelectItem>
+                <SelectItem value="DIVISION">Khusus Divisi</SelectItem>
+                <SelectItem value="SUBUNIT">Khusus Posko / Subunit</SelectItem>
+                <SelectItem value="CLUSTER">Khusus Klaster</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Conditional Sub-filter: Division */}
+            {targetTypeFilter === 'DIVISION' && (
+              <Select value={divisionFilter} onValueChange={setDivisionFilter}>
+                <SelectTrigger className="w-40 text-xs h-8 bg-background border-border/70">
+                  <SelectValue placeholder="Pilih Divisi" />
+                </SelectTrigger>
+                <SelectContent className="text-xs">
+                  <SelectItem value="all">Semua Divisi</SelectItem>
+                  {divisions.map((div) => (
+                    <SelectItem key={div.id} value={div.id}>
+                      Divisi {div.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Conditional Sub-filter: Subunit */}
+            {targetTypeFilter === 'SUBUNIT' && (
+              <Select value={subunitFilter} onValueChange={setSubunitFilter}>
+                <SelectTrigger className="w-40 text-xs h-8 bg-background border-border/70">
+                  <SelectValue placeholder="Pilih Posko" />
+                </SelectTrigger>
+                <SelectContent className="text-xs">
+                  <SelectItem value="all">Semua Posko</SelectItem>
+                  {subunits.map((sub) => (
+                    <SelectItem key={sub.id} value={sub.id}>
+                      Posko {sub.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Conditional Sub-filter: Cluster */}
+            {targetTypeFilter === 'CLUSTER' && (
+              <Select value={clusterFilter} onValueChange={setClusterFilter}>
+                <SelectTrigger className="w-36 text-xs h-8 bg-background border-border/70">
+                  <SelectValue placeholder="Pilih Klaster" />
+                </SelectTrigger>
+                <SelectContent className="text-xs">
+                  <SelectItem value="all">Semua Klaster</SelectItem>
+                  <SelectItem value="SAINTEK">Saintek</SelectItem>
+                  <SelectItem value="SOSHUM">Soshum</SelectItem>
+                  <SelectItem value="MEDIKA">Medika</SelectItem>
+                  <SelectItem value="AGRO">Agro</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Reset Filters Button */}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={handleResetFilters}
+                className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5 transition-colors"
+                title="Reset semua filter dan sorting"
+              >
+                <RotateCcw className="size-3" />
+                <span>Reset</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Results count */}
+          <div className="text-3xs text-muted-foreground font-medium">
+            Menampilkan <span className="font-semibold text-foreground">{announcements.length}</span> pengumuman
+          </div>
         </div>
       </div>
 

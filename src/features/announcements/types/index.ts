@@ -71,6 +71,10 @@ export interface UpdateAnnouncementDTO {
   sendEmail?: boolean;
 }
 
+export type AnnouncementSortBy = 'eventStartDate' | 'createdAt' | 'title';
+export type SortOrder = 'asc' | 'desc';
+export type EventPeriod = 'all' | 'upcoming' | 'past';
+
 export interface QueryAnnouncementsParams {
   category?: AnnouncementCategory;
   targetType?: AnnouncementTarget;
@@ -78,6 +82,9 @@ export interface QueryAnnouncementsParams {
   subunitId?: string;
   cluster?: string;
   search?: string;
+  sortBy?: AnnouncementSortBy;
+  sortOrder?: SortOrder;
+  eventPeriod?: EventPeriod;
 }
 
 export interface AnnouncementPermissionsResponse {
